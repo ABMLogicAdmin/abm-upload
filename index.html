@@ -32,9 +32,9 @@
     }
     .wrap{max-width:760px;margin:0 auto}
     .header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-    .logo{height:34px;width:auto;display:block}
-    h1{font-size:18px;margin:0;color:var(--brand-navy);font-weight:700;letter-spacing:.2px}
-    .sub{margin:2px 0 0;color:var(--muted);font-size:12.5px;line-height:1.45}
+    .logo{height:34px;width:auto}
+    h1{font-size:18px;margin:0;color:var(--brand-navy);font-weight:700}
+    .sub{margin:2px 0 0;color:var(--muted);font-size:12.5px}
     .card{
       margin-top:18px;
       background:var(--card);
@@ -51,13 +51,7 @@
       font-size:14px;
       border-radius:10px;
       border:1px solid var(--border);
-      outline:none;
       font-family:inherit;
-      background:#fff;
-    }
-    input:focus,select:focus{
-      border-color:rgba(48,173,247,.8);
-      box-shadow:0 0 0 4px rgba(48,173,247,.18);
     }
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .btn{
@@ -68,10 +62,7 @@
       cursor:pointer;
       margin-top:18px;
     }
-    .btn:hover{filter:brightness(.98)}
-    .btn:active{transform:translateY(1px)}
-    .status{margin-top:14px;font-size:12.5px;white-space:pre-wrap;color:var(--brand-navy)}
-    .hint{font-size:12px;color:var(--muted);margin-top:10px}
+    .status{margin-top:14px;font-size:12.5px;white-space:pre-wrap}
     .pill{
       display:inline-block;
       font-size:11px;
@@ -82,7 +73,6 @@
       padding:4px 8px;
       border-radius:999px;
       margin-left:8px;
-      vertical-align:middle;
     }
     @media (max-width:640px){.row{grid-template-columns:1fr}}
   </style>
@@ -91,10 +81,10 @@
 <body>
   <div class="wrap">
     <div class="header">
-      <img class="logo" src="https://abmlogic.com/abm-logic-email-logo.png" alt="ABM Logic Logo">
+      <img class="logo" src="https://abmlogic.com/abm-logic-email-logo.png" alt="ABM Logic">
       <div>
         <h1>CSV Upload <span class="pill">Internal</span></h1>
-        <p class="sub">Uploads a CSV to Storage and creates an <code>ingest_jobs</code> record. No parsing yet.</p>
+        <p class="sub">Uploads a CSV to Storage and creates an ingest_jobs record.</p>
       </div>
     </div>
 
@@ -102,17 +92,15 @@
       <div class="row">
         <div>
           <label>Email</label>
-          <input id="email" type="email" placeholder="you@abmlogic.com" />
+          <input id="email" type="email" />
         </div>
         <div>
           <label>Password</label>
-          <input id="password" type="password" placeholder="••••••••" />
+          <input id="password" type="password" />
         </div>
       </div>
-
       <button class="btn" id="loginBtn">Sign in</button>
       <div class="status" id="loginStatus"></div>
-      <div class="hint">Tip: once signed in, the session is remembered in this browser.</div>
     </div>
 
     <div class="card" id="appCard" style="display:none;">
@@ -131,100 +119,89 @@
       <select id="source"></select>
 
       <label>CSV File</label>
-      <input id="file" type="file" accept=".csv,text/csv" />
+      <input id="file" type="file" accept=".csv" />
 
       <button class="btn" id="uploadBtn">Upload CSV</button>
       <div class="status" id="status"></div>
-      <div class="hint">File path: <code>client_{id}/campaign_{id}/ingest_{job_id}.csv</code></div>
     </div>
   </div>
 
 <script>
-  // ======= CONFIG (EDIT ONLY THIS) =======
-  // Paste your anon public key here (one line, no breaks).
-  // For GitHub Pages: you can leave this as placeholder and paste in later.
+  // ===== CONFIG =====
   window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
-  // ======================================
-
   const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
+  // ==================
 
-  if (!window.supabase) {
-    alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
-    throw new Error("Supabase SDK not loaded");
-  }
+  const sb = window.supabase.createClient(
+    SUPABASE_URL,
+    window.ABM_SUPABASE_ANON_KEY
+  );
 
-  const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
   const $ = (id) => document.getElementById(id);
 
-  $("loginBtn").addEventListener("click", login);
-  $("uploadBtn").addEventListener("click", uploadCsv);
+  $("loginBtn").onclick = login;
+  $("uploadBtn").onclick = uploadCsv;
 
   async function login() {
     $("loginStatus").textContent = "Signing in…";
-    const email = $("email").value.trim();
-    const password = $("password").value;
-
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-
+    const { error } = await sb.auth.signInWithPassword({
+      email: $("email").value.trim(),
+      password: $("password").value
+    });
     if (error) {
-      $("loginStatus").textContent = `Login failed: ${error.message}`;
+      $("loginStatus").textContent = error.message;
       return;
     }
-
     $("loginStatus").textContent = "";
-    await showApp();
+    showApp();
   }
 
   async function showApp() {
     $("loginCard").style.display = "none";
     $("appCard").style.display = "block";
     $("status").textContent = "Loading dropdowns…";
-
     try {
-      await loadSelect("clients", "client");
-      await loadSelect("campaigns", "campaign");
-      await loadSelect("sources", "source");
+      await loadSelect("clients","client");
+      await loadSelect("campaigns","campaign");
+      await loadSelect("sources","source");
       $("status").textContent = "";
     } catch (e) {
-      $("status").textContent = String(e?.message || e);
+      $("status").textContent = e.message;
     }
   }
 
   async function loadSelect(table, elementId) {
+    const map = {
+      clients:   { id:"client_id",   label:"name",        order:"name" },
+      campaigns: { id:"campaign_id", label:"name",        order:"name" },
+      sources:   { id:"source_id",   label:"source_name", order:"source_name" }
+    };
+    const cfg = map[table];
     const { data, error } = await sb
       .from(table)
-      .select("id, name")
-      .order("name");
+      .select(`${cfg.id}, ${cfg.label}`)
+      .order(cfg.order);
 
-    if (error) throw new Error(`Failed to load ${table}: ${error.message}`);
+    if (error) throw error;
 
-    const select = $(elementId);
-    select.innerHTML = "";
-
-    (data || []).forEach((row) => {
-      const opt = document.createElement("option");
-      opt.value = row.id;
-      opt.textContent = row.name;
-      select.appendChild(opt);
+    const el = $(elementId);
+    el.innerHTML = "";
+    data.forEach(r => {
+      const o = document.createElement("option");
+      o.value = r[cfg.id];
+      o.textContent = r[cfg.label];
+      el.appendChild(o);
     });
   }
 
   async function uploadCsv() {
     const file = $("file").files[0];
-    if (!file) return $("status").textContent = "Select a CSV file first.";
-    if (!file.name.toLowerCase().endsWith(".csv")) return $("status").textContent = "File must be a .csv";
+    if (!file) return $("status").textContent = "Select a CSV first.";
 
-    $("status").textContent = "Checking session…";
-    const { data: userData, error: userErr } = await sb.auth.getUser();
-    if (userErr || !userData?.user) {
-      $("status").textContent = "Not signed in. Refresh the page and sign in again.";
-      return;
-    }
+    const { data:{user} } = await sb.auth.getUser();
+    if (!user) return $("status").textContent = "Not logged in.";
 
-    const userId = userData.user.id;
-
-    $("status").textContent = "Creating ingest job…";
-    const { data: job, error: jobError } = await sb
+    const { data:job, error } = await sb
       .from("ingest_jobs")
       .insert({
         client_id: $("client").value,
@@ -232,47 +209,29 @@
         source_id: $("source").value,
         status: "uploaded",
         storage_bucket: "ingest-uploads",
-        created_by: userId
+        created_by: user.id
       })
       .select("id")
       .single();
 
-    if (jobError) {
-      $("status").textContent = `Failed to create ingest job: ${jobError.message}`;
-      return;
-    }
+    if (error) return $("status").textContent = error.message;
 
     const path = `client_${$("client").value}/campaign_${$("campaign").value}/ingest_${job.id}.csv`;
 
-    $("status").textContent = "Uploading file…";
-    const { error: uploadError } = await sb.storage
+    const { error:upErr } = await sb.storage
       .from("ingest-uploads")
-      .upload(path, file, { contentType: "text/csv", upsert: true });
+      .upload(path, file, { upsert:true });
 
-    if (uploadError) {
-      $("status").textContent = `Upload failed: ${uploadError.message}\nJob created: ${job.id}`;
-      return;
-    }
+    if (upErr) return $("status").textContent = upErr.message;
 
-    $("status").textContent = "Updating job record…";
-    const { error: updErr } = await sb
-      .from("ingest_jobs")
-      .update({ storage_path: path })
+    await sb.from("ingest_jobs")
+      .update({ storage_path:path })
       .eq("id", job.id);
 
-    if (updErr) {
-      $("status").textContent =
-        `Upload succeeded but failed to update job path: ${updErr.message}\nJob: ${job.id}\nPath: ${path}`;
-      return;
-    }
-
-    $("status").textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}`;
+    $("status").textContent = `Upload complete\nJob ID: ${job.id}`;
   }
 
-  // Auto-restore session
-  sb.auth.getSession()
-    .then(({ data }) => { if (data?.session) showApp(); })
-    .catch(() => {});
+  sb.auth.getSession().then(r => { if (r.data.session) showApp(); });
 </script>
 
 </body>
