@@ -217,6 +217,13 @@
     source:   { value: "", label: "Select source…", items: [] }
   };
 
+  // Raw cache (so we can filter campaigns by selected client)
+  const cache = {
+    clients: [],
+    campaigns: [],
+    sources: []
+  };
+
   $("loginBtn").onclick = login;
   $("uploadBtn").onclick = uploadCsv;
 
@@ -294,6 +301,13 @@
         state[key].value = it.value;
         state[key].label = it.label;
         container.classList.remove("open");
+
+        // IMPORTANT: when client changes, filter campaigns to that client and reset campaign selection
+        if (key === "client") {
+          applyCampaignFilterForSelectedClient();
+          renderDropdown("ddCampaign", "campaign", "Select campaign…");
+        }
+
         // re-render button label
         renderDropdown(containerId, key, "");
       });
@@ -322,13 +336,47 @@
 
     try {
       await loadItems();
+
+      // Start unselected (important for sane UX + avoiding weird dropdown behaviour)
+      state.client.label = "Select client…";
+      state.client.value = "";
+      state.campaign.label = "Select campaign…";
+      state.campaign.value = "";
+      state.source.label = "Select source…";
+      state.source.value = "";
+
+      // Populate state lists
+      state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
+      state.source.items = (cache.sources || []).map(r => ({ value: r.source_id, label: r.source_name }));
+
+      // Campaign list starts empty until a client is selected
+      state.campaign.items = [];
+
       renderDropdown("ddClient", "client", "Select client…");
       renderDropdown("ddCampaign", "campaign", "Select campaign…");
       renderDropdown("ddSource", "source", "Select source…");
+
       $("status").textContent = "";
     } catch (e) {
       $("status").textContent = String(e?.message || e);
     }
+  }
+
+  function applyCampaignFilterForSelectedClient() {
+    const clientId = state.client.value;
+
+    // Reset campaign selection whenever client changes
+    state.campaign.label = "Select campaign…";
+    state.campaign.value = "";
+
+    if (!clientId) {
+      state.campaign.items = [];
+      return;
+    }
+
+    // Filter campaigns by the selected client_id
+    const filtered = (cache.campaigns || []).filter(c => c.client_id === clientId);
+    state.campaign.items = filtered.map(r => ({ value: r.campaign_id, label: r.name }));
   }
 
   async function loadItems() {
@@ -339,10 +387,10 @@
       .order("name");
     if (cErr) throw new Error(`Failed to load clients: ${cErr.message}`);
 
-    // campaigns: campaign_id, name
+    // campaigns: campaign_id, client_id, name  (client_id is needed to filter)
     const { data: campaigns, error: caErr } = await sb
       .from("campaigns")
-      .select("campaign_id, name")
+      .select("campaign_id, client_id, name")
       .order("name");
     if (caErr) throw new Error(`Failed to load campaigns: ${caErr.message}`);
 
@@ -353,17 +401,9 @@
       .order("source_name");
     if (sErr) throw new Error(`Failed to load sources: ${sErr.message}`);
 
-    state.client.items = (clients || []).map(r => ({ value: r.client_id, label: r.name }));
-    state.campaign.items = (campaigns || []).map(r => ({ value: r.campaign_id, label: r.name }));
-    state.source.items = (sources || []).map(r => ({ value: r.source_id, label: r.source_name }));
-
-    // default labels
-    state.client.label = state.client.items[0]?.label || "Select client…";
-    state.client.value = state.client.items[0]?.value || "";
-    state.campaign.label = state.campaign.items[0]?.label || "Select campaign…";
-    state.campaign.value = state.campaign.items[0]?.value || "";
-    state.source.label = state.source.items[0]?.label || "Select source…";
-    state.source.value = state.source.items[0]?.value || "";
+    cache.clients = clients || [];
+    cache.campaigns = campaigns || [];
+    cache.sources = sources || [];
   }
 
   async function uploadCsv() {
@@ -415,9 +455,9 @@
     $("status").textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}`;
   }
 
+  // Auto-show app if already logged in
   sb.auth.getSession().then(r => { if (r.data.session) showApp(); }).catch(()=>{});
 </script>
 
 </body>
 </html>
-
