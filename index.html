@@ -63,7 +63,10 @@
       color:#fff;
       font-weight:700;
       cursor:pointer;
-      margin-top:18px;
+      margin-top:14px;
+      text-align:center;
+      text-decoration:none;
+      display:inline-block;
     }
     .btn:hover{filter:brightness(.98)}
     .btn:active{transform:translateY(1px)}
@@ -81,68 +84,6 @@
       vertical-align:middle;
     }
     @media (max-width:640px){.row{grid-template-columns:1fr}}
-
-    /* Custom dropdown */
-    .dd { position: relative; margin-top: 7px; }
-    .dd-btn{
-      width:100%;
-      padding:11px 12px;
-      font-size:14px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      background:#fff;
-      color:var(--text);
-      text-align:left;
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      cursor:pointer;
-    }
-    .dd-btn:focus{
-      outline:none;
-      border-color:rgba(48,173,247,.8);
-      box-shadow:0 0 0 4px rgba(48,173,247,.18);
-    }
-    .dd-caret{ color: var(--muted); font-size: 12px; }
-    .dd-menu{
-      position:absolute;
-      top:calc(100% + 6px);
-      left:0;
-      right:0;
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:12px;
-      box-shadow:0 18px 45px rgba(17,24,39,.12);
-      max-height:240px;
-      overflow:auto;
-      padding:6px;
-      z-index:9999;
-      display:none;
-    }
-    .dd.open .dd-menu{ display:block; }
-    .dd-item{
-      width:100%;
-      border:none;
-      background:transparent;
-      padding:10px 10px;
-      border-radius:10px;
-      text-align:left;
-      cursor:pointer;
-      color:var(--text);
-      font-size:14px;
-    }
-    .dd-item:hover{ background:rgba(48,173,247,.10); }
-    .dd-meta{ font-size:11px; color:var(--muted); margin-top:2px; }
-    .dd-search{
-      width:100%;
-      padding:10px 10px;
-      margin:6px 0 8px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      font-size:13px;
-    }
-    .hint{ font-size:12px;color:var(--muted);margin-top:10px; }
   </style>
 </head>
 
@@ -151,11 +92,12 @@
     <div class="header">
       <img class="logo" src="https://abmlogic.com/abm-logic-email-logo.png" alt="ABM Logic">
       <div>
-        <h1>CSV Upload <span class="pill">Internal</span></h1>
-        <p class="sub">Uploads a CSV to Storage and creates an ingest_jobs record.</p>
+        <h1>CSV Upload <span class="pill">Partner / Batch Ingest</span></h1>
+        <p class="sub">Upload partner-delivered leads for a single client & campaign.</p>
       </div>
     </div>
 
+    <!-- LOGIN -->
     <div class="card" id="loginCard">
       <div class="row">
         <div>
@@ -169,153 +111,51 @@
       </div>
       <button class="btn" id="loginBtn">Sign in</button>
       <div class="status" id="loginStatus"></div>
-      <div class="hint">If login works but data doesn’t load, it’s usually RLS.</div>
     </div>
 
+    <!-- APP -->
     <div class="card" id="appCard" style="display:none;">
+
       <div class="row">
         <div>
           <label>Client</label>
-          <div class="dd" id="ddClient"></div>
+          <div id="ddClient"></div>
         </div>
         <div>
           <label>Campaign</label>
-          <div class="dd" id="ddCampaign"></div>
+          <div id="ddCampaign"></div>
         </div>
       </div>
 
       <label>Source</label>
-      <div class="dd" id="ddSource"></div>
+      <div id="ddSource"></div>
+
+      <!-- DOWNLOAD TEMPLATE -->
+      <a class="btn" href="./abm-logic-lead-upload-template.csv" download>
+        Download CSV Template
+      </a>
 
       <label>CSV File</label>
       <input id="file" type="file" accept=".csv" />
 
       <button class="btn" id="uploadBtn">Upload CSV</button>
       <div class="status" id="status"></div>
-      <div class="hint">Storage path: <code>client_{id}/campaign_{id}/ingest_{job_id}.csv</code></div>
+
+      <p class="sub" style="margin-top:10px">
+        One CSV per client, campaign, and source.  
+        All rows inherit this context automatically.
+      </p>
     </div>
   </div>
 
 <script>
-  // ===== CONFIG =====
-  window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
   const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
-  // ==================
+  const SUPABASE_ANON_KEY = "YOUR_ANON_KEY_HERE";
 
-  if (!window.supabase) {
-    alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
-    throw new Error("Supabase SDK not loaded");
-  }
+  const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const $ = id => document.getElementById(id);
 
-  const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
-  const $ = (id) => document.getElementById(id);
-
-  // Dropdown state
-  const state = {
-    client:   { value: "", label: "Select client…", items: [] },
-    campaign: { value: "", label: "Select campaign…", items: [] },
-    source:   { value: "", label: "Select source…", items: [] }
-  };
-
-  // Raw cache (so we can filter campaigns by selected client)
-  const cache = {
-    clients: [],
-    campaigns: [],
-    sources: []
-  };
-
-  $("loginBtn").onclick = login;
-  $("uploadBtn").onclick = uploadCsv;
-
-  // Close dropdowns when clicking outside
-  document.addEventListener("click", (e) => {
-    ["ddClient","ddCampaign","ddSource"].forEach(id => {
-      const el = $(id);
-      if (!el) return;
-      if (!el.contains(e.target)) el.classList.remove("open");
-    });
-  });
-
-  function renderDropdown(containerId, key, placeholder) {
-    const container = $(containerId);
-    container.innerHTML = "";
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "dd-btn";
-    btn.innerHTML = `<span>${state[key].label || placeholder}</span><span class="dd-caret">▾</span>`;
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      container.classList.toggle("open");
-      const search = container.querySelector(".dd-search");
-      if (search) { search.value = ""; search.focus(); filterMenu(containerId, key, ""); }
-    });
-
-    const menu = document.createElement("div");
-    menu.className = "dd-menu";
-
-    const search = document.createElement("input");
-    search.className = "dd-search";
-    search.placeholder = "Type to filter…";
-    search.addEventListener("input", () => filterMenu(containerId, key, search.value));
-    menu.appendChild(search);
-
-    const list = document.createElement("div");
-    list.className = "dd-list";
-    menu.appendChild(list);
-
-    container.appendChild(btn);
-    container.appendChild(menu);
-
-    filterMenu(containerId, key, "");
-  }
-
-  function filterMenu(containerId, key, query) {
-    const container = $(containerId);
-    const list = container.querySelector(".dd-list");
-    if (!list) return;
-
-    const q = (query || "").toLowerCase().trim();
-    list.innerHTML = "";
-
-    const items = (state[key].items || []).filter(it =>
-      !q || (it.label || "").toLowerCase().includes(q)
-    );
-
-    if (!items.length) {
-      const empty = document.createElement("div");
-      empty.className = "dd-meta";
-      empty.style.padding = "10px";
-      empty.textContent = "No matches.";
-      list.appendChild(empty);
-      return;
-    }
-
-    for (const it of items) {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "dd-item";
-      b.textContent = it.label;
-      b.addEventListener("click", () => {
-        state[key].value = it.value;
-        state[key].label = it.label;
-        container.classList.remove("open");
-
-        // IMPORTANT: when client changes, filter campaigns to that client and reset campaign selection
-        if (key === "client") {
-          applyCampaignFilterForSelectedClient();
-          renderDropdown("ddCampaign", "campaign", "Select campaign…");
-        }
-
-        // re-render button label
-        renderDropdown(containerId, key, "");
-      });
-      list.appendChild(b);
-    }
-  }
-
-  async function login() {
+  $("loginBtn").onclick = async () => {
     $("loginStatus").textContent = "Signing in…";
     const { error } = await sb.auth.signInWithPassword({
       email: $("email").value.trim(),
@@ -325,138 +165,16 @@
       $("loginStatus").textContent = error.message;
       return;
     }
-    $("loginStatus").textContent = "";
-    showApp();
-  }
-
-  async function showApp() {
     $("loginCard").style.display = "none";
     $("appCard").style.display = "block";
-    $("status").textContent = "Loading dropdowns…";
+  };
 
-    try {
-      await loadItems();
-
-      // Start unselected (important for sane UX + avoiding weird dropdown behaviour)
-      state.client.label = "Select client…";
-      state.client.value = "";
-      state.campaign.label = "Select campaign…";
-      state.campaign.value = "";
-      state.source.label = "Select source…";
-      state.source.value = "";
-
-      // Populate state lists
-      state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
-      state.source.items = (cache.sources || []).map(r => ({ value: r.source_id, label: r.source_name }));
-
-      // Campaign list starts empty until a client is selected
-      state.campaign.items = [];
-
-      renderDropdown("ddClient", "client", "Select client…");
-      renderDropdown("ddCampaign", "campaign", "Select campaign…");
-      renderDropdown("ddSource", "source", "Select source…");
-
-      $("status").textContent = "";
-    } catch (e) {
-      $("status").textContent = String(e?.message || e);
+  sb.auth.getSession().then(r => {
+    if (r.data.session) {
+      $("loginCard").style.display = "none";
+      $("appCard").style.display = "block";
     }
-  }
-
-  function applyCampaignFilterForSelectedClient() {
-    const clientId = state.client.value;
-
-    // Reset campaign selection whenever client changes
-    state.campaign.label = "Select campaign…";
-    state.campaign.value = "";
-
-    if (!clientId) {
-      state.campaign.items = [];
-      return;
-    }
-
-    // Filter campaigns by the selected client_id
-    const filtered = (cache.campaigns || []).filter(c => c.client_id === clientId);
-    state.campaign.items = filtered.map(r => ({ value: r.campaign_id, label: r.name }));
-  }
-
-  async function loadItems() {
-    // clients: client_id, name
-    const { data: clients, error: cErr } = await sb
-      .from("clients")
-      .select("client_id, name")
-      .order("name");
-    if (cErr) throw new Error(`Failed to load clients: ${cErr.message}`);
-
-    // campaigns: campaign_id, client_id, name  (client_id is needed to filter)
-    const { data: campaigns, error: caErr } = await sb
-      .from("campaigns")
-      .select("campaign_id, client_id, name")
-      .order("name");
-    if (caErr) throw new Error(`Failed to load campaigns: ${caErr.message}`);
-
-    // sources: source_id, source_name
-    const { data: sources, error: sErr } = await sb
-      .from("sources")
-      .select("source_id, source_name")
-      .order("source_name");
-    if (sErr) throw new Error(`Failed to load sources: ${sErr.message}`);
-
-    cache.clients = clients || [];
-    cache.campaigns = campaigns || [];
-    cache.sources = sources || [];
-  }
-
-  async function uploadCsv() {
-    const file = $("file").files[0];
-    if (!file) return $("status").textContent = "Select a CSV first.";
-
-    if (!state.client.value || !state.campaign.value || !state.source.value) {
-      $("status").textContent = "Select Client, Campaign, and Source first.";
-      return;
-    }
-
-    $("status").textContent = "Checking session…";
-    const { data:{user}, error:userErr } = await sb.auth.getUser();
-    if (userErr || !user) return $("status").textContent = "Not logged in.";
-
-    $("status").textContent = "Creating ingest job…";
-    const { data: job, error: jobErr } = await sb
-      .from("ingest_jobs")
-      .insert({
-        client_id: state.client.value,
-        campaign_id: state.campaign.value,
-        source_id: state.source.value,
-        status: "uploaded",
-        storage_bucket: "ingest-uploads",
-        created_by: user.id
-      })
-      .select("id")
-      .single();
-
-    if (jobErr) return $("status").textContent = `Failed to create ingest job: ${jobErr.message}`;
-
-    const path = `client_${state.client.value}/campaign_${state.campaign.value}/ingest_${job.id}.csv`;
-
-    $("status").textContent = "Uploading file…";
-    const { error: upErr } = await sb.storage
-      .from("ingest-uploads")
-      .upload(path, file, { upsert:true, contentType:"text/csv" });
-
-    if (upErr) return $("status").textContent = `Upload failed: ${upErr.message}\nJob created: ${job.id}`;
-
-    $("status").textContent = "Updating job record…";
-    const { error: updErr } = await sb
-      .from("ingest_jobs")
-      .update({ storage_path: path })
-      .eq("id", job.id);
-
-    if (updErr) return $("status").textContent = `Upload ok but update failed: ${updErr.message}`;
-
-    $("status").textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}`;
-  }
-
-  // Auto-show app if already logged in
-  sb.auth.getSession().then(r => { if (r.data.session) showApp(); }).catch(()=>{});
+  });
 </script>
 
 </body>
