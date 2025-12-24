@@ -1,1 +1,2 @@
-email,first_name,last_name,company_name,",job_title",company_domain,linkedin_url,country,state,city,lead_timestamp,ip_address,source_lead_id,phone,consent
+email,first_name,last_name,company_name,job_title,company_domain,linkedin_url,country,state,city,lead_timestamp,ip_address,source_lead_id,phone,consent
+example@company.com,George,Ford,Company123,Director of Marketing,company.com,personal/linkedin/url,United Kingdom,Surrey,London,00:00:00:00,123.123.123.12.,Vendor/supplier ID number,38905478957,yes/no
