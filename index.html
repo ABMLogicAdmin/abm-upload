@@ -750,9 +750,10 @@
     if (updErr) return $("status").textContent = `Upload ok but update failed: ${updErr.message}`;
 
     // ============================
-    // NEW: AUTO-RUN INGESTION
+    // AUTO-RUN INGESTION (with extra visible confirmations)
     // ============================
-    $("status").textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}\n\n🚀 Starting ingestion…`;
+    $("status").textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}`;
+    $("status").textContent += "\n🚀 Starting ingestion…";
 
     try {
       const resp = await fetch(`${SUPABASE_URL}/functions/v1/process-ingest-job`, {
@@ -761,19 +762,19 @@
         body: JSON.stringify({ ingest_job_id: job.id })
       });
 
+      // Visible confirmation immediately after the fetch completes
+      $("status").textContent += `\n✅ Ingestion triggered (${resp.status})`;
+
       const text = await resp.text(); // keep as text so we can show errors even if JSON breaks
 
       if (!resp.ok) {
-        $("status").textContent =
-          `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}\n\n❌ Ingestion failed (${resp.status})\n${text}`;
+        $("status").textContent += `\n❌ Ingestion failed\n${text}`;
         return;
       }
 
-      $("status").textContent =
-        `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}\n\n✅ Ingestion completed\n${text}`;
+      $("status").textContent += `\n✅ Ingestion completed\n${text}`;
     } catch (e) {
-      $("status").textContent =
-        `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}\n\n❌ Ingestion call failed\n${String(e?.message || e)}`;
+      $("status").textContent += `\n❌ Ingestion call failed\n${String(e?.message || e)}`;
     }
   }
 
