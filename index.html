@@ -225,27 +225,63 @@
 
 <script>
   // ===== CONFIG =====
-  // IMPORTANT: put your real anon key back here (the one you were using before).
   window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
   const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
   // ==================
 
+  // Ensure SDK loaded
   if (!window.supabase) {
     alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
     throw new Error("Supabase SDK not loaded");
   }
 
-  const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
+  // ✅ Create ONE Supabase client and use it everywhere
+  const supabase = window.supabase.createClient(
+    SUPABASE_URL,
+    window.ABM_SUPABASE_ANON_KEY
+  );
+
   const $ = (id) => document.getElementById(id);
 
+  // =========================
+  // Admin detection (Slice 2)
+  // =========================
+  async function isAdmin() {
+    const { data: userRes, error: userErr } = await supabase.auth.getUser();
+
+    if (userErr || !userRes?.user) {
+      console.warn("No logged-in user for admin check");
+      return false;
+    }
+
+    const { data, error } = await supabase
+      .from("app_users")
+      .select("role")
+      .eq("user_id", userRes.user.id)
+      .single();
+
+    if (error) {
+      console.error("Admin check failed:", error);
+      return false;
+    }
+
+    return data.role === "admin";
+  }
+
+  // TEMP sanity check (remove later)
+  (async () => {
+    console.log("Am I admin?", await isAdmin());
+  })();
+
+  // =========================
   // Dropdown state
+  // =========================
   const state = {
     client:   { value: "", label: "Select client…", items: [] },
     campaign: { value: "", label: "Select campaign…", items: [] },
     source:   { value: "", label: "Select source…", items: [] }
   };
 
-  // Raw caches (used for filtering campaigns by selected client)
   const cache = { clients: [], campaigns: [], sources: [] };
 
   $("loginBtn").onclick = login;
@@ -268,17 +304,11 @@
     btn.type = "button";
     btn.className = "dd-btn";
     btn.innerHTML = `<span>${state[key].label || placeholder}</span><span class="dd-caret">▾</span>`;
-    btn.addEventListener("click", (e) => {
+    btn.onclick = (e) => {
       e.preventDefault();
       e.stopPropagation();
       container.classList.toggle("open");
-      const search = container.querySelector(".dd-search");
-      if (search) {
-        search.value = "";
-        search.focus();
-        filterMenu(containerId, key, "");
-      }
-    });
+    };
 
     const menu = document.createElement("div");
     menu.className = "dd-menu";
@@ -286,7 +316,7 @@
     const search = document.createElement("input");
     search.className = "dd-search";
     search.placeholder = "Type to filter…";
-    search.addEventListener("input", () => filterMenu(containerId, key, search.value));
+    search.oninput = () => filterMenu(containerId, key, search.value);
     menu.appendChild(search);
 
     const list = document.createElement("div");
@@ -302,75 +332,53 @@
   function filterMenu(containerId, key, query) {
     const container = $(containerId);
     const list = container.querySelector(".dd-list");
-    if (!list) return;
-
-    const q = (query || "").toLowerCase().trim();
     list.innerHTML = "";
 
-    const items = (state[key].items || []).filter(it =>
-      !q || (it.label || "").toLowerCase().includes(q)
+    const q = query.toLowerCase().trim();
+    const items = state[key].items.filter(it =>
+      !q || it.label.toLowerCase().includes(q)
     );
 
     if (!items.length) {
-      const empty = document.createElement("div");
-      empty.className = "dd-meta";
-      empty.style.padding = "10px";
-      empty.textContent = "No matches.";
-      list.appendChild(empty);
+      list.innerHTML = `<div class="dd-meta" style="padding:10px;">No matches</div>`;
       return;
     }
 
-    for (const it of items) {
+    items.forEach(it => {
       const b = document.createElement("button");
       b.type = "button";
       b.className = "dd-item";
       b.textContent = it.label;
-
-      b.addEventListener("click", () => {
+      b.onclick = () => {
         state[key].value = it.value;
         state[key].label = it.label;
         container.classList.remove("open");
 
-        // If client changes, filter campaigns to that client and reset campaign selection.
         if (key === "client") {
           applyCampaignFilterForSelectedClient();
           renderDropdown("ddCampaign", "campaign", "Select campaign…");
         }
 
-        // Re-render this dropdown label
         renderDropdown(containerId, key, "");
-      });
-
+      };
       list.appendChild(b);
-    }
+    });
   }
 
   function applyCampaignFilterForSelectedClient() {
     const clientId = state.client.value;
-
-    // Reset campaign selection whenever client changes
-    state.campaign.label = "Select campaign…";
-    state.campaign.value = "";
-
-    if (!clientId) {
-      state.campaign.items = [];
-      return;
-    }
-
-    const filtered = (cache.campaigns || []).filter(c => c.client_id === clientId);
-    state.campaign.items = filtered.map(r => ({ value: r.campaign_id, label: r.name }));
+    state.campaign.items = cache.campaigns
+      .filter(c => c.client_id === clientId)
+      .map(c => ({ value: c.campaign_id, label: c.name }));
   }
 
   async function login() {
     $("loginStatus").textContent = "Signing in…";
-    const { error } = await sb.auth.signInWithPassword({
+    const { error } = await supabase.auth.signInWithPassword({
       email: $("email").value.trim(),
       password: $("password").value
     });
-    if (error) {
-      $("loginStatus").textContent = error.message;
-      return;
-    }
+    if (error) return $("loginStatus").textContent = error.message;
     $("loginStatus").textContent = "";
     showApp();
   }
@@ -380,53 +388,23 @@
     $("appCard").style.display = "block";
     $("status").textContent = "Loading dropdowns…";
 
-    try {
-      await loadItems();
+    await loadItems();
 
-      // Start unselected (no auto-pick)
-      state.client.label = "Select client…";
-      state.client.value = "";
-      state.campaign.label = "Select campaign…";
-      state.campaign.value = "";
-      state.source.label = "Select source…";
-      state.source.value = "";
+    state.client.items = cache.clients.map(r => ({ value: r.client_id, label: r.name }));
+    state.source.items = cache.sources.map(r => ({ value: r.source_id, label: r.source_name }));
+    state.campaign.items = [];
 
-      // Populate dropdown item lists
-      state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
-      state.source.items = (cache.sources || []).map(r => ({ value: r.source_id, label: r.source_name }));
-      state.campaign.items = []; // empty until a client is selected
+    renderDropdown("ddClient", "client", "Select client…");
+    renderDropdown("ddCampaign", "campaign", "Select campaign…");
+    renderDropdown("ddSource", "source", "Select source…");
 
-      renderDropdown("ddClient", "client", "Select client…");
-      renderDropdown("ddCampaign", "campaign", "Select campaign…");
-      renderDropdown("ddSource", "source", "Select source…");
-
-      $("status").textContent = "";
-    } catch (e) {
-      $("status").textContent = String(e?.message || e);
-    }
+    $("status").textContent = "";
   }
 
   async function loadItems() {
-    // clients: client_id, name
-    const { data: clients, error: cErr } = await sb
-      .from("clients")
-      .select("client_id, name")
-      .order("name");
-    if (cErr) throw new Error(`Failed to load clients: ${cErr.message}`);
-
-    // campaigns: campaign_id, client_id, name (client_id needed to filter)
-    const { data: campaigns, error: caErr } = await sb
-      .from("campaigns")
-      .select("campaign_id, client_id, name")
-      .order("name");
-    if (caErr) throw new Error(`Failed to load campaigns: ${caErr.message}`);
-
-    // sources: source_id, source_name
-    const { data: sources, error: sErr } = await sb
-      .from("sources")
-      .select("source_id, source_name")
-      .order("source_name");
-    if (sErr) throw new Error(`Failed to load sources: ${sErr.message}`);
+    const { data: clients } = await supabase.from("clients").select("client_id,name").order("name");
+    const { data: campaigns } = await supabase.from("campaigns").select("campaign_id,client_id,name").order("name");
+    const { data: sources } = await supabase.from("sources").select("source_id,source_name").order("source_name");
 
     cache.clients = clients || [];
     cache.campaigns = campaigns || [];
@@ -438,16 +416,14 @@
     if (!file) return $("status").textContent = "Select a CSV first.";
 
     if (!state.client.value || !state.campaign.value || !state.source.value) {
-      $("status").textContent = "Select Client, Campaign, and Source first.";
-      return;
+      return $("status").textContent = "Select Client, Campaign, and Source first.";
     }
 
-    $("status").textContent = "Checking session…";
-    const { data:{user}, error:userErr } = await sb.auth.getUser();
-    if (userErr || !user) return $("status").textContent = "Not logged in.";
+    const { data:{user} } = await supabase.auth.getUser();
+    if (!user) return $("status").textContent = "Not logged in.";
 
     $("status").textContent = "Creating ingest job…";
-    const { data: job, error: jobErr } = await sb
+    const { data: job } = await supabase
       .from("ingest_jobs")
       .insert({
         client_id: state.client.value,
@@ -460,34 +436,24 @@
       .select("id")
       .single();
 
-    if (jobErr) return $("status").textContent = `Failed to create ingest job: ${jobErr.message}`;
-
     const path = `client_${state.client.value}/campaign_${state.campaign.value}/ingest_${job.id}.csv`;
 
-    $("status").textContent = "Uploading file…";
-    const { error: upErr } = await sb.storage
+    await supabase.storage
       .from("ingest-uploads")
       .upload(path, file, { upsert:true, contentType:"text/csv" });
 
-    if (upErr) return $("status").textContent = `Upload failed: ${upErr.message}\nJob created: ${job.id}`;
-
-    $("status").textContent = "Updating job record…";
-    const { error: updErr } = await sb
+    await supabase
       .from("ingest_jobs")
       .update({ storage_path: path })
       .eq("id", job.id);
 
-    if (updErr) return $("status").textContent = `Upload ok but update failed: ${updErr.message}`;
-
-    $("status").textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}`;
+    $("status").textContent = `✅ Upload complete\nJob ID: ${job.id}`;
   }
 
-  // Auto-show app if already logged in
-  sb.auth.getSession()
-    .then(r => { if (r.data.session) showApp(); })
-    .catch(()=>{});
+  // Auto-login
+  supabase.auth.getSession().then(r => {
+    if (r.data.session) showApp();
+  });
 </script>
 
-</body>
-</html>
 
