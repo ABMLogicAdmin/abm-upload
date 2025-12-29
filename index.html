@@ -749,7 +749,32 @@
 
     if (updErr) return $("status").textContent = `Upload ok but update failed: ${updErr.message}`;
 
-    $("status").textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}`;
+    // ============================
+    // NEW: AUTO-RUN INGESTION
+    // ============================
+    $("status").textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}\n\n🚀 Starting ingestion…`;
+
+    try {
+      const resp = await fetch(`${SUPABASE_URL}/functions/v1/process-ingest-job`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ingest_job_id: job.id })
+      });
+
+      const text = await resp.text(); // keep as text so we can show errors even if JSON breaks
+
+      if (!resp.ok) {
+        $("status").textContent =
+          `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}\n\n❌ Ingestion failed (${resp.status})\n${text}`;
+        return;
+      }
+
+      $("status").textContent =
+        `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}\n\n✅ Ingestion completed\n${text}`;
+    } catch (e) {
+      $("status").textContent =
+        `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}\n\n❌ Ingestion call failed\n${String(e?.message || e)}`;
+    }
   }
 
   // Auto-show app if already logged in
@@ -760,4 +785,3 @@
 
 </body>
 </html>
-
