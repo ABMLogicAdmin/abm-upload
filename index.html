@@ -45,7 +45,7 @@
       border:1px solid var(--border);
       border-radius:var(--radius);
       padding:18px;
-      box-shadow:0 8px 30px rgba(17,24,39,.06);
+      box-shadow:0 8px 30px rgba(17,24,39,06);
     }
     label{display:block;margin-top:14px;font-size:12.5px;color:var(--brand-navy);font-weight:600}
 
@@ -78,8 +78,8 @@
       font-size:11px;
       font-weight:700;
       color:var(--brand-navy);
-      background:rgba(48,173,247,.18);
-      border:1px solid rgba(48,173,247,.28);
+      background:rgba(48,173,247,18);
+      border:1px solid rgba(48,173,247,28);
       padding:4px 8px;
       border-radius:999px;
       margin-left:8px;
@@ -96,8 +96,8 @@
       font-size:14px;
       border-radius:10px;
       text-decoration:none;
-      border:1px solid rgba(48,173,247,.35);
-      background:rgba(48,173,247,.12);
+      border:1px solid rgba(48,173,247,35);
+      background:rgba(48,173,247,12);
       color:var(--brand-navy);
       font-weight:700;
       text-align:center;
@@ -124,8 +124,8 @@
     }
     .dd-btn:focus{
       outline:none;
-      border-color:rgba(48,173,247,.8);
-      box-shadow:0 0 0 4px rgba(48,173,247,.18);
+      border-color:rgba(48,173,247,8);
+      box-shadow:0 0 0 4px rgba(48,173,247,18);
     }
     .dd-caret{ color: var(--muted); font-size: 12px; }
     .dd-menu{
@@ -136,7 +136,7 @@
       background:#fff;
       border:1px solid var(--border);
       border-radius:12px;
-      box-shadow:0 18px 45px rgba(17,24,39,.12);
+      box-shadow:0 18px 45px rgba(17,24,39,12);
       max-height:240px;
       overflow:auto;
       padding:6px;
@@ -155,7 +155,7 @@
       color:var(--text);
       font-size:14px;
     }
-    .dd-item:hover{ background:rgba(48,173,247,.10); }
+    .dd-item:hover{ background:rgba(48,173,247,10); }
     .dd-meta{ font-size:11px; color:var(--muted); margin-top:2px; }
     .dd-search{
       width:100%;
@@ -166,47 +166,29 @@
       font-size:13px;
     }
 
-    /* Admin panel */
-    .adminToggle{
-      margin-top:16px;
-      border:1px solid rgba(48,173,247,.35);
-      background:rgba(48,173,247,.10);
+    /* Simple nav */
+    .nav{
+      margin-top:10px;
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+    .nav a, .nav button{
+      width:auto;
+      padding:9px 12px;
+      border-radius:999px;
+      border:1px solid rgba(34,35,61,.15);
+      background:#fff;
       color:var(--brand-navy);
-      font-weight:800;
-    }
-    .adminBox{
-      display:none;
-      margin-top:12px;
-      padding:14px;
-      border:1px dashed rgba(48,173,247,.45);
-      border-radius:12px;
-      background:rgba(48,173,247,.06);
-    }
-    .adminTitle{
-      margin:0 0 6px;
+      font-weight:700;
       font-size:13px;
-      font-weight:800;
-      color:var(--brand-navy);
-    }
-    .adminNote{
-      font-size:12px;
-      color:var(--muted);
-      margin:0 0 10px;
-    }
-    .btn-secondary{
-      border:none;
-      background:var(--brand-navy);
-      color:#fff;
-      font-weight:800;
       cursor:pointer;
-      margin-top:10px;
+      text-decoration:none;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
     }
-    .adminStatus{
-      margin-top:10px;
-      font-size:12.5px;
-      white-space:pre-wrap;
-      color:var(--brand-navy);
-    }
+    .nav a:hover, .nav button:hover{filter:brightness(.98)}
   </style>
 </head>
 
@@ -217,6 +199,13 @@
       <div>
         <h1>CSV Upload <span class="pill">Partner / Batch Ingest</span></h1>
         <p class="sub">Uploads a CSV to Storage and creates an ingest_jobs record.</p>
+
+        <div class="nav">
+          <a href="./index.html">Upload</a>
+          <a id="adminLink" href="./admin.html" style="display:none;">Admin Setup</a>
+          <a href="./workbench.html" style="opacity:.55; pointer-events:none;">Workbench (coming)</a>
+          <button id="logoutBtn" type="button" style="margin-left:auto; display:none;">Logout</button>
+        </div>
       </div>
     </div>
 
@@ -261,98 +250,6 @@
       <button class="btn" id="uploadBtn">Upload CSV</button>
       <div class="status" id="status"></div>
       <div class="hint">Storage path: <code>client_{id}/campaign_{id}/ingest_{job_id}.csv</code></div>
-
-      <!-- Admin (Slice 2) -->
-      <button id="adminToggleBtn" class="adminToggle" style="display:none;">Admin setup</button>
-
-      <div id="adminBox" class="adminBox">
-        <p class="adminTitle">Admin setup</p>
-        <p class="adminNote">
-          Create Clients / Campaigns / Sources here. Only admins can see this.
-        </p>
-
-        <div class="row">
-          <div>
-            <label>New client name</label>
-            <input id="newClientName" placeholder="e.g. Deloitte" />
-          </div>
-          <div>
-            <label>Client status</label>
-            <select id="newClientStatus">
-              <option value="active" selected>active</option>
-              <option value="inactive">inactive</option>
-            </select>
-          </div>
-        </div>
-        <button id="createClientBtn" class="btn-secondary">Create client</button>
-
-        <hr style="margin:16px 0; border:none; border-top:1px solid rgba(34,35,61,.12);" />
-
-        <div class="row">
-          <div>
-            <label>New campaign name</label>
-            <input id="newCampaignName" placeholder="e.g. Q1 SME Syndication" />
-          </div>
-          <div>
-            <label>Campaign type</label>
-            <input id="newCampaignType" placeholder="e.g. demand_gen / syndication (optional)" />
-          </div>
-        </div>
-
-        <div class="row">
-          <div>
-            <label>Campaign status</label>
-            <select id="newCampaignStatus">
-              <option value="active" selected>active</option>
-              <option value="inactive">inactive</option>
-            </select>
-          </div>
-          <div>
-            <label>Client ID (optional override)</label>
-            <input id="newCampaignClientId" placeholder="Leave blank to use selected Client above" />
-          </div>
-        </div>
-
-        <button id="createCampaignBtn" class="btn-secondary">Create campaign</button>
-
-        <hr style="margin:16px 0; border:none; border-top:1px solid rgba(34,35,61,.12);" />
-
-        <div class="row">
-          <div>
-            <label>New source name</label>
-            <input id="newSourceName" placeholder="e.g. Manual Upload / StackAdapt / Benchmark" />
-          </div>
-          <div>
-            <label>Source system</label>
-            <select id="newSourceSystem">
-              <option value="manual" selected>manual</option>
-              <option value="internal">internal</option>
-              <option value="partner">partner</option>
-              <option value="platform">platform</option>
-            </select>
-          </div>
-        </div>
-        <div class="row">
-          <div>
-            <label>Source channel</label>
-            <select id="newSourceChannel">
-              <option value="csv" selected>csv</option>
-              <option value="email">email</option>
-              <option value="web">web</option>
-              <option value="ads">ads</option>
-              <option value="other">other</option>
-            </select>
-          </div>
-          <div>
-            <label>&nbsp;</label>
-            <input disabled value="External refs auto-empty (OK for MVP)" />
-          </div>
-        </div>
-
-        <button id="createSourceBtn" class="btn-secondary">Create source</button>
-
-        <div id="adminStatus" class="adminStatus"></div>
-      </div>
     </div>
   </div>
 
@@ -384,6 +281,7 @@
 
   $("loginBtn").onclick = login;
   $("uploadBtn").onclick = uploadCsv;
+  $("logoutBtn").onclick = logout;
 
   // Close dropdowns when clicking outside
   document.addEventListener("click", (e) => {
@@ -393,6 +291,11 @@
       if (!el.contains(e.target)) el.classList.remove("open");
     });
   });
+
+  async function logout() {
+    await sb.auth.signOut();
+    location.reload();
+  }
 
   async function isAdmin() {
     const { data: userRes, error: userErr } = await sb.auth.getUser();
@@ -526,6 +429,7 @@
   async function showApp() {
     $("loginCard").style.display = "none";
     $("appCard").style.display = "block";
+    $("logoutBtn").style.display = "inline-flex";
     $("status").textContent = "Loading dropdowns…";
 
     try {
@@ -546,10 +450,11 @@
       renderDropdown("ddCampaign", "campaign", "Select campaign…");
       renderDropdown("ddSource", "source", "Select source…");
 
-      $("status").textContent = "";
+      // Show admin link only for admins
+      const admin = await isAdmin();
+      if (admin) $("adminLink").style.display = "inline-flex";
 
-      // Admin panel visibility + wiring
-      await initAdminPanel();
+      $("status").textContent = "";
     } catch (e) {
       $("status").textContent = String(e?.message || e);
     }
@@ -577,130 +482,6 @@
     cache.clients = clients || [];
     cache.campaigns = campaigns || [];
     cache.sources = sources || [];
-  }
-
-  async function refreshDropdownsAfterAdminChange() {
-    await loadItems();
-
-    // rebuild lists
-    state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
-    state.source.items = (cache.sources || []).map(r => ({ value: r.source_id, label: r.source_name }));
-
-    // keep selected client if still exists
-    const selectedClientStillExists = cache.clients.some(c => c.client_id === state.client.value);
-    if (!selectedClientStillExists) {
-      state.client.value = "";
-      state.client.label = "Select client…";
-      state.campaign.value = "";
-      state.campaign.label = "Select campaign…";
-      state.campaign.items = [];
-    } else {
-      // rebuild campaigns for selected client
-      applyCampaignFilterForSelectedClient();
-    }
-
-    // keep selected source if still exists
-    const selectedSourceStillExists = cache.sources.some(s => s.source_id === state.source.value);
-    if (!selectedSourceStillExists) {
-      state.source.value = "";
-      state.source.label = "Select source…";
-    }
-
-    renderDropdown("ddClient", "client", "Select client…");
-    renderDropdown("ddCampaign", "campaign", "Select campaign…");
-    renderDropdown("ddSource", "source", "Select source…");
-  }
-
-  async function initAdminPanel() {
-    const admin = await isAdmin();
-    console.log("Am I admin?", admin);
-
-    if (!admin) return;
-
-    $("adminToggleBtn").style.display = "block";
-
-    $("adminToggleBtn").onclick = () => {
-      const box = $("adminBox");
-      box.style.display = (box.style.display === "block") ? "none" : "block";
-    };
-
-    $("createClientBtn").onclick = createClient;
-    $("createCampaignBtn").onclick = createCampaign;
-    $("createSourceBtn").onclick = createSource;
-  }
-
-  function setAdminStatus(msg) {
-    $("adminStatus").textContent = msg || "";
-  }
-
-  async function createClient() {
-    setAdminStatus("Creating client…");
-
-    const name = $("newClientName").value.trim();
-    const status = $("newClientStatus").value;
-
-    if (!name) return setAdminStatus("Client name is required.");
-
-    const { error } = await sb.from("clients").insert({ name, status });
-
-    if (error) return setAdminStatus(`❌ Client create failed: ${error.message}`);
-
-    $("newClientName").value = "";
-    setAdminStatus("✅ Client created. Refreshing dropdowns…");
-    await refreshDropdownsAfterAdminChange();
-    setAdminStatus("✅ Done.");
-  }
-
-  async function createCampaign() {
-    setAdminStatus("Creating campaign…");
-
-    const name = $("newCampaignName").value.trim();
-    const type = $("newCampaignType").value.trim() || null;
-    const status = $("newCampaignStatus").value;
-
-    // Default to selected client on the page, but allow override (paste id)
-    const overrideClientId = $("newCampaignClientId").value.trim();
-    const client_id = overrideClientId || state.client.value;
-
-    if (!client_id) return setAdminStatus("Select a Client above OR paste a Client ID in the override field.");
-    if (!name) return setAdminStatus("Campaign name is required.");
-
-    const payload = { client_id, name, status };
-    if (type) payload.type = type;
-
-    const { error } = await sb.from("campaigns").insert(payload);
-    if (error) return setAdminStatus(`❌ Campaign create failed: ${error.message}`);
-
-    $("newCampaignName").value = "";
-    $("newCampaignType").value = "";
-    $("newCampaignClientId").value = "";
-
-    setAdminStatus("✅ Campaign created. Refreshing dropdowns…");
-    await refreshDropdownsAfterAdminChange();
-    setAdminStatus("✅ Done.");
-  }
-
-  async function createSource() {
-    setAdminStatus("Creating source…");
-
-    const source_name = $("newSourceName").value.trim();
-    const source_system = $("newSourceSystem").value;
-    const source_channel = $("newSourceChannel").value;
-
-    if (!source_name) return setAdminStatus("Source name is required.");
-
-    const { error } = await sb.from("sources").insert({
-      source_name,
-      source_system,
-      source_channel
-    });
-
-    if (error) return setAdminStatus(`❌ Source create failed: ${error.message}`);
-
-    $("newSourceName").value = "";
-    setAdminStatus("✅ Source created. Refreshing dropdowns…");
-    await refreshDropdownsAfterAdminChange();
-    setAdminStatus("✅ Done.");
   }
 
   async function uploadCsv() {
@@ -750,7 +531,7 @@
     if (updErr) return $("status").textContent = `Upload ok but update failed: ${updErr.message}`;
 
     // ============================
-    // AUTO-RUN INGESTION (with extra visible confirmations)
+    // AUTO-RUN INGESTION
     // ============================
     $("status").textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}`;
     $("status").textContent += "\n🚀 Starting ingestion…";
@@ -762,10 +543,9 @@
         body: JSON.stringify({ ingest_job_id: job.id })
       });
 
-      // Visible confirmation immediately after the fetch completes
       $("status").textContent += `\n✅ Ingestion triggered (${resp.status})`;
 
-      const text = await resp.text(); // keep as text so we can show errors even if JSON breaks
+      const text = await resp.text();
 
       if (!resp.ok) {
         $("status").textContent += `\n❌ Ingestion failed\n${text}`;
