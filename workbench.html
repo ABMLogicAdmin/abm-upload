@@ -21,94 +21,25 @@
       --border:#e5e7eb;
       --card:#ffffff;
       --radius:14px;
-      --ok:#16a34a;
-      --bad:#dc2626;
-      --warn:#f59e0b;
+      --shadow:0 10px 35px rgba(17,24,39,.12);
     }
-    html, body { color-scheme: light; }
-    select, option { background-color:#ffffff !important; color:#111827 !important; }
 
-    *{box-sizing:border-box}
+    html, body { color-scheme: light; }
+    *{ box-sizing:border-box; }
+
     body{
       font-family:Poppins,Arial,sans-serif;
       background:linear-gradient(180deg,var(--brand-bg),#ffffff 55%);
       color:var(--text);
       margin:0;
-      padding:32px 16px 60px;
+      padding:28px 16px 70px;
     }
 
-    .wrap{max-width:1360px;margin:0 auto}
-
-    .header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-    .logo{height:34px;width:auto}
-    h1{font-size:18px;margin:0;color:var(--brand-navy);font-weight:700}
-    .sub{margin:2px 0 0;color:var(--muted);font-size:12.5px}
-
-    .card{
-      margin-top:18px;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:18px;
-      box-shadow:0 8px 30px rgba(17,24,39,.06);
-    }
-
-    label{display:block;margin-top:14px;font-size:12.5px;color:var(--brand-navy);font-weight:600}
-
-    input,button,select,textarea{
-      width:100%;
-      padding:11px 12px;
-      margin-top:7px;
-      font-size:14px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      font-family:inherit;
-      background:#fff;
-      color:var(--text);
-    }
-    textarea{min-height:120px; resize:vertical;}
-
-    .btn{
-      border:none;
-      background:var(--brand-primary);
-      color:#fff;
-      font-weight:700;
-      cursor:pointer;
-      margin-top:14px;
-      text-align:center;
-    }
-    .btn:hover{filter:brightness(.98)}
-    .btn:active{transform:translateY(1px)}
-
-    .btn-ghost{
-      border:1px solid rgba(34,35,61,.15);
-      background:#fff;
-      color:var(--brand-navy);
-      font-weight:800;
-      cursor:pointer;
-      margin-top:14px;
-    }
-
-    .btn-navy{
-      border:none;
-      background:var(--brand-navy);
-      color:#fff;
-      font-weight:800;
-      cursor:pointer;
-      margin-top:14px;
-    }
-
-    .btn-danger{
-      border:none;
-      background:var(--bad);
-      color:#fff;
-      font-weight:800;
-      cursor:pointer;
-      margin-top:14px;
-    }
-
-    .status{margin-top:14px;font-size:12.5px;white-space:pre-wrap}
-    .hint{ font-size:12px;color:var(--muted);margin-top:10px; }
+    .wrap{ max-width:1240px; margin:0 auto; }
+    .header{ display:flex; align-items:center; gap:14px; margin-bottom:12px; }
+    .logo{ height:34px; width:auto; }
+    h1{ font-size:18px; margin:0; color:var(--brand-navy); font-weight:800; }
+    .sub{ margin:2px 0 0; color:var(--muted); font-size:12.5px; }
 
     .pill{
       display:inline-block;
@@ -122,16 +53,77 @@
       margin-left:8px;
       vertical-align:middle;
     }
-    .pill-ok{background:rgba(22,163,74,.14);border-color:rgba(22,163,74,.25)}
-    .pill-warn{background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.25)}
-    .pill-bad{background:rgba(220,38,38,.12);border-color:rgba(220,38,38,.25)}
+
+    .card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:var(--shadow);
+    }
+
+    label{
+      display:block;
+      margin-top:12px;
+      font-size:12.5px;
+      color:var(--brand-navy);
+      font-weight:700;
+    }
+
+    input,button,select,textarea{
+      width:100%;
+      padding:11px 12px;
+      margin-top:7px;
+      font-size:14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      font-family:inherit;
+      background:#fff;
+      color:var(--text);
+    }
+    textarea{ min-height:90px; resize:vertical; }
+
+    .btn{
+      border:none;
+      background:var(--brand-primary);
+      color:#fff;
+      font-weight:800;
+      cursor:pointer;
+      margin-top:14px;
+      text-align:center;
+    }
+    .btn:hover{ filter:brightness(.98); }
+    .btn:active{ transform:translateY(1px); }
+
+    .btn-secondary{
+      border:none;
+      background:var(--brand-navy);
+      color:#fff;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .btn-ghost{
+      background:#fff;
+      color:var(--brand-navy);
+      border:1px solid rgba(34,35,61,.18);
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .btn-danger{
+      border:none;
+      background:#ef4444;
+      color:#fff;
+      font-weight:900;
+      cursor:pointer;
+    }
 
     .nav{
-      margin-top:10px;
+      margin-top:8px;
       display:flex;
       gap:10px;
       flex-wrap:wrap;
-      justify-content:flex-start;
       align-items:center;
     }
     .nav a, .nav button{
@@ -141,95 +133,258 @@
       border:1px solid rgba(34,35,61,.15);
       background:#fff;
       color:var(--brand-navy);
-      font-weight:700;
+      font-weight:800;
       font-size:13px;
       cursor:pointer;
       text-decoration:none;
       display:inline-flex;
       align-items:center;
       gap:8px;
-      margin-top:0;
     }
-    .spacer{flex:1}
+    .nav a:hover, .nav button:hover{ filter:brightness(.98); }
+    .nav .spacer{ flex:1; }
 
-    /* Queue wider */
+    .statusText{
+      margin-top:12px;
+      font-size:12.5px;
+      white-space:pre-wrap;
+      color:var(--brand-navy);
+    }
+    .muted{ color:var(--muted); font-size:12px; }
+    code{ background:rgba(17,24,39,.04); padding:2px 6px; border-radius:8px; }
+
+    /* Layout */
     .grid{
+      margin-top:16px;
       display:grid;
-      grid-template-columns: 1.75fr 1fr;
-      gap:18px;
+      grid-template-columns: 1.35fr 1fr; /* wider queue */
+      gap:14px;
       align-items:start;
     }
+
     @media (max-width: 980px){
-      .grid{grid-template-columns:1fr;}
+      .grid{ grid-template-columns: 1fr; }
     }
 
+    /* Queue controls */
+    .queueHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:10px;
+    }
+    .queueTitle{
+      font-weight:900;
+      color:var(--brand-navy);
+      font-size:13px;
+      margin:0;
+    }
+
+    .queueControls{
+      display:grid;
+      grid-template-columns: 220px 1fr 140px;
+      gap:10px;
+      margin:12px 0 8px;
+    }
+    @media (max-width:980px){
+      .queueControls{ grid-template-columns: 1fr; }
+    }
+
+    .smallBtn{
+      padding:10px 12px;
+      margin-top:0;
+      border-radius:12px;
+      font-size:13px;
+      font-weight:900;
+    }
+
+    /* Queue table */
     table{
       width:100%;
       border-collapse:separate;
       border-spacing:0;
+      margin-top:10px;
     }
-
-    .queueTable{
-      font-size:13.8px;
-    }
-    .queueTable thead th{
+    thead th{
       text-align:left;
-      font-size:12.8px;
+      font-size:12px;
       color:var(--muted);
-      padding:12px 10px;
-      border-bottom:1px solid rgba(34,35,61,.10);
+      font-weight:900;
+      padding:10px 10px;
+      border-bottom:1px solid rgba(34,35,61,.12);
       white-space:nowrap;
     }
-    .queueTable tbody td{
+    tbody td{
       padding:12px 10px;
       border-bottom:1px solid rgba(34,35,61,.08);
       vertical-align:top;
+      font-size:13.5px;
     }
-    .queueTable tbody tr:hover{background:rgba(48,173,247,.06);}
 
-    .small{font-size:12.5px;color:var(--muted)}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    .leadPrimary{
+      font-weight:900;
+      color:var(--brand-navy);
+      font-size:14px;
+      line-height:1.1;
+    }
+    .leadSecondary{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:3px;
+      line-height:1.25;
+      word-break:break-word;
+    }
+    .companyPrimary{
+      font-weight:900;
+      color:var(--brand-navy);
+      font-size:13.5px;
+      line-height:1.1;
+    }
+    .companySecondary{
+      color:var(--muted);
+      font-size:12px;
+      margin-top:3px;
+      line-height:1.25;
+    }
+
+    .pillStatus{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      padding:4px 9px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:900;
+      border:1px solid rgba(34,35,61,.12);
+      background:#fff;
+      color:var(--brand-navy);
+      white-space:nowrap;
+    }
+    .pill-pending{
+      background:rgba(48,173,247,.12);
+      border-color:rgba(48,173,247,.35);
+    }
+    .pill-inprogress{
+      background:rgba(245,158,11,.14);
+      border-color:rgba(245,158,11,.35);
+    }
+    .pill-done{
+      background:rgba(34,197,94,.14);
+      border-color:rgba(34,197,94,.35);
+    }
+    .pill-rejected{
+      background:rgba(239,68,68,.12);
+      border-color:rgba(239,68,68,.35);
+    }
 
     .actions{
       display:flex;
       gap:8px;
       flex-wrap:wrap;
+      justify-content:flex-end;
     }
     .actions button{
       width:auto;
-      margin-top:0;
       padding:8px 10px;
-      font-size:12px;
+      margin-top:0;
       border-radius:999px;
-      white-space:nowrap;
+      font-size:12px;
+      font-weight:900;
     }
 
+    /* Selected row highlight */
+    tr.selected-row td{
+      background: rgba(48, 173, 247, 0.12);
+      border-bottom-color: rgba(48,173,247,.28);
+    }
+    tr.selected-row td:first-child{
+      border-top-left-radius:10px;
+      border-bottom-left-radius:10px;
+    }
+    tr.selected-row td:last-child{
+      border-top-right-radius:10px;
+      border-bottom-right-radius:10px;
+    }
+
+    /* Lead detail */
     .detailHead{
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap:12px;
-      margin-bottom:4px;
+      gap:10px;
+      margin-bottom:8px;
     }
-    .detailKey{
-      font-weight:800;
+    .detailTitle{
+      font-weight:900;
       color:var(--brand-navy);
       font-size:13px;
+      margin:0;
     }
-    .divider{
-      margin:14px 0;
-      border:none;
-      border-top:1px solid rgba(34,35,61,.12);
+    .detailPill{
+      display:inline-block;
+      font-size:11px;
+      font-weight:900;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(34,35,61,.12);
+      background:#fff;
+      color:var(--brand-navy);
+      white-space:nowrap;
     }
 
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-    @media (max-width: 640px){
-      .row, .row3{grid-template-columns:1fr;}
+    .leadContext{
+      padding:12px;
+      margin:10px 0 12px;
+      background:#f8fafc;
+      border:1px solid #e5e7eb;
+      border-radius:12px;
+      font-size:13px;
+    }
+    .leadContext .row{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width:980px){
+      .leadContext .row{ grid-template-columns: 1fr; }
+    }
+    .ctxItem strong{ color:var(--brand-navy); font-weight:900; }
+    .ctxItem span{ color:var(--text); }
+
+    .detailGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width:980px){
+      .detailGrid{ grid-template-columns: 1fr; }
     }
 
-    .keyTiny{font-size:11px;color:var(--muted)}
-    .tightLabel{margin-top:10px;}
+    .footerBtns{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+    .footerBtns button{
+      width:auto;
+      margin-top:0;
+      padding:10px 12px;
+      border-radius:999px;
+      font-size:13px;
+      font-weight:900;
+    }
+
+    .helpLine{
+      margin-top:10px;
+      font-size:11.5px;
+      color:var(--muted);
+      line-height:1.35;
+    }
+
+    /* Login */
+    .wrapSmall{ max-width:760px; margin:0 auto; }
   </style>
 </head>
 
@@ -237,664 +392,714 @@
   <div class="wrap">
     <div class="header">
       <img class="logo" src="https://abmlogic.com/abm-logic-email-logo.png" alt="ABM Logic">
-      <div style="flex:1;">
+      <div>
         <h1>Workbench <span class="pill">Enrichment / Validation</span></h1>
-        <p class="sub">Claim → Enrich → Done / Reject. Owner-only updates enforced by RLS.</p>
-
-        <div class="nav">
-          <a href="./index.html">Upload</a>
-          <a id="adminLink" href="./admin.html" style="display:none;">Admin Setup</a>
-          <a href="./workbench.html">Workbench</a>
-          <span class="spacer"></span>
-          <button id="logoutBtn" type="button" style="display:none;">Logout</button>
-        </div>
+        <p class="sub">Claim → Enrich → Save → Done / Reject. Owner-only updates enforced by RLS.</p>
       </div>
+    </div>
+
+    <div class="nav" id="topNav" style="display:none;">
+      <a href="./index.html">Upload</a>
+      <a href="./admin.html">Admin Setup</a>
+      <a href="./workbench.html" aria-current="page">Workbench</a>
+      <span class="spacer"></span>
+      <button id="logoutBtn">Logout</button>
     </div>
 
     <!-- LOGIN -->
-    <div class="card" id="loginCard">
-      <div class="row">
-        <div>
-          <label>Email</label>
-          <input id="email" type="email" autocomplete="username" />
+    <div class="wrapSmall">
+      <div class="card" id="loginCard">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div>
+            <label>Email</label>
+            <input id="email" type="email" autocomplete="username" />
+          </div>
+          <div>
+            <label>Password</label>
+            <input id="password" type="password" autocomplete="current-password" />
+          </div>
         </div>
-        <div>
-          <label>Password</label>
-          <input id="password" type="password" autocomplete="current-password" />
-        </div>
+        <button class="btn" id="loginBtn">Sign in</button>
+        <div class="statusText" id="loginStatus"></div>
+        <div class="helpLine">If login works but the queue won’t load, it’s usually RLS or missing view permissions.</div>
       </div>
-      <button class="btn" id="loginBtn">Sign in</button>
-      <div class="status" id="loginStatus"></div>
-      <div class="hint">If you can’t see any leads, check stg_leads has rows and RLS allows SELECT for authenticated.</div>
     </div>
 
     <!-- APP -->
-    <div id="appWrap" style="display:none;">
-      <div class="grid">
+    <div class="grid" id="appGrid" style="display:none;">
+      <!-- Queue -->
+      <div class="card">
+        <div class="queueHead">
+          <div>
+            <p class="queueTitle">Enrichment Queue</p>
+            <div class="muted">Pending + in progress</div>
+          </div>
+          <button id="refreshBtn" class="btn-ghost smallBtn" style="width:auto;">Refresh</button>
+        </div>
 
-        <!-- LEFT: Queue -->
-        <div class="card">
-          <div class="detailHead">
-            <div>
-              <div class="detailKey">Enrichment Queue</div>
-              <div class="small">Pending + in progress</div>
-            </div>
-            <button id="refreshBtn" class="btn-ghost" type="button" style="width:auto;margin-top:0;">Refresh</button>
+        <div class="queueControls">
+          <div>
+            <label style="margin-top:0;">View</label>
+            <select id="viewSelect">
+              <option value="pending_in_progress" selected>Pending + In progress</option>
+              <option value="pending">Pending only</option>
+              <option value="in_progress">In progress only</option>
+              <option value="done">Done (read-only)</option>
+              <option value="rejected">Rejected (read-only)</option>
+            </select>
           </div>
 
-          <div class="row3" style="margin-top:10px;">
-            <div>
-              <label>View</label>
-              <select id="viewFilter">
-                <option value="pending">Pending</option>
-                <option value="mine">In progress (mine)</option>
-                <option value="all" selected>Pending + In progress</option>
-              </select>
-            </div>
-            <div>
-              <label>Search</label>
-              <input id="searchBox" placeholder="Search text (optional)" />
-            </div>
-            <div>
-              <label>&nbsp;</label>
-              <button id="clearBtn" class="btn-ghost" type="button" style="margin-top:7px;">Clear</button>
-            </div>
+          <div>
+            <label style="margin-top:0;">Search</label>
+            <input id="searchInput" placeholder="Search text (optional)" />
           </div>
 
-          <div class="status" id="queueStatus"></div>
-
-          <div style="overflow:auto; margin-top:10px;">
-            <table class="queueTable">
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>First</th>
-                  <th>Last</th>
-                  <th>Email</th>
-                  <th>Company</th>
-                  <th>Title</th>
-                  <th>Owner</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="queueBody"></tbody>
-            </table>
-          </div>
-
-          <div class="hint">
-            Key is <span class="mono">(ingest_job_id, row_number)</span>. That’s your primary key for stg_leads.
+          <div style="display:flex; align-items:end;">
+            <button id="clearBtn" class="btn-ghost smallBtn" style="width:100%;">Clear</button>
           </div>
         </div>
 
-        <!-- RIGHT: Detail -->
-        <div class="card">
-          <div class="detailHead">
-            <div>
-              <div class="detailKey">Lead Detail</div>
-              <div class="small" id="detailSub">Select a row from the queue.</div>
-            </div>
-            <div id="detailPill"></div>
+        <div class="muted" id="queueCount">Showing 0 row(s).</div>
+
+        <div style="overflow:auto; margin-top:8px;">
+          <table>
+            <thead>
+              <tr>
+                <th style="min-width:120px;">Status</th>
+                <th style="min-width:120px;">First</th>
+                <th style="min-width:120px;">Last</th>
+                <th style="min-width:240px;">Email</th>
+                <th style="min-width:200px;">Company</th>
+                <th style="min-width:220px;">Title</th>
+                <th style="min-width:90px;">Owner</th>
+                <th style="min-width:170px; text-align:right;">Actions</th>
+              </tr>
+            </thead>
+            <tbody id="queueBody"></tbody>
+          </table>
+        </div>
+
+        <div class="helpLine">
+          Keys are <code>(ingest_job_id, row_number)</code>. That’s your primary key for stg_leads.
+        </div>
+      </div>
+
+      <!-- Detail -->
+      <div class="card">
+        <div class="detailHead">
+          <div>
+            <p class="detailTitle">Lead Detail</p>
+            <div class="muted">Edit enrichment fields, then Save / Done / Reject.</div>
           </div>
+          <span class="detailPill" id="detailStatusPill">No lead selected</span>
+        </div>
 
-          <hr class="divider" />
-
-          <div id="detailEmpty" class="small" style="color:var(--muted);">
-            No lead selected.
-          </div>
-
-          <div id="detailForm" style="display:none;">
-            <div class="row">
-              <div>
-                <label>ingest_job_id</label>
-                <input id="d_ingest_job_id" class="mono" disabled />
-              </div>
-              <div>
-                <label>row_number</label>
-                <input id="d_row_number" class="mono" disabled />
-              </div>
-            </div>
-
-            <!-- NEW: Phone fields -->
-            <div class="row3">
-              <div>
-                <label class="tightLabel">Phone country</label>
-                <select id="d_phone_country">
-                  <option value="">Select country…</option>
-                </select>
-                <div class="small" id="dialHint" style="margin-top:6px;"></div>
-              </div>
-              <div>
-                <label class="tightLabel">Direct / Desk phone</label>
-                <input id="d_phone_direct" placeholder="+44…" />
-              </div>
-              <div>
-                <label class="tightLabel">Mobile phone</label>
-                <input id="d_phone_mobile" placeholder="+44…" />
-              </div>
-            </div>
-
-            <label>enrichment_notes</label>
-            <textarea id="d_notes" placeholder="Add notes (why verified / changes / rejection reason etc.)"></textarea>
-
-            <label>verified_fields (JSON)</label>
-            <textarea id="d_verified" placeholder='{"job_title_verified":true,"company_verified":true}'></textarea>
-
-            <label>enriched_payload (JSON)</label>
-            <textarea id="d_payload" placeholder='{"linkedin_url":"...","title":"..."}'></textarea>
-
-            <div class="actions" style="margin-top:12px;">
-              <button id="saveBtn" class="btn-navy" type="button">Save</button>
-              <button id="releaseBtn" class="btn-ghost" type="button">Release</button>
-              <button id="doneBtn" class="btn" type="button">Mark Done</button>
-              <button id="rejectBtn" class="btn-danger" type="button">Reject</button>
-            </div>
-
-            <div class="status" id="detailStatus"></div>
-            <div class="hint">Owner-only updates enforced by RLS. If Save fails, you likely aren’t the owner.</div>
+        <div class="leadContext" id="leadContext" style="display:none;">
+          <div class="row">
+            <div class="ctxItem"><strong>Name:</strong> <span id="ctxName"></span></div>
+            <div class="ctxItem"><strong>Email:</strong> <span id="ctxEmail"></span></div>
+            <div class="ctxItem"><strong>Company:</strong> <span id="ctxCompany"></span></div>
+            <div class="ctxItem"><strong>Job title:</strong> <span id="ctxTitle"></span></div>
+            <div class="ctxItem"><strong>Location:</strong> <span id="ctxLocation"></span></div>
+            <div class="ctxItem"><strong>Owner:</strong> <span id="ctxOwner"></span></div>
           </div>
         </div>
 
+        <div class="detailGrid">
+          <div>
+            <label>ingest_job_id</label>
+            <input id="ingestJobId" readonly />
+          </div>
+          <div>
+            <label>row_number</label>
+            <input id="rowNumber" readonly />
+          </div>
+          <div>
+            <label>Phone country</label>
+            <select id="phoneCountry">
+              <option value="" selected>Select country…</option>
+              <!-- Common ISO2 list (MVP). Add more anytime. -->
+              <option value="GB">United Kingdom (+44)</option>
+              <option value="US">United States (+1)</option>
+              <option value="CA">Canada (+1)</option>
+              <option value="IE">Ireland (+353)</option>
+              <option value="DE">Germany (+49)</option>
+              <option value="FR">France (+33)</option>
+              <option value="ES">Spain (+34)</option>
+              <option value="IT">Italy (+39)</option>
+              <option value="NL">Netherlands (+31)</option>
+              <option value="BE">Belgium (+32)</option>
+              <option value="CH">Switzerland (+41)</option>
+              <option value="SE">Sweden (+46)</option>
+              <option value="NO">Norway (+47)</option>
+              <option value="DK">Denmark (+45)</option>
+              <option value="FI">Finland (+358)</option>
+              <option value="PL">Poland (+48)</option>
+              <option value="AT">Austria (+43)</option>
+              <option value="PT">Portugal (+351)</option>
+              <option value="CZ">Czechia (+420)</option>
+              <option value="HU">Hungary (+36)</option>
+              <option value="RO">Romania (+40)</option>
+              <option value="GR">Greece (+30)</option>
+              <option value="TR">Turkey (+90)</option>
+
+              <option value="IN">India (+91)</option>
+              <option value="PK">Pakistan (+92)</option>
+              <option value="BD">Bangladesh (+880)</option>
+              <option value="LK">Sri Lanka (+94)</option>
+
+              <option value="AE">United Arab Emirates (+971)</option>
+              <option value="SA">Saudi Arabia (+966)</option>
+              <option value="QA">Qatar (+974)</option>
+
+              <option value="SG">Singapore (+65)</option>
+              <option value="MY">Malaysia (+60)</option>
+              <option value="AU">Australia (+61)</option>
+              <option value="NZ">New Zealand (+64)</option>
+              <option value="JP">Japan (+81)</option>
+              <option value="KR">South Korea (+82)</option>
+
+              <option value="ZA">South Africa (+27)</option>
+              <option value="NG">Nigeria (+234)</option>
+              <option value="KE">Kenya (+254)</option>
+
+              <option value="BR">Brazil (+55)</option>
+              <option value="MX">Mexico (+52)</option>
+              <option value="AR">Argentina (+54)</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Direct / Desk phone</label>
+            <input id="phoneDirect" placeholder="+44…" />
+          </div>
+          <div>
+            <label>Mobile phone</label>
+            <input id="phoneMobile" placeholder="+44…" />
+          </div>
+        </div>
+
+        <label>enrichment_notes</label>
+        <textarea id="enrichmentNotes" placeholder="Add notes (why verified / changes / rejection reason etc.)"></textarea>
+
+        <label>verified_fields (JSON)</label>
+        <textarea id="verifiedFields" placeholder='{"job_title_verified":true,"company_verified":true}'></textarea>
+
+        <label>enriched_payload (JSON)</label>
+        <textarea id="enrichedPayload" placeholder='{"linkedin_url":"...","title":"..."}'></textarea>
+
+        <label>raw_payload (read-only)</label>
+        <textarea id="rawPayload" readonly placeholder="Will populate after you Open a lead…"></textarea>
+
+        <div class="footerBtns">
+          <button id="saveBtn" class="btn-secondary">Save</button>
+          <button id="releaseBtn" class="btn-ghost">Release</button>
+          <button id="doneBtn" class="btn">Mark Done</button>
+          <button id="rejectBtn" class="btn-danger">Reject</button>
+        </div>
+
+        <div class="helpLine">
+          Owner-only updates enforced by RLS. If Save fails, you likely aren’t the owner (Claim first).
+        </div>
+
+        <div class="statusText" id="detailStatus"></div>
       </div>
     </div>
   </div>
 
 <script>
   // ===== CONFIG =====
-  const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
+  // Must match your other pages
   window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
+  const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
   // ==================
+
+  if (!window.supabase) {
+    alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
+    throw new Error("Supabase SDK not loaded");
+  }
 
   const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
   const $ = (id) => document.getElementById(id);
 
-  let currentUserId = null;
-  let selected = null;
+  // UI state
+  let me = null;                 // user object
+  let queueRows = [];            // loaded queue rows (from view)
+  let currentLead = null;        // full row object currently opened
+  let selectedLeadKey = null;    // `${ingest_job_id}:${row_number}`
 
-  // ISO2 -> dial code (coverage is broad; some territories share codes)
-  const DIAL = {
-    "AF":"+93","AL":"+355","DZ":"+213","AS":"+1","AD":"+376","AO":"+244","AI":"+1","AQ":"+672","AG":"+1","AR":"+54","AM":"+374","AW":"+297",
-    "AU":"+61","AT":"+43","AZ":"+994","BS":"+1","BH":"+973","BD":"+880","BB":"+1","BY":"+375","BE":"+32","BZ":"+501","BJ":"+229","BM":"+1",
-    "BT":"+975","BO":"+591","BQ":"+599","BA":"+387","BW":"+267","BR":"+55","IO":"+246","BN":"+673","BG":"+359","BF":"+226","BI":"+257","KH":"+855",
-    "CM":"+237","CA":"+1","CV":"+238","KY":"+1","CF":"+236","TD":"+235","CL":"+56","CN":"+86","CX":"+61","CC":"+61","CO":"+57","KM":"+269","CG":"+242",
-    "CD":"+243","CK":"+682","CR":"+506","CI":"+225","HR":"+385","CU":"+53","CW":"+599","CY":"+357","CZ":"+420","DK":"+45","DJ":"+253","DM":"+1","DO":"+1",
-    "EC":"+593","EG":"+20","SV":"+503","GQ":"+240","ER":"+291","EE":"+372","SZ":"+268","ET":"+251","FK":"+500","FO":"+298","FJ":"+679","FI":"+358","FR":"+33",
-    "GF":"+594","PF":"+689","GA":"+241","GM":"+220","GE":"+995","DE":"+49","GH":"+233","GI":"+350","GR":"+30","GL":"+299","GD":"+1","GP":"+590","GU":"+1",
-    "GT":"+502","GG":"+44","GN":"+224","GW":"+245","GY":"+592","HT":"+509","HN":"+504","HK":"+852","HU":"+36","IS":"+354","IN":"+91","ID":"+62","IR":"+98","IQ":"+964",
-    "IE":"+353","IM":"+44","IL":"+972","IT":"+39","JM":"+1","JP":"+81","JE":"+44","JO":"+962","KZ":"+7","KE":"+254","KI":"+686","KP":"+850","KR":"+82","KW":"+965",
-    "KG":"+996","LA":"+856","LV":"+371","LB":"+961","LS":"+266","LR":"+231","LY":"+218","LI":"+423","LT":"+370","LU":"+352","MO":"+853","MG":"+261","MW":"+265",
-    "MY":"+60","MV":"+960","ML":"+223","MT":"+356","MH":"+692","MQ":"+596","MR":"+222","MU":"+230","YT":"+262","MX":"+52","FM":"+691","MD":"+373","MC":"+377",
-    "MN":"+976","ME":"+382","MS":"+1","MA":"+212","MZ":"+258","MM":"+95","NA":"+264","NR":"+674","NP":"+977","NL":"+31","NC":"+687","NZ":"+64","NI":"+505",
-    "NE":"+227","NG":"+234","NU":"+683","NF":"+672","MK":"+389","MP":"+1","NO":"+47","OM":"+968","PK":"+92","PW":"+680","PS":"+970","PA":"+507","PG":"+675",
-    "PY":"+595","PE":"+51","PH":"+63","PL":"+48","PT":"+351","PR":"+1","QA":"+974","RE":"+262","RO":"+40","RU":"+7","RW":"+250","BL":"+590","SH":"+290","KN":"+1",
-    "LC":"+1","MF":"+590","PM":"+508","VC":"+1","WS":"+685","SM":"+378","ST":"+239","SA":"+966","SN":"+221","RS":"+381","SC":"+248","SL":"+232","SG":"+65",
-    "SX":"+1","SK":"+421","SI":"+386","SB":"+677","SO":"+252","ZA":"+27","SS":"+211","ES":"+34","LK":"+94","SD":"+249","SR":"+597","SE":"+46","CH":"+41","SY":"+963",
-    "TW":"+886","TJ":"+992","TZ":"+255","TH":"+66","TL":"+670","TG":"+228","TK":"+690","TO":"+676","TT":"+1","TN":"+216","TR":"+90","TM":"+993","TC":"+1","TV":"+688",
-    "UG":"+256","UA":"+380","AE":"+971","GB":"+44","US":"+1","UY":"+598","UZ":"+998","VU":"+678","VA":"+379","VE":"+58","VN":"+84","VG":"+1","VI":"+1","YE":"+967",
-    "ZM":"+260","ZW":"+263"
-  };
-
-  // Full list (ISO2 + name) - used to populate the dropdown
-  const COUNTRIES = [
-    ["AF","Afghanistan"],["AL","Albania"],["DZ","Algeria"],["AS","American Samoa"],["AD","Andorra"],["AO","Angola"],["AI","Anguilla"],["AQ","Antarctica"],
-    ["AG","Antigua and Barbuda"],["AR","Argentina"],["AM","Armenia"],["AW","Aruba"],["AU","Australia"],["AT","Austria"],["AZ","Azerbaijan"],["BS","Bahamas"],
-    ["BH","Bahrain"],["BD","Bangladesh"],["BB","Barbados"],["BY","Belarus"],["BE","Belgium"],["BZ","Belize"],["BJ","Benin"],["BM","Bermuda"],["BT","Bhutan"],
-    ["BO","Bolivia"],["BQ","Bonaire, Sint Eustatius and Saba"],["BA","Bosnia and Herzegovina"],["BW","Botswana"],["BR","Brazil"],["IO","British Indian Ocean Territory"],
-    ["BN","Brunei"],["BG","Bulgaria"],["BF","Burkina Faso"],["BI","Burundi"],["KH","Cambodia"],["CM","Cameroon"],["CA","Canada"],["CV","Cape Verde"],
-    ["KY","Cayman Islands"],["CF","Central African Republic"],["TD","Chad"],["CL","Chile"],["CN","China"],["CX","Christmas Island"],["CC","Cocos (Keeling) Islands"],
-    ["CO","Colombia"],["KM","Comoros"],["CG","Congo"],["CD","Congo (DRC)"],["CK","Cook Islands"],["CR","Costa Rica"],["CI","Côte d’Ivoire"],["HR","Croatia"],
-    ["CU","Cuba"],["CW","Curaçao"],["CY","Cyprus"],["CZ","Czechia"],["DK","Denmark"],["DJ","Djibouti"],["DM","Dominica"],["DO","Dominican Republic"],
-    ["EC","Ecuador"],["EG","Egypt"],["SV","El Salvador"],["GQ","Equatorial Guinea"],["ER","Eritrea"],["EE","Estonia"],["SZ","Eswatini"],["ET","Ethiopia"],
-    ["FK","Falkland Islands"],["FO","Faroe Islands"],["FJ","Fiji"],["FI","Finland"],["FR","France"],["GF","French Guiana"],["PF","French Polynesia"],
-    ["GA","Gabon"],["GM","Gambia"],["GE","Georgia"],["DE","Germany"],["GH","Ghana"],["GI","Gibraltar"],["GR","Greece"],["GL","Greenland"],["GD","Grenada"],
-    ["GP","Guadeloupe"],["GU","Guam"],["GT","Guatemala"],["GG","Guernsey"],["GN","Guinea"],["GW","Guinea-Bissau"],["GY","Guyana"],["HT","Haiti"],
-    ["HN","Honduras"],["HK","Hong Kong"],["HU","Hungary"],["IS","Iceland"],["IN","India"],["ID","Indonesia"],["IR","Iran"],["IQ","Iraq"],["IE","Ireland"],
-    ["IM","Isle of Man"],["IL","Israel"],["IT","Italy"],["JM","Jamaica"],["JP","Japan"],["JE","Jersey"],["JO","Jordan"],["KZ","Kazakhstan"],["KE","Kenya"],
-    ["KI","Kiribati"],["KP","Korea (North)"],["KR","Korea (South)"],["KW","Kuwait"],["KG","Kyrgyzstan"],["LA","Laos"],["LV","Latvia"],["LB","Lebanon"],
-    ["LS","Lesotho"],["LR","Liberia"],["LY","Libya"],["LI","Liechtenstein"],["LT","Lithuania"],["LU","Luxembourg"],["MO","Macao"],["MG","Madagascar"],
-    ["MW","Malawi"],["MY","Malaysia"],["MV","Maldives"],["ML","Mali"],["MT","Malta"],["MH","Marshall Islands"],["MQ","Martinique"],["MR","Mauritania"],
-    ["MU","Mauritius"],["YT","Mayotte"],["MX","Mexico"],["FM","Micronesia"],["MD","Moldova"],["MC","Monaco"],["MN","Mongolia"],["ME","Montenegro"],
-    ["MS","Montserrat"],["MA","Morocco"],["MZ","Mozambique"],["MM","Myanmar"],["NA","Namibia"],["NR","Nauru"],["NP","Nepal"],["NL","Netherlands"],
-    ["NC","New Caledonia"],["NZ","New Zealand"],["NI","Nicaragua"],["NE","Niger"],["NG","Nigeria"],["NU","Niue"],["NF","Norfolk Island"],["MK","North Macedonia"],
-    ["MP","Northern Mariana Islands"],["NO","Norway"],["OM","Oman"],["PK","Pakistan"],["PW","Palau"],["PS","Palestine"],["PA","Panama"],["PG","Papua New Guinea"],
-    ["PY","Paraguay"],["PE","Peru"],["PH","Philippines"],["PL","Poland"],["PT","Portugal"],["PR","Puerto Rico"],["QA","Qatar"],["RE","Réunion"],["RO","Romania"],
-    ["RU","Russia"],["RW","Rwanda"],["BL","Saint Barthélemy"],["SH","Saint Helena"],["KN","Saint Kitts and Nevis"],["LC","Saint Lucia"],["MF","Saint Martin"],
-    ["PM","Saint Pierre and Miquelon"],["VC","Saint Vincent and the Grenadines"],["WS","Samoa"],["SM","San Marino"],["ST","São Tomé and Príncipe"],
-    ["SA","Saudi Arabia"],["SN","Senegal"],["RS","Serbia"],["SC","Seychelles"],["SL","Sierra Leone"],["SG","Singapore"],["SX","Sint Maarten"],["SK","Slovakia"],
-    ["SI","Slovenia"],["SB","Solomon Islands"],["SO","Somalia"],["ZA","South Africa"],["SS","South Sudan"],["ES","Spain"],["LK","Sri Lanka"],["SD","Sudan"],
-    ["SR","Suriname"],["SE","Sweden"],["CH","Switzerland"],["SY","Syria"],["TW","Taiwan"],["TJ","Tajikistan"],["TZ","Tanzania"],["TH","Thailand"],
-    ["TL","Timor-Leste"],["TG","Togo"],["TK","Tokelau"],["TO","Tonga"],["TT","Trinidad and Tobago"],["TN","Tunisia"],["TR","Turkey"],["TM","Turkmenistan"],
-    ["TC","Turks and Caicos Islands"],["TV","Tuvalu"],["UG","Uganda"],["UA","Ukraine"],["AE","United Arab Emirates"],["GB","United Kingdom"],["US","United States"],
-    ["UY","Uruguay"],["UZ","Uzbekistan"],["VU","Vanuatu"],["VA","Vatican City"],["VE","Venezuela"],["VN","Vietnam"],["VG","Virgin Islands (British)"],
-    ["VI","Virgin Islands (US)"],["YE","Yemen"],["ZM","Zambia"],["ZW","Zimbabwe"]
-  ];
-
-  function populateCountryDropdown() {
-    const sel = $("d_phone_country");
-    // already populated?
-    if (sel.options.length > 1) return;
-
-    for (const [iso, name] of COUNTRIES) {
-      const opt = document.createElement("option");
-      opt.value = iso;
-      const dial = DIAL[iso] ? ` (${DIAL[iso]})` : "";
-      opt.textContent = `${name} — ${iso}${dial}`;
-      sel.appendChild(opt);
-    }
-  }
-
-  function updateDialHint() {
-    const iso = $("d_phone_country").value;
-    const dial = DIAL[iso] || "";
-    $("dialHint").textContent = dial ? `Dial code: ${dial}` : "";
-  }
-
-  function maybePrefillDialCode() {
-    const iso = $("d_phone_country").value;
-    const dial = DIAL[iso] || "";
-    if (!dial) return;
-
-    const direct = $("d_phone_direct").value.trim();
-    const mobile = $("d_phone_mobile").value.trim();
-
-    // only prefill if empty
-    if (!direct) $("d_phone_direct").value = dial;
-    if (!mobile) $("d_phone_mobile").value = dial;
-  }
-
-  $("d_phone_country")?.addEventListener("change", () => {
-    updateDialHint();
-    maybePrefillDialCode();
-  });
-
+  // Events
   $("loginBtn").onclick = login;
   $("logoutBtn").onclick = logout;
 
-  $("refreshBtn").onclick = loadQueue;
-  $("viewFilter").onchange = loadQueue;
-  $("searchBox").oninput = debounce(loadQueue, 300);
-  $("clearBtn").onclick = () => { $("searchBox").value = ""; loadQueue(); };
+  $("refreshBtn").onclick = () => loadQueue(true);
+  $("viewSelect").onchange = () => loadQueue();
+  $("searchInput").oninput = () => renderQueue();
+  $("clearBtn").onclick = () => { $("searchInput").value = ""; renderQueue(); };
 
-  $("saveBtn").onclick = saveSelected;
-  $("releaseBtn").onclick = releaseSelected;
-  $("doneBtn").onclick = doneSelected;
-  $("rejectBtn").onclick = rejectSelected;
+  $("saveBtn").onclick = saveLead;
+  $("releaseBtn").onclick = releaseLead;
+  $("doneBtn").onclick = markDone;
+  $("rejectBtn").onclick = markRejected;
 
-  async function logout() {
+  // Init: if already signed in, show app
+  init();
+
+  async function init(){
+    const { data } = await sb.auth.getSession();
+    if (data?.session?.user){
+      await afterLogin();
+    }
+  }
+
+  async function login(){
+    $("loginStatus").textContent = "Signing in…";
+    const email = $("email").value.trim();
+    const password = $("password").value;
+    const { error } = await sb.auth.signInWithPassword({ email, password });
+    if (error){
+      $("loginStatus").textContent = error.message;
+      return;
+    }
+    $("loginStatus").textContent = "Signed in.";
+    await afterLogin();
+  }
+
+  async function afterLogin(){
+    const { data: userRes, error: userErr } = await sb.auth.getUser();
+    if (userErr || !userRes?.user){
+      $("loginStatus").textContent = "Login succeeded but user fetch failed.";
+      return;
+    }
+    me = userRes.user;
+
+    $("loginCard").style.display = "none";
+    $("topNav").style.display = "flex";
+    $("appGrid").style.display = "grid";
+
+    await loadQueue(true);
+  }
+
+  async function logout(){
     await sb.auth.signOut();
     location.reload();
   }
 
-  async function isAdmin() {
-    const { data: userRes, error: userErr } = await sb.auth.getUser();
-    if (userErr || !userRes?.user) return false;
+  function statusPillClass(s){
+    if (s === "pending") return "pillStatus pill-pending";
+    if (s === "in_progress") return "pillStatus pill-inprogress";
+    if (s === "done") return "pillStatus pill-done";
+    if (s === "rejected") return "pillStatus pill-rejected";
+    return "pillStatus";
+  }
+
+  function ownerLabel(row){
+    if (!row?.enriched_by) return "-";
+    if (me && row.enriched_by === me.id) return "me";
+    return "•";
+  }
+
+  function leadKey(row){
+    return `${row.ingest_job_id}:${row.row_number}`;
+  }
+
+  async function loadQueue(forceClearDetail=false){
+    $("detailStatus").textContent = "";
+    const viewMode = $("viewSelect").value;
+
+    // NOTE: Use the enriched view for queue display (includes lead fields)
+    // This view should be readable by authenticated users.
+    let statuses = [];
+    if (viewMode === "pending_in_progress") statuses = ["pending","in_progress"];
+    else statuses = [viewMode];
 
     const { data, error } = await sb
-      .from("app_users")
-      .select("role")
-      .eq("user_id", userRes.user.id)
-      .single();
-
-    if (error) return false;
-    return data?.role === "admin";
-  }
-
-  function pillForStatus(status) {
-    if (status === "done") return `<span class="pill pill-ok">done</span>`;
-    if (status === "rejected") return `<span class="pill pill-bad">rejected</span>`;
-    if (status === "in_progress") return `<span class="pill pill-warn">in_progress</span>`;
-    return `<span class="pill">pending</span>`;
-  }
-
-  function setQueueStatus(msg) { $("queueStatus").textContent = msg || ""; }
-  function setDetailStatus(msg) { $("detailStatus").textContent = msg || ""; }
-
-  async function login() {
-    $("loginStatus").textContent = "Signing in…";
-    const { error } = await sb.auth.signInWithPassword({
-      email: $("email").value.trim(),
-      password: $("password").value
-    });
-    if (error) {
-      $("loginStatus").textContent = error.message;
-      return;
-    }
-    $("loginStatus").textContent = "";
-    await showApp();
-  }
-
-  async function showApp() {
-    populateCountryDropdown();
-
-    const { data: userRes } = await sb.auth.getUser();
-    currentUserId = userRes?.user?.id || null;
-
-    $("loginCard").style.display = "none";
-    $("appWrap").style.display = "block";
-    $("logoutBtn").style.display = "inline-flex";
-
-    const admin = await isAdmin();
-    if (admin) $("adminLink").style.display = "inline-flex";
-
-    await loadQueue();
-  }
-
-  function matchesSearch(row, q) {
-    if (!q) return true;
-    const hay = [
-      row.first_name || "",
-      row.last_name || "",
-      row.email || "",
-      row.company || "",
-      row.title || "",
-      row.ingest_job_id || "",
-      String(row.row_number || ""),
-      row.enrichment_status || ""
-    ].join(" ").toLowerCase();
-    return hay.includes(q);
-  }
-
-  function escapeHtml(str){
-    return String(str ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  async function loadQueue() {
-    setQueueStatus("Loading queue…");
-    const view = $("viewFilter").value;
-    const q = $("searchBox").value.trim().toLowerCase();
-
-    const { data: rows, error } = await sb
       .from("v_enrichment_queue")
       .select("*")
-      .limit(500);
+      .in("enrichment_status", statuses)
+      .order("enrichment_status", { ascending: true });
 
-    if (error) {
-      setQueueStatus("❌ Failed to load queue: " + error.message);
+    if (error){
+      $("queueCount").textContent = "Queue load failed.";
+      $("detailStatus").textContent = "Error loading queue: " + error.message;
+      queueRows = [];
+      renderQueue();
       return;
     }
 
-    let filtered = rows || [];
+    queueRows = data || [];
+    $("queueCount").textContent = `Showing ${queueRows.length} row(s).`;
 
-    if (view === "pending") {
-      filtered = filtered.filter(r => r.enrichment_status === "pending");
-    } else if (view === "mine") {
-      filtered = filtered.filter(r => r.enrichment_status === "in_progress" && r.enriched_by === currentUserId);
+    // If current lead moved out of view (done/rejected), clear it
+    if (forceClearDetail){
+      // keep selected if still present; else clear
+      if (selectedLeadKey && !queueRows.some(r => leadKey(r) === selectedLeadKey)){
+        clearDetail();
+      }
     }
 
-    filtered = filtered.filter(r => matchesSearch(r, q));
+    renderQueue();
+  }
 
-    const body = $("queueBody");
-    body.innerHTML = "";
+  function renderQueue(){
+    const tbody = $("queueBody");
+    tbody.innerHTML = "";
 
-    if (!filtered.length) {
-      setQueueStatus("No rows.");
-      return;
-    }
+    const q = ($("searchInput").value || "").toLowerCase().trim();
 
-    setQueueStatus(`Showing ${filtered.length} row(s).`);
+    const filtered = queueRows.filter(r => {
+      if (!q) return true;
+      const hay = [
+        r.first_name, r.last_name, r.email, r.company, r.title, r.country, r.city
+      ].filter(Boolean).join(" ").toLowerCase();
+      return hay.includes(q);
+    });
 
-    for (const r of filtered) {
+    $("queueCount").textContent = `Showing ${filtered.length} row(s).`;
+
+    for (const row of filtered){
       const tr = document.createElement("tr");
+      const isSelected = selectedLeadKey && (leadKey(row) === selectedLeadKey);
+      if (isSelected) tr.classList.add("selected-row");
 
-      const owner = r.enriched_by ? (r.enriched_by === currentUserId ? "me" : "other") : "-";
-      const canOpen = (r.enrichment_status === "pending") || (r.enrichment_status === "in_progress" && r.enriched_by === currentUserId);
+      // Status
+      const tdStatus = document.createElement("td");
+      tdStatus.innerHTML = `<span class="${statusPillClass(row.enrichment_status)}">${row.enrichment_status}</span>`;
+      tr.appendChild(tdStatus);
 
-      tr.innerHTML = `
-        <td>${pillForStatus(r.enrichment_status)}</td>
-        <td>${escapeHtml(r.first_name || "")}</td>
-        <td>${escapeHtml(r.last_name || "")}</td>
-        <td>${escapeHtml(r.email || "")}</td>
-        <td>
-          <div style="font-weight:800;color:var(--brand-navy);">${escapeHtml(r.company || "")}</div>
-          <div class="keyTiny mono">${escapeHtml(String(r.ingest_job_id).slice(0,8))}… • row ${escapeHtml(String(r.row_number))}</div>
-        </td>
-        <td>${escapeHtml(r.title || "")}</td>
-        <td>${escapeHtml(owner)}</td>
-        <td>
-          <div class="actions">
-            <button class="btn-ghost" type="button" ${canOpen ? "" : "disabled"}>Open</button>
-            ${r.enrichment_status === "pending" ? `<button class="btn" type="button">Claim</button>` : ``}
-          </div>
-        </td>
+      // First
+      const tdFirst = document.createElement("td");
+      tdFirst.textContent = row.first_name || "";
+      tr.appendChild(tdFirst);
+
+      // Last
+      const tdLast = document.createElement("td");
+      tdLast.textContent = row.last_name || "";
+      tr.appendChild(tdLast);
+
+      // Email
+      const tdEmail = document.createElement("td");
+      tdEmail.innerHTML = `
+        <div class="leadPrimary">${escapeHtml(row.email || "")}</div>
       `;
+      tr.appendChild(tdEmail);
 
-      const buttons = tr.querySelectorAll("button");
-      const openBtn = buttons[0];
-      openBtn.onclick = () => openRow(r);
+      // Company
+      const tdCompany = document.createElement("td");
+      tdCompany.innerHTML = `
+        <div class="companyPrimary">${escapeHtml(row.company || "")}</div>
+        <div class="companySecondary">${escapeHtml(shortKey(row.ingest_job_id, row.row_number))}</div>
+      `;
+      tr.appendChild(tdCompany);
 
-      if (r.enrichment_status === "pending") {
-        const claimBtn = buttons[1];
-        claimBtn.onclick = async () => {
-          await claimThenOpen(r);
-        };
+      // Title
+      const tdTitle = document.createElement("td");
+      tdTitle.textContent = row.title || "";
+      tr.appendChild(tdTitle);
+
+      // Owner
+      const tdOwner = document.createElement("td");
+      tdOwner.textContent = ownerLabel(row);
+      tr.appendChild(tdOwner);
+
+      // Actions
+      const tdActions = document.createElement("td");
+      tdActions.style.textAlign = "right";
+      const actionWrap = document.createElement("div");
+      actionWrap.className = "actions";
+
+      const openBtn = document.createElement("button");
+      openBtn.className = "btn-ghost";
+      openBtn.textContent = "Open";
+      openBtn.onclick = () => openLead(row);
+
+      actionWrap.appendChild(openBtn);
+
+      // Only show Claim if pending
+      if (row.enrichment_status === "pending"){
+        const claimBtn = document.createElement("button");
+        claimBtn.className = "btn";
+        claimBtn.textContent = "Claim";
+        claimBtn.onclick = () => claimLead(row);
+        actionWrap.appendChild(claimBtn);
       }
 
-      body.appendChild(tr);
+      tdActions.appendChild(actionWrap);
+      tr.appendChild(tdActions);
+
+      tbody.appendChild(tr);
     }
   }
 
-  async function claimThenOpen(row) {
-    setQueueStatus("Claiming lead…");
+  function openLead(row){
+    currentLead = row;
+    selectedLeadKey = leadKey(row);
+    renderQueue();               // highlight selected row
+    renderLeadDetail();          // show lead context + fields
+    $("detailStatus").textContent = "";
+  }
+
+  function clearDetail(){
+    currentLead = null;
+    selectedLeadKey = null;
+    $("leadContext").style.display = "none";
+    $("detailStatusPill").textContent = "No lead selected";
+
+    $("ingestJobId").value = "";
+    $("rowNumber").value = "";
+    $("phoneCountry").value = "";
+    $("phoneDirect").value = "";
+    $("phoneMobile").value = "";
+    $("enrichmentNotes").value = "";
+    $("verifiedFields").value = "";
+    $("enrichedPayload").value = "";
+    $("rawPayload").value = "";
+
+    renderQueue();
+  }
+
+  function renderLeadDetail(){
+    if (!currentLead) return;
+
+    // Status pill
+    $("detailStatusPill").textContent = currentLead.enrichment_status || "—";
+
+    // Key fields
+    $("ingestJobId").value = currentLead.ingest_job_id || "";
+    $("rowNumber").value = currentLead.row_number ?? "";
+
+    // Lead context (always visible)
+    $("leadContext").style.display = "block";
+    $("ctxName").textContent = `${currentLead.first_name || ""} ${currentLead.last_name || ""}`.trim();
+    $("ctxEmail").textContent = currentLead.email || "";
+    $("ctxCompany").textContent = currentLead.company || "";
+    $("ctxTitle").textContent = currentLead.title || "";
+    const loc = [currentLead.city, currentLead.state, currentLead.country].filter(Boolean).join(", ");
+    $("ctxLocation").textContent = loc || "—";
+    $("ctxOwner").textContent = ownerLabel(currentLead);
+
+    // Enrichment fields from stg_leads columns (via view)
+    $("phoneCountry").value = currentLead.phone_country_iso2 || "";
+    $("phoneDirect").value = currentLead.phone_direct || "";
+    $("phoneMobile").value = currentLead.phone_mobile || "";
+    $("enrichmentNotes").value = currentLead.enrichment_notes || "";
+
+    // JSON fields (allow editing)
+    $("verifiedFields").value = stringifyJsonMaybe(currentLead.verified_fields);
+    $("enrichedPayload").value = stringifyJsonMaybe(currentLead.enriched_payload);
+
+    // Raw payload (read-only)
+    $("rawPayload").value = stringifyJsonMaybe(currentLead.raw_payload);
+
+    // Buttons (basic UX)
+    const isReadonly = (currentLead.enrichment_status === "done" || currentLead.enrichment_status === "rejected");
+    setDetailInputsDisabled(isReadonly);
+  }
+
+  function setDetailInputsDisabled(disabled){
+    ["phoneCountry","phoneDirect","phoneMobile","enrichmentNotes","verifiedFields","enrichedPayload"]
+      .forEach(id => $(id).disabled = disabled);
+
+    $("saveBtn").disabled = disabled;
+    $("releaseBtn").disabled = disabled;
+    $("doneBtn").disabled = disabled;
+    $("rejectBtn").disabled = disabled;
+  }
+
+  async function claimLead(row){
+    $("detailStatus").textContent = "Claiming lead…";
     const { data, error } = await sb.rpc("claim_lead", {
       p_ingest_job_id: row.ingest_job_id,
       p_row_number: row.row_number
     });
 
-    if (error) {
-      setQueueStatus("❌ claim_lead error: " + error.message);
+    if (error){
+      $("detailStatus").textContent = "Claim failed: " + error.message;
       return;
     }
 
-    if (!data) {
-      setQueueStatus("⚠️ Already claimed by someone else.");
-      await loadQueue();
-      return;
-    }
+    // Reload queue and open the claimed lead
+    await loadQueue(true);
+    const updated = queueRows.find(r => leadKey(r) === leadKey(row));
+    if (updated) openLead(updated);
 
-    setQueueStatus("✅ Claimed.");
-    await loadQueue();
-    await openRow({ ...row, enrichment_status: "in_progress", enriched_by: currentUserId });
+    $("detailStatus").textContent = (data === true) ? "Claimed." : "Claim returned false (already owned / not claimable).";
   }
 
-  async function openRow(row) {
-    if (row.enrichment_status === "pending") {
-      await claimThenOpen(row);
+  async function releaseLead(){
+    if (!currentLead){
+      $("detailStatus").textContent = "Open a lead first.";
       return;
     }
-
-    if (row.enrichment_status === "in_progress" && row.enriched_by !== currentUserId) {
-      setQueueStatus("⚠️ This lead is in progress by someone else.");
+    $("detailStatus").textContent = "Releasing lead…";
+    const { data, error } = await sb.rpc("release_lead", {
+      p_ingest_job_id: currentLead.ingest_job_id,
+      p_row_number: currentLead.row_number
+    });
+    if (error){
+      $("detailStatus").textContent = "Release failed: " + error.message;
       return;
     }
-
-    selected = { ingest_job_id: row.ingest_job_id, row_number: row.row_number };
-
-    $("detailEmpty").style.display = "none";
-    $("detailForm").style.display = "block";
-
-    $("d_ingest_job_id").value = row.ingest_job_id;
-    $("d_row_number").value = row.row_number;
-    $("detailSub").textContent = "Edit enrichment fields, then Save / Done / Reject.";
-    $("detailPill").innerHTML = pillForStatus(row.enrichment_status);
-    setDetailStatus("Loading lead…");
-
-    const { data: lead, error } = await sb
-      .from("stg_leads")
-      .select("ingest_job_id,row_number,enrichment_status,enriched_by,enriched_at,phone_country_iso2,phone_direct,phone_mobile,enrichment_notes,verified_fields,enriched_payload")
-      .eq("ingest_job_id", row.ingest_job_id)
-      .eq("row_number", row.row_number)
-      .single();
-
-    if (error) {
-      setDetailStatus("❌ Failed to load lead: " + error.message);
-      return;
-    }
-
-    // phone fields
-    $("d_phone_country").value = lead.phone_country_iso2 || "";
-    updateDialHint();
-    $("d_phone_direct").value = lead.phone_direct || "";
-    $("d_phone_mobile").value = lead.phone_mobile || "";
-
-    $("d_notes").value = lead.enrichment_notes || "";
-    $("d_verified").value = lead.verified_fields ? JSON.stringify(lead.verified_fields, null, 2) : "";
-    $("d_payload").value = lead.enriched_payload ? JSON.stringify(lead.enriched_payload, null, 2) : "";
-
-    $("detailPill").innerHTML = pillForStatus(lead.enrichment_status);
-    setDetailStatus("");
+    await loadQueue(true);
+    clearDetail();
+    $("detailStatus").textContent = (data === true) ? "Released." : "Release returned false.";
   }
 
-  function parseJsonOrNull(text, labelForError) {
-    const t = (text || "").trim();
-    if (!t) return null;
-    try {
-      return JSON.parse(t);
-    } catch (e) {
-      throw new Error(`${labelForError} must be valid JSON.`);
-    }
-  }
-
-  async function saveSelected() {
-    if (!selected) return;
-
-    setDetailStatus("Saving…");
-
-    let verified = null;
-    let payload = null;
-    try {
-      verified = parseJsonOrNull($("d_verified").value, "verified_fields");
-      payload = parseJsonOrNull($("d_payload").value, "enriched_payload");
-    } catch (e) {
-      setDetailStatus("❌ " + e.message);
+  async function saveLead(){
+    if (!currentLead){
+      $("detailStatus").textContent = "Open a lead first.";
       return;
     }
 
-    const updates = {
-      phone_country_iso2: $("d_phone_country").value || null,
-      phone_direct: $("d_phone_direct").value.trim() || null,
-      phone_mobile: $("d_phone_mobile").value.trim() || null,
-      enrichment_notes: $("d_notes").value.trim() || null,
-      verified_fields: verified,
-      enriched_payload: payload
+    $("detailStatus").textContent = "Saving…";
+
+    // Parse JSON safely (allow blank)
+    const verified = parseJsonTextarea($("verifiedFields").value);
+    if (verified === "__invalid__"){
+      $("detailStatus").textContent = "verified_fields JSON is invalid. Fix it and try again.";
+      return;
+    }
+
+    const enriched = parseJsonTextarea($("enrichedPayload").value);
+    if (enriched === "__invalid__"){
+      $("detailStatus").textContent = "enriched_payload JSON is invalid. Fix it and try again.";
+      return;
+    }
+
+    const update = {
+      phone_country_iso2: $("phoneCountry").value || null,
+      phone_direct: $("phoneDirect").value || null,
+      phone_mobile: $("phoneMobile").value || null,
+      enrichment_notes: ($("enrichmentNotes").value || "").trim() || null,
+      verified_fields: verified === "__blank__" ? null : verified,
+      enriched_payload: enriched === "__blank__" ? null : enriched
     };
 
     const { error } = await sb
       .from("stg_leads")
-      .update(updates)
-      .eq("ingest_job_id", selected.ingest_job_id)
-      .eq("row_number", selected.row_number);
+      .update(update)
+      .eq("ingest_job_id", currentLead.ingest_job_id)
+      .eq("row_number", currentLead.row_number);
 
-    if (error) {
-      setDetailStatus("❌ Save failed: " + error.message);
+    if (error){
+      $("detailStatus").textContent = "Save failed: " + error.message;
       return;
     }
 
-    setDetailStatus("✅ Saved.");
-    await loadQueue();
+    // Reload & keep selection highlighted (best UX)
+    const prevKey = selectedLeadKey;
+    await loadQueue(true);
+
+    const updated = queueRows.find(r => leadKey(r) === prevKey);
+    if (updated){
+      openLead(updated); // re-open to refresh detail + keep highlight
+    } else {
+      // if it fell out of view
+      clearDetail();
+    }
+
+    $("detailStatus").textContent = "Saved.";
   }
 
-  async function releaseSelected() {
-    if (!selected) return;
-    setDetailStatus("Releasing…");
-
-    const { data, error } = await sb.rpc("release_lead", {
-      p_ingest_job_id: selected.ingest_job_id,
-      p_row_number: selected.row_number
-    });
-
-    if (error) {
-      setDetailStatus("❌ release_lead error: " + error.message);
+  async function markDone(){
+    if (!currentLead){
+      $("detailStatus").textContent = "Open a lead first.";
       return;
     }
-
-    if (!data) {
-      setDetailStatus("⚠️ Not released (maybe not yours or not in_progress).");
-      await loadQueue();
-      return;
-    }
-
-    setDetailStatus("✅ Released back to pending.");
-    selected = null;
-    $("detailForm").style.display = "none";
-    $("detailEmpty").style.display = "block";
-    $("detailSub").textContent = "Select a row from the queue.";
-    $("detailPill").innerHTML = "";
-    await loadQueue();
-  }
-
-  async function doneSelected() {
-    if (!selected) return;
-    setDetailStatus("Marking done…");
-
+    $("detailStatus").textContent = "Marking done…";
     const { data, error } = await sb.rpc("mark_lead_done", {
-      p_ingest_job_id: selected.ingest_job_id,
-      p_row_number: selected.row_number
+      p_ingest_job_id: currentLead.ingest_job_id,
+      p_row_number: currentLead.row_number
     });
-
-    if (error) {
-      setDetailStatus("❌ mark_lead_done error: " + error.message);
+    if (error){
+      $("detailStatus").textContent = "Mark done failed: " + error.message;
       return;
     }
 
-    if (!data) {
-      setDetailStatus("⚠️ Not marked done (maybe not yours or not in_progress).");
-      return;
+    const viewMode = $("viewSelect").value;
+    await loadQueue(true);
+
+    // If current view hides done, clear detail (lead will disappear from list)
+    if (viewMode !== "done"){
+      clearDetail();
+    } else {
+      // stay open if viewing done
+      const updated = queueRows.find(r => leadKey(r) === selectedLeadKey);
+      if (updated) openLead(updated);
     }
 
-    setDetailStatus("✅ Marked done.");
-    await loadQueue();
+    $("detailStatus").textContent = (data === true) ? "Marked done." : "Mark done returned false.";
   }
 
-  async function rejectSelected() {
-    if (!selected) return;
-
-    const reason = prompt("Reject reason (required):");
-    if (!reason || !reason.trim()) {
-      setDetailStatus("⚠️ Reject cancelled (reason required).");
+  async function markRejected(){
+    if (!currentLead){
+      $("detailStatus").textContent = "Open a lead first.";
       return;
     }
-
-    setDetailStatus("Rejecting…");
-
+    $("detailStatus").textContent = "Marking rejected…";
     const { data, error } = await sb.rpc("mark_lead_rejected", {
-      p_ingest_job_id: selected.ingest_job_id,
-      p_row_number: selected.row_number,
-      p_reason: reason.trim()
+      p_ingest_job_id: currentLead.ingest_job_id,
+      p_row_number: currentLead.row_number
     });
-
-    if (error) {
-      setDetailStatus("❌ mark_lead_rejected error: " + error.message);
+    if (error){
+      $("detailStatus").textContent = "Reject failed: " + error.message;
       return;
     }
 
-    if (!data) {
-      setDetailStatus("⚠️ Not rejected (maybe not yours or not in_progress).");
-      return;
+    const viewMode = $("viewSelect").value;
+    await loadQueue(true);
+
+    if (viewMode !== "rejected"){
+      clearDetail();
+    } else {
+      const updated = queueRows.find(r => leadKey(r) === selectedLeadKey);
+      if (updated) openLead(updated);
     }
 
-    $("d_notes").value = reason.trim();
-    setDetailStatus("✅ Rejected.");
-    await loadQueue();
+    $("detailStatus").textContent = (data === true) ? "Rejected." : "Reject returned false.";
   }
 
-  sb.auth.getSession()
-    .then(async (r) => {
-      if (r.data.session) await showApp();
-    })
-    .catch(()=>{});
+  // Helpers
+  function escapeHtml(str){
+    return String(str || "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
 
-  function debounce(fn, ms){
-    let t = null;
-    return (...args) => {
-      clearTimeout(t);
-      t = setTimeout(() => fn(...args), ms);
-    };
+  function shortKey(ingest_job_id, row_number){
+    if (!ingest_job_id) return "";
+    const s = String(ingest_job_id);
+    return `${s.slice(0,8)}… • row ${row_number}`;
+  }
+
+  function stringifyJsonMaybe(val){
+    if (val === null || val === undefined) return "";
+    try{
+      if (typeof val === "string"){
+        // if it's already a JSON-ish string, keep it (but pretty print if possible)
+        const trimmed = val.trim();
+        if (!trimmed) return "";
+        const parsed = JSON.parse(trimmed);
+        return JSON.stringify(parsed, null, 2);
+      }
+      return JSON.stringify(val, null, 2);
+    }catch{
+      return String(val);
+    }
+  }
+
+  function parseJsonTextarea(text){
+    const t = (text || "").trim();
+    if (!t) return "__blank__";
+    try{
+      return JSON.parse(t);
+    }catch{
+      return "__invalid__";
+    }
   }
 </script>
-
 </body>
 </html>
