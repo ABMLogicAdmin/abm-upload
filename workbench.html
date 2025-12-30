@@ -1048,16 +1048,44 @@ async function fetchLeadFromStg(ingestJobId, rowNumber){
     $("detailStatus").textContent = (data === true) ? "Marked done." : "Mark done returned false.";
   }
 
-  async function markRejected(){
-    if (!currentLead){
-      $("detailStatus").textContent = "Open a lead first.";
-      return;
-    }
-    $("detailStatus").textContent = "Marking rejected…";
-    const { data, error } = await sb.rpc("mark_lead_rejected", {
-      p_ingest_job_id: currentLead.ingest_job_id,
-      p_row_number: currentLead.row_number
-    });
+async function markRejected(){
+  if (!currentLead){
+    $("detailStatus").textContent = "Open a lead first.";
+    return;
+  }
+
+  const reason = ($("notes")?.value || $("enrichment_notes")?.value || "").trim();
+  if (!reason){
+    $("detailStatus").textContent = "Add a rejection reason in notes, then Reject.";
+    return;
+  }
+
+  $("detailStatus").textContent = "Marking rejected…";
+
+  const { error } = await sb.rpc("mark_lead_rejected", {
+    p_ingest_job_id: currentLead.ingest_job_id,
+    p_row_number: currentLead.row_number,
+    p_reason: reason
+  });
+
+  if (error){
+    $("detailStatus").textContent = "Reject failed: " + error.message;
+    return;
+  }
+
+  const viewMode = $("viewSelect").value;
+  await loadQueue(true);
+
+  if (viewMode !== "rejected"){
+    clearDetail();
+  } else {
+    const updated = queueRows.find(r => leadKey(r) === selectedLeadKey);
+    if (updated) openLead(updated);
+  }
+
+  $("detailStatus").textContent = "Rejected.";
+}
+
     if (error){
       $("detailStatus").textContent = "Reject failed: " + error.message;
       return;
