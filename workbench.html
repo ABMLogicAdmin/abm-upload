@@ -728,7 +728,18 @@
     if (me && row.enriched_by === me.id) return "me";
     return "•";
   }
+  
+async function fetchLeadFromStg(ingestJobId, rowNumber){
+  const { data, error } = await sb
+    .from("stg_leads")
+    .select("*")
+    .eq("ingest_job_id", ingestJobId)
+    .eq("row_number", rowNumber)
+    .single();
 
+  if (error) throw error;
+  return data;
+}
   function leadKey(row){
     return `${row.ingest_job_id}:${row.row_number}`;
   }
@@ -991,17 +1002,22 @@
       return;
     }
 
-    const prevKey = selectedLeadKey;
     await loadQueue(true);
 
-    const updated = queueRows.find(r => leadKey(r) === prevKey);
-    if (updated){
-      openLead(updated);
-    } else {
-      clearDetail();
-    }
+    try{
+      const full = await fetchLeadFromStg(currentLead.ingest_job_id, currentLead.row_number);
 
-    $("detailStatus").textContent = "Saved.";
+      // Use full stg_leads row so saved values stay visible
+      currentLead = full;
+      selectedLeadKey = leadKey(full);
+
+      renderQueue();
+      renderLeadDetail();
+
+      $("detailStatus").textContent = "Saved.";
+    }catch(e){
+      $("detailStatus").textContent = "Saved, but failed to reload full lead: " + (e?.message || e);
+    }
   }
 
   async function markDone(){
