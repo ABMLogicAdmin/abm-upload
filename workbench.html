@@ -153,20 +153,20 @@
     .muted{ color:var(--muted); font-size:12px; }
     code{ background:rgba(17,24,39,.04); padding:2px 6px; border-radius:8px; }
 
-    /* Layout */
+    /* =========================
+       Layout (fixed, stable)
+       ========================= */
     .grid{
       margin-top:16px;
       display:grid;
-      grid-template-columns: 0.95fr 1.75fr; /* wider queue */
+      grid-template-columns: 1.05fr 1.75fr; /* queue left, detail wider but queue still usable */
       gap:14px;
       align-items:start;
     }
-/* IMPORTANT: allow grid children to shrink so table doesn't force page width */
-.grid > .card{
-  min-width: 0;
-}
 
-    
+    /* CRITICAL: allow grid children to shrink so the table doesn't force page width */
+    .grid > .card{ min-width:0; }
+
     @media (max-width: 980px){
       .grid{ grid-template-columns: 1fr; }
     }
@@ -186,14 +186,28 @@
       margin:0;
     }
 
+    /* FIX: make controls wrap nicely at any queue width */
     .queueControls{
-      display:grid;
-      grid-template-columns: 220px 1fr 140px;
+      display:flex;
       gap:10px;
+      flex-wrap:wrap;
       margin:12px 0 8px;
+      align-items:flex-end;
+    }
+    .queueControls > div{
+      flex: 1 1 220px; /* will wrap when narrow */
+      min-width: 200px;
+    }
+    .queueControls > div:last-child{
+      flex: 0 0 140px; /* Clear button column */
+      min-width: 120px;
     }
     @media (max-width:980px){
-      .queueControls{ grid-template-columns: 1fr; }
+      .queueControls > div,
+      .queueControls > div:last-child{
+        flex: 1 1 100%;
+        min-width: 0;
+      }
     }
 
     .smallBtn{
@@ -466,7 +480,7 @@
 
         <div class="muted" id="queueCount">Showing 0 row(s).</div>
 
-        <div style="overflow-x:auto; overflow-y:auto; max-width:100%; margin-top:8px;">
+        <div style="overflow-x:auto; overflow-y:auto; max-width:100%; width:100%; margin-top:8px;">
           <table>
             <thead>
               <tr>
@@ -523,7 +537,6 @@
             <label>Phone country</label>
             <select id="phoneCountry">
               <option value="" selected>Select country…</option>
-              <!-- Common ISO2 list (MVP). Add more anytime. -->
               <option value="GB">United Kingdom (+44)</option>
               <option value="US">United States (+1)</option>
               <option value="CA">Canada (+1)</option>
@@ -712,8 +725,6 @@
     $("detailStatus").textContent = "";
     const viewMode = $("viewSelect").value;
 
-    // NOTE: Use the enriched view for queue display (includes lead fields)
-    // This view should be readable by authenticated users.
     let statuses = [];
     if (viewMode === "pending_in_progress") statuses = ["pending","in_progress"];
     else statuses = [viewMode];
@@ -735,9 +746,7 @@
     queueRows = data || [];
     $("queueCount").textContent = `Showing ${queueRows.length} row(s).`;
 
-    // If current lead moved out of view (done/rejected), clear it
     if (forceClearDetail){
-      // keep selected if still present; else clear
       if (selectedLeadKey && !queueRows.some(r => leadKey(r) === selectedLeadKey)){
         clearDetail();
       }
@@ -767,29 +776,22 @@
       const isSelected = selectedLeadKey && (leadKey(row) === selectedLeadKey);
       if (isSelected) tr.classList.add("selected-row");
 
-      // Status
       const tdStatus = document.createElement("td");
       tdStatus.innerHTML = `<span class="${statusPillClass(row.enrichment_status)}">${row.enrichment_status}</span>`;
       tr.appendChild(tdStatus);
 
-      // First
       const tdFirst = document.createElement("td");
       tdFirst.textContent = row.first_name || "";
       tr.appendChild(tdFirst);
 
-      // Last
       const tdLast = document.createElement("td");
       tdLast.textContent = row.last_name || "";
       tr.appendChild(tdLast);
 
-      // Email
       const tdEmail = document.createElement("td");
-      tdEmail.innerHTML = `
-        <div class="leadPrimary">${escapeHtml(row.email || "")}</div>
-      `;
+      tdEmail.innerHTML = `<div class="leadPrimary">${escapeHtml(row.email || "")}</div>`;
       tr.appendChild(tdEmail);
 
-      // Company
       const tdCompany = document.createElement("td");
       tdCompany.innerHTML = `
         <div class="companyPrimary">${escapeHtml(row.company || "")}</div>
@@ -797,17 +799,14 @@
       `;
       tr.appendChild(tdCompany);
 
-      // Title
       const tdTitle = document.createElement("td");
       tdTitle.textContent = row.title || "";
       tr.appendChild(tdTitle);
 
-      // Owner
       const tdOwner = document.createElement("td");
       tdOwner.textContent = ownerLabel(row);
       tr.appendChild(tdOwner);
 
-      // Actions
       const tdActions = document.createElement("td");
       tdActions.style.textAlign = "right";
       const actionWrap = document.createElement("div");
@@ -817,10 +816,8 @@
       openBtn.className = "btn-ghost";
       openBtn.textContent = "Open";
       openBtn.onclick = () => openLead(row);
-
       actionWrap.appendChild(openBtn);
 
-      // Only show Claim if pending
       if (row.enrichment_status === "pending"){
         const claimBtn = document.createElement("button");
         claimBtn.className = "btn";
@@ -839,8 +836,8 @@
   function openLead(row){
     currentLead = row;
     selectedLeadKey = leadKey(row);
-    renderQueue();               // highlight selected row
-    renderLeadDetail();          // show lead context + fields
+    renderQueue();
+    renderLeadDetail();
     $("detailStatus").textContent = "";
   }
 
@@ -866,14 +863,11 @@
   function renderLeadDetail(){
     if (!currentLead) return;
 
-    // Status pill
     $("detailStatusPill").textContent = currentLead.enrichment_status || "—";
 
-    // Key fields
     $("ingestJobId").value = currentLead.ingest_job_id || "";
     $("rowNumber").value = currentLead.row_number ?? "";
 
-    // Lead context (always visible)
     $("leadContext").style.display = "block";
     $("ctxName").textContent = `${currentLead.first_name || ""} ${currentLead.last_name || ""}`.trim();
     $("ctxEmail").textContent = currentLead.email || "";
@@ -883,20 +877,16 @@
     $("ctxLocation").textContent = loc || "—";
     $("ctxOwner").textContent = ownerLabel(currentLead);
 
-    // Enrichment fields from stg_leads columns (via view)
     $("phoneCountry").value = currentLead.phone_country_iso2 || "";
     $("phoneDirect").value = currentLead.phone_direct || "";
     $("phoneMobile").value = currentLead.phone_mobile || "";
     $("enrichmentNotes").value = currentLead.enrichment_notes || "";
 
-    // JSON fields (allow editing)
     $("verifiedFields").value = stringifyJsonMaybe(currentLead.verified_fields);
     $("enrichedPayload").value = stringifyJsonMaybe(currentLead.enriched_payload);
 
-    // Raw payload (read-only)
     $("rawPayload").value = stringifyJsonMaybe(currentLead.raw_payload);
 
-    // Buttons (basic UX)
     const isReadonly = (currentLead.enrichment_status === "done" || currentLead.enrichment_status === "rejected");
     setDetailInputsDisabled(isReadonly);
   }
@@ -923,7 +913,6 @@
       return;
     }
 
-    // Reload queue and open the claimed lead
     await loadQueue(true);
     const updated = queueRows.find(r => leadKey(r) === leadKey(row));
     if (updated) openLead(updated);
@@ -958,7 +947,6 @@
 
     $("detailStatus").textContent = "Saving…";
 
-    // Parse JSON safely (allow blank)
     const verified = parseJsonTextarea($("verifiedFields").value);
     if (verified === "__invalid__"){
       $("detailStatus").textContent = "verified_fields JSON is invalid. Fix it and try again.";
@@ -991,15 +979,13 @@
       return;
     }
 
-    // Reload & keep selection highlighted (best UX)
     const prevKey = selectedLeadKey;
     await loadQueue(true);
 
     const updated = queueRows.find(r => leadKey(r) === prevKey);
     if (updated){
-      openLead(updated); // re-open to refresh detail + keep highlight
+      openLead(updated);
     } else {
-      // if it fell out of view
       clearDetail();
     }
 
@@ -1024,11 +1010,9 @@
     const viewMode = $("viewSelect").value;
     await loadQueue(true);
 
-    // If current view hides done, clear detail (lead will disappear from list)
     if (viewMode !== "done"){
       clearDetail();
     } else {
-      // stay open if viewing done
       const updated = queueRows.find(r => leadKey(r) === selectedLeadKey);
       if (updated) openLead(updated);
     }
@@ -1064,7 +1048,6 @@
     $("detailStatus").textContent = (data === true) ? "Rejected." : "Reject returned false.";
   }
 
-  // Helpers
   function escapeHtml(str){
     return String(str || "")
       .replaceAll("&", "&amp;")
@@ -1084,7 +1067,6 @@
     if (val === null || val === undefined) return "";
     try{
       if (typeof val === "string"){
-        // if it's already a JSON-ish string, keep it (but pretty print if possible)
         const trimmed = val.trim();
         if (!trimmed) return "";
         const parsed = JSON.parse(trimmed);
