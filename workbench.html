@@ -498,7 +498,12 @@
             <div class="muted">Edit enrichment fields, then Save / Done / Reject.</div>
           </div>
           <span class="detailPill" id="detailStatusPill">No lead selected</span>
-        </div>
+          </div>
+
+<div id="rejectedBanner" style="display:none; margin:10px 0 6px; padding:10px 12px; border-radius:12px; border:1px solid rgba(239,68,68,.35); background:rgba(239,68,68,.08); font-weight:900; color:#991b1b;">
+  Rejected — read-only
+</div>
+
 
         <div class="leadContext" id="leadContext" style="display:none;">
           <div class="row">
@@ -587,11 +592,17 @@
         <label>enrichment_notes</label>
         <textarea id="enrichmentNotes" placeholder="Add notes (why verified / changes / rejection reason etc.)"></textarea>
 
-        <label>verified_fields (JSON)</label>
-        <textarea id="verifiedFields" placeholder='{"job_title_verified":true,"company_verified":true}'></textarea>
-
-        <label>enriched_payload (JSON)</label>
-        <textarea id="enrichedPayload" placeholder='{"linkedin_url":"...","title":"..."}'></textarea>
+          <details id="advancedBox" style="margin-top:10px;">
+            <summary style="cursor:pointer; font-weight:800;">Advanced (read-only)</summary>
+          
+            <div style="margin-top:10px;">
+              <label>verified_fields (JSON)</label>
+              <textarea id="verifiedFields" readonly placeholder='{"job_title_verified":true,"company_verified":true}'></textarea>
+          
+              <label>enriched_payload (JSON)</label>
+              <textarea id="enrichedPayload" readonly placeholder='{"linkedin_url":".","title":"."}'></textarea>
+            </div>
+          </details>
 
         <label>raw_payload (read-only)</label>
         <textarea id="rawPayload" readonly placeholder="Will populate after you Open a lead…"></textarea>
@@ -832,13 +843,28 @@
     }
   }
 
-  function openLead(row){
+async function openLead(row){
+  // Keep the row highlighted immediately
+  selectedLeadKey = leadKey(row);
+  renderQueue();
+
+  $("detailStatus").textContent = "Loading lead…";
+
+  try{
+    const full = await fetchLeadFromStg(row.ingest_job_id, row.row_number);
+
+    // Merge: keep the nice “view” fields (first_name, company, title, etc.)
+    // but overwrite with the real saved stg fields (phones/notes/status/etc.)
+    currentLead = { ...row, ...full };
+  }catch(e){
+    // Fallback: still open the view row if stg fetch fails
     currentLead = row;
-    selectedLeadKey = leadKey(row);
-    renderQueue();
-    renderLeadDetail();
-    $("detailStatus").textContent = "";
+    $("detailStatus").textContent = "Opened, but failed to load saved fields: " + (e?.message || e);
   }
+
+  renderLeadDetail();
+}
+
 
   function clearDetail(){
     currentLead = null;
@@ -863,6 +889,10 @@
     if (!currentLead) return;
 
     $("detailStatusPill").textContent = currentLead.enrichment_status || "—";
+    const isRejected = (currentLead.enrichment_status === "rejected");
+$("rejectedBanner").style.display = isRejected ? "block" : "none";
+
+    
 
     $("ingestJobId").value = currentLead.ingest_job_id || "";
     $("rowNumber").value = currentLead.row_number ?? "";
@@ -875,7 +905,7 @@
     const loc = [currentLead.city, currentLead.state, currentLead.country].filter(Boolean).join(", ");
     $("ctxLocation").textContent = loc || "—";
     $("ctxOwner").textContent = ownerLabel(currentLead);
-
+    
     $("phoneCountry").value = currentLead.phone_country_iso2 || "";
     $("phoneDirect").value = currentLead.phone_direct || "";
     $("phoneMobile").value = currentLead.phone_mobile || "";
@@ -885,19 +915,39 @@
     $("enrichedPayload").value = stringifyJsonMaybe(currentLead.enriched_payload);
     $("rawPayload").value = stringifyJsonMaybe(currentLead.raw_payload);
 
-    const isReadonly = (currentLead.enrichment_status === "done" || currentLead.enrichment_status === "rejected");
-    setDetailInputsDisabled(isReadonly);
+ setDetailInputsDisabled();
+
   }
 
-  function setDetailInputsDisabled(disabled){
-    ["phoneCountry","phoneDirect","phoneMobile","enrichmentNotes","verifiedFields","enrichedPayload"]
-      .forEach(id => $(id).disabled = disabled);
+function setDetailInputsDisabled(){
+  const status = currentLead?.enrichment_status;
 
-    $("saveBtn").disabled = disabled;
-    $("releaseBtn").disabled = disabled;
-    $("doneBtn").disabled = disabled;
-    $("rejectBtn").disabled = disabled;
-  }
+  const isDone = status === "done";
+  const isRejected = status === "rejected";
+  const isReadOnly = isDone || isRejected;
+
+  // Normal analyst fields
+  ["phoneCountry","phoneDirect","phoneMobile","enrichmentNotes"]
+    .forEach(id => $(id).disabled = isReadOnly);
+
+  // Advanced JSON is ALWAYS read-only for analysts
+  $("verifiedFields").readOnly = true;
+  $("enrichedPayload").readOnly = true;
+
+  // Buttons (rules)
+  // done: disable everything
+  // rejected: disable everything AND hide Save/Mark Done
+  $("saveBtn").disabled = isReadOnly;
+  $("doneBtn").disabled = isReadOnly;
+  $("rejectBtn").disabled = isReadOnly;
+  $("releaseBtn").disabled = isReadOnly;
+
+  // Hide Save + Mark Done only when rejected (this is what you asked for)
+  $("saveBtn").style.display = isRejected ? "none" : "inline-block";
+  $("doneBtn").style.display = isRejected ? "none" : "inline-block";
+}
+
+
 
   async function claimLead(row){
     $("detailStatus").textContent = "Claiming lead…";
