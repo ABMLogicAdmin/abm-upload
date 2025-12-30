@@ -219,7 +219,6 @@
 
         <div class="nav">
           <a href="./index.html">← Upload</a>
-          <!-- Workbench link will be added later -->
           <a href="./workbench.html">Workbench</a>
           <button id="logoutBtn" type="button" style="margin-left:auto;">Logout</button>
         </div>
@@ -395,6 +394,7 @@
     return data?.role === "admin";
   }
 
+  // ✅ FIXED: filterMenu now receives placeholder so re-render works after selection
   function renderDropdown(containerId, key, placeholder) {
     const container = $(containerId);
     container.innerHTML = "";
@@ -411,7 +411,7 @@
       if (search) {
         search.value = "";
         search.focus();
-        filterMenu(containerId, key, "");
+        filterMenu(containerId, key, "", placeholder);
       }
     });
 
@@ -421,7 +421,7 @@
     const search = document.createElement("input");
     search.className = "dd-search";
     search.placeholder = "Type to filter…";
-    search.addEventListener("input", () => filterMenu(containerId, key, search.value));
+    search.addEventListener("input", () => filterMenu(containerId, key, search.value, placeholder));
     menu.appendChild(search);
 
     const list = document.createElement("div");
@@ -431,10 +431,11 @@
     container.appendChild(btn);
     container.appendChild(menu);
 
-    filterMenu(containerId, key, "");
+    filterMenu(containerId, key, "", placeholder);
   }
 
-  function filterMenu(containerId, key, query) {
+  // ✅ FIXED: added placeholder param so it exists inside click handler
+  function filterMenu(containerId, key, query, placeholder) {
     const container = $(containerId);
     const list = container.querySelector(".dd-list");
     if (!list) return;
