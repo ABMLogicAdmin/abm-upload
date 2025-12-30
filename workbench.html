@@ -37,9 +37,9 @@
 
     .wrap{
       max-width: 1600px;
-     margin: 0 auto;
-     padding: 0 12px;
-}
+      margin: 0 auto;
+      padding: 0 12px;
+    }
     .header{ display:flex; align-items:center; gap:14px; margin-bottom:12px; }
     .logo{ height:34px; width:auto; }
     h1{ font-size:18px; margin:0; color:var(--brand-navy); font-weight:800; }
@@ -163,12 +163,12 @@
     .grid{
       margin-top:16px;
       display:grid;
-      grid-template-columns: 1.2fr 1fr; /* queue left, detail wider but queue still usable */
+      grid-template-columns: 1.2fr 1fr; /* queue left, detail compact */
       gap:14px;
       align-items:start;
     }
 
-    /* CRITICAL: allow grid children to shrink so the table doesn't force page width */
+    /* allow grid children to shrink so the table doesn't force page width */
     .grid > .card{ min-width:0; }
 
     @media (max-width: 980px){
@@ -190,7 +190,6 @@
       margin:0;
     }
 
-    /* FIX: make controls wrap nicely at any queue width */
     .queueControls{
       display:flex;
       gap:10px;
@@ -199,11 +198,11 @@
       align-items:flex-end;
     }
     .queueControls > div{
-      flex: 1 1 220px; /* will wrap when narrow */
+      flex: 1 1 220px;
       min-width: 200px;
     }
     .queueControls > div:last-child{
-      flex: 0 0 140px; /* Clear button column */
+      flex: 0 0 140px;
       min-width: 120px;
     }
     @media (max-width:980px){
@@ -251,13 +250,7 @@
       font-size:14px;
       line-height:1.1;
     }
-    .leadSecondary{
-      color:var(--muted);
-      font-size:12px;
-      margin-top:3px;
-      line-height:1.25;
-      word-break:break-word;
-    }
+
     .companyPrimary{
       font-weight:900;
       color:var(--brand-navy);
@@ -284,22 +277,10 @@
       color:var(--brand-navy);
       white-space:nowrap;
     }
-    .pill-pending{
-      background:rgba(48,173,247,.12);
-      border-color:rgba(48,173,247,.35);
-    }
-    .pill-inprogress{
-      background:rgba(245,158,11,.14);
-      border-color:rgba(245,158,11,.35);
-    }
-    .pill-done{
-      background:rgba(34,197,94,.14);
-      border-color:rgba(34,197,94,.35);
-    }
-    .pill-rejected{
-      background:rgba(239,68,68,.12);
-      border-color:rgba(239,68,68,.35);
-    }
+    .pill-pending{ background:rgba(48,173,247,.12); border-color:rgba(48,173,247,.35); }
+    .pill-inprogress{ background:rgba(245,158,11,.14); border-color:rgba(245,158,11,.35); }
+    .pill-done{ background:rgba(34,197,94,.14); border-color:rgba(34,197,94,.35); }
+    .pill-rejected{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
 
     .actions{
       display:flex;
@@ -316,7 +297,6 @@
       font-weight:900;
     }
 
-    /* Selected row highlight */
     tr.selected-row td{
       background: rgba(48, 173, 247, 0.12);
       border-bottom-color: rgba(48,173,247,.28);
@@ -330,7 +310,6 @@
       border-bottom-right-radius:10px;
     }
 
-    /* Lead detail */
     .detailHead{
       display:flex;
       align-items:center;
@@ -380,13 +359,10 @@
       grid-template-columns: 1fr 1fr;
       gap:10px;
     }
+
     /* Slightly tighten lead detail typography */
-.card:last-child{
-  font-size:13px;
-}
-.card:last-child label{
-  font-size:12px;
-}
+    .card:last-child{ font-size:13px; }
+    .card:last-child label{ font-size:12px; }
 
     @media (max-width:980px){
       .detailGrid{ grid-template-columns: 1fr; }
@@ -414,7 +390,6 @@
       line-height:1.35;
     }
 
-    /* Login */
     .wrapSmall{ max-width:760px; margin:0 auto; }
   </style>
 </head>
@@ -728,18 +703,19 @@
     if (me && row.enriched_by === me.id) return "me";
     return "•";
   }
-  
-async function fetchLeadFromStg(ingestJobId, rowNumber){
-  const { data, error } = await sb
-    .from("stg_leads")
-    .select("*")
-    .eq("ingest_job_id", ingestJobId)
-    .eq("row_number", rowNumber)
-    .single();
 
-  if (error) throw error;
-  return data;
-}
+  async function fetchLeadFromStg(ingestJobId, rowNumber){
+    const { data, error } = await sb
+      .from("stg_leads")
+      .select("*")
+      .eq("ingest_job_id", ingestJobId)
+      .eq("row_number", rowNumber)
+      .single();
+
+    if (error) throw error;
+    return data;
+  }
+
   function leadKey(row){
     return `${row.ingest_job_id}:${row.row_number}`;
   }
@@ -907,7 +883,6 @@ async function fetchLeadFromStg(ingestJobId, rowNumber){
 
     $("verifiedFields").value = stringifyJsonMaybe(currentLead.verified_fields);
     $("enrichedPayload").value = stringifyJsonMaybe(currentLead.enriched_payload);
-
     $("rawPayload").value = stringifyJsonMaybe(currentLead.raw_payload);
 
     const isReadonly = (currentLead.enrichment_status === "done" || currentLead.enrichment_status === "rejected");
@@ -1006,8 +981,6 @@ async function fetchLeadFromStg(ingestJobId, rowNumber){
 
     try{
       const full = await fetchLeadFromStg(currentLead.ingest_job_id, currentLead.row_number);
-
-      // Use full stg_leads row so saved values stay visible
       currentLead = full;
       selectedLeadKey = leadKey(full);
 
@@ -1048,43 +1021,25 @@ async function fetchLeadFromStg(ingestJobId, rowNumber){
     $("detailStatus").textContent = (data === true) ? "Marked done." : "Mark done returned false.";
   }
 
-async function markRejected(){
-  if (!currentLead){
-    $("detailStatus").textContent = "Open a lead first.";
-    return;
-  }
+  async function markRejected(){
+    if (!currentLead){
+      $("detailStatus").textContent = "Open a lead first.";
+      return;
+    }
 
-  const reason = ($("notes")?.value || $("enrichment_notes")?.value || "").trim();
-  if (!reason){
-    $("detailStatus").textContent = "Add a rejection reason in notes, then Reject.";
-    return;
-  }
+    const reason = ($("enrichmentNotes").value || "").trim();
+    if (!reason){
+      $("detailStatus").textContent = "Add a rejection reason in notes, then Reject.";
+      return;
+    }
 
-  $("detailStatus").textContent = "Marking rejected…";
+    $("detailStatus").textContent = "Marking rejected…";
 
-  const { error } = await sb.rpc("mark_lead_rejected", {
-    p_ingest_job_id: currentLead.ingest_job_id,
-    p_row_number: currentLead.row_number,
-    p_reason: reason
-  });
-
-  if (error){
-    $("detailStatus").textContent = "Reject failed: " + error.message;
-    return;
-  }
-
-  const viewMode = $("viewSelect").value;
-  await loadQueue(true);
-
-  if (viewMode !== "rejected"){
-    clearDetail();
-  } else {
-    const updated = queueRows.find(r => leadKey(r) === selectedLeadKey);
-    if (updated) openLead(updated);
-  }
-
-  $("detailStatus").textContent = "Rejected.";
-}
+    const { error } = await sb.rpc("mark_lead_rejected", {
+      p_ingest_job_id: currentLead.ingest_job_id,
+      p_row_number: currentLead.row_number,
+      p_reason: reason
+    });
 
     if (error){
       $("detailStatus").textContent = "Reject failed: " + error.message;
@@ -1101,7 +1056,7 @@ async function markRejected(){
       if (updated) openLead(updated);
     }
 
-    $("detailStatus").textContent = (data === true) ? "Rejected." : "Reject returned false.";
+    $("detailStatus").textContent = "Rejected.";
   }
 
   function escapeHtml(str){
