@@ -2,12 +2,8 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
+  <title>ABM Logic – Workbench</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>ABM Logic — Workbench</title>
-
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -21,12 +17,7 @@
       --border:#e5e7eb;
       --card:#ffffff;
       --radius:14px;
-      --ok:#16a34a;
-      --bad:#dc2626;
-      --warn:#f59e0b;
     }
-    html, body { color-scheme: light; }
-    select, option { background-color:#ffffff !important; color:#111827 !important; }
 
     *{box-sizing:border-box}
     body{
@@ -36,725 +27,241 @@
       margin:0;
       padding:32px 16px 60px;
     }
+
     .wrap{max-width:1200px;margin:0 auto}
-    .header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-    .logo{height:34px;width:auto}
-    h1{font-size:18px;margin:0;color:var(--brand-navy);font-weight:700}
-    .sub{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+    .header{text-align:center;margin-bottom:18px}
+    .nav{display:flex;gap:10px;justify-content:center;margin-top:10px}
 
-    .card{
-      margin-top:18px;
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:18px;
-      box-shadow:0 8px 30px rgba(17,24,39,06);
-    }
-    label{display:block;margin-top:14px;font-size:12.5px;color:var(--brand-navy);font-weight:600}
-
-    input,button,select,textarea{
-      width:100%;
-      padding:11px 12px;
-      margin-top:7px;
-      font-size:14px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      font-family:inherit;
-      background:#fff;
-      color:var(--text);
-    }
-    textarea{min-height:120px; resize:vertical;}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
-    .btn{
-      border:none;
-      background:var(--brand-primary);
-      color:#fff;
-      font-weight:700;
-      cursor:pointer;
-      margin-top:14px;
-      text-align:center;
-    }
-    .btn:hover{filter:brightness(.98)}
-    .btn:active{transform:translateY(1px)}
-    .btn-ghost{
-      border:1px solid rgba(34,35,61,.15);
-      background:#fff;
-      color:var(--brand-navy);
-      font-weight:800;
-      cursor:pointer;
-      margin-top:14px;
-    }
-    .btn-navy{
-      border:none;
-      background:var(--brand-navy);
-      color:#fff;
-      font-weight:800;
-      cursor:pointer;
-      margin-top:14px;
-    }
-    .btn-danger{
-      border:none;
-      background:var(--bad);
-      color:#fff;
-      font-weight:800;
-      cursor:pointer;
-      margin-top:14px;
-    }
-
-    .status{margin-top:14px;font-size:12.5px;white-space:pre-wrap}
-    .pill{
-      display:inline-block;
-      font-size:11px;
-      font-weight:800;
-      color:var(--brand-navy);
-      background:rgba(48,173,247,18);
-      border:1px solid rgba(48,173,247,28);
-      padding:4px 8px;
+    a.btn-nav{
+      padding:8px 14px;
       border-radius:999px;
-      margin-left:8px;
-      vertical-align:middle;
-    }
-    .pill-ok{background:rgba(22,163,74,14);border-color:rgba(22,163,74,25)}
-    .pill-warn{background:rgba(245,158,11,14);border-color:rgba(245,158,11,25)}
-    .pill-bad{background:rgba(220,38,38,12);border-color:rgba(220,38,38,25)}
-    .hint{ font-size:12px;color:var(--muted);margin-top:10px; }
-
-    /* Simple nav */
-    .nav{
-      margin-top:10px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-    .nav a, .nav button{
-      width:auto;
-      padding:9px 12px;
-      border-radius:999px;
-      border:1px solid rgba(34,35,61,.15);
+      border:1px solid var(--border);
       background:#fff;
-      color:var(--brand-navy);
-      font-weight:700;
-      font-size:13px;
-      cursor:pointer;
+      color:#111;
       text-decoration:none;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
+      font-weight:600;
+      font-size:13px;
     }
-    .nav a:hover, .nav button:hover{filter:brightness(.98)}
 
-    /* Workbench layout */
     .grid{
       display:grid;
-      grid-template-columns: 1.3fr 1fr;
-      gap:18px;
+      grid-template-columns:1.4fr 1fr;
+      gap:20px;
       align-items:start;
     }
-    @media (max-width: 920px){
-      .grid{grid-template-columns:1fr;}
+
+    .card{
+      background:var(--card);
+      border-radius:var(--radius);
+      padding:16px;
+      box-shadow:0 18px 40px rgba(0,0,0,.12);
     }
 
-    /* Table */
-    table{
-      width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      font-size:13px;
-    }
-    thead th{
-      text-align:left;
-      font-size:12px;
-      color:var(--muted);
-      padding:12px 12px;
-      border-bottom:1px solid rgba(34,35,61,.10);
-    }
-    tbody td{
-      padding:12px 12px;
-      border-bottom:1px solid rgba(34,35,61,.08);
-      vertical-align:top;
-    }
-    tbody tr:hover{background:rgba(48,173,247,06);}
-    .small{font-size:11px;color:var(--muted)}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
+    h2{font-size:16px;margin:0 0 6px}
+    .sub{font-size:12px;color:var(--muted);margin-bottom:10px}
 
-    .actions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-    .actions button{
-      width:auto;
-      margin-top:0;
-      padding:8px 10px;
-      font-size:12px;
+    table{width:100%;border-collapse:collapse;font-size:13px}
+    th,td{padding:12px;border-bottom:1px solid var(--border);vertical-align:top}
+    th{text-align:left;color:#374151;font-size:12px}
+
+    .small{font-size:12px;color:var(--muted)}
+    .mono{font-family:ui-monospace,monospace;font-size:11px}
+
+    .pill{
+      display:inline-block;
+      padding:4px 10px;
       border-radius:999px;
+      font-size:11px;
+      font-weight:700;
+      color:#fff;
     }
+    .pending{background:#3b82f6}
+    .in_progress{background:#f59e0b}
 
-    .detailHead{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:4px;
+    .actions{display:flex;gap:6px}
+    button{
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      font-weight:700;
+      border:none;
+      cursor:pointer;
     }
-    .detailKey{
-      font-weight:800;
-      color:var(--brand-navy);
+    .btn{background:var(--brand-primary);color:#fff}
+    .btn-ghost{background:#fff;border:1px solid var(--border)}
+
+    input,select,textarea{
+      width:100%;
+      border-radius:10px;
+      border:1px solid var(--border);
+      padding:8px;
       font-size:13px;
     }
-    .divider{
-      margin:14px 0;
-      border:none;
-      border-top:1px solid rgba(34,35,61,.12);
-    }
+    textarea{min-height:80px}
   </style>
 </head>
 
 <body>
-  <div class="wrap">
-    <div class="header">
-      <img class="logo" src="https://abmlogic.com/abm-logic-email-logo.png" alt="ABM Logic">
-      <div style="flex:1;">
-        <h1>Workbench <span class="pill">Enrichment / Validation</span></h1>
-        <p class="sub">Claim → Enrich → Done / Reject. Owner-only updates enforced by RLS.</p>
+<div class="wrap">
 
-        <div class="nav">
-          <a href="./index.html">Upload</a>
-          <a id="adminLink" href="./admin.html" style="display:none;">Admin Setup</a>
-          <a href="./workbench.html">Workbench</a>
-          <button id="logoutBtn" type="button" style="margin-left:auto; display:none;">Logout</button>
-        </div>
-      </div>
-    </div>
+  <div class="header">
+    <h1>Workbench</h1>
+    <div class="sub">Enrichment / Validation — owner-only updates enforced by RLS</div>
 
-    <!-- LOGIN -->
-    <div class="card" id="loginCard">
-      <div class="row">
-        <div>
-          <label>Email</label>
-          <input id="email" type="email" autocomplete="username" />
-        </div>
-        <div>
-          <label>Password</label>
-          <input id="password" type="password" autocomplete="current-password" />
-        </div>
-      </div>
-      <button class="btn" id="loginBtn">Sign in</button>
-      <div class="status" id="loginStatus"></div>
-      <div class="hint">If you can’t see any leads, check that stg_leads has rows and RLS allows SELECT for authenticated.</div>
-    </div>
-
-    <!-- APP -->
-    <div id="appWrap" style="display:none;">
-      <div class="grid">
-        <!-- LEFT: Queue -->
-        <div class="card">
-          <div class="detailHead">
-            <div>
-              <div class="detailKey">Enrichment Queue</div>
-              <div class="small">Pending + in progress</div>
-            </div>
-            <button id="refreshBtn" class="btn-ghost" type="button" style="width:auto;margin-top:0;">Refresh</button>
-          </div>
-
-          <div class="row3" style="margin-top:10px;">
-            <div>
-              <label>View</label>
-              <select id="viewFilter">
-                <option value="pending" selected>Pending</option>
-                <option value="mine">In progress (mine)</option>
-                <option value="all">Pending + In progress (all)</option>
-              </select>
-            </div>
-            <div>
-              <label>Search</label>
-              <input id="searchBox" placeholder="Search text (optional)" />
-            </div>
-            <div>
-              <label>&nbsp;</label>
-              <button id="clearBtn" class="btn-ghost" type="button" style="margin-top:7px;">Clear</button>
-            </div>
-          </div>
-
-          <div class="status" id="queueStatus"></div>
-
-          <div style="overflow:auto; margin-top:10px;">
-            <table>
-              <thead>
-                <tr>
-                  <th>Status</th>
-                  <th>Lead</th>
-                  <th>Company</th>
-                  <th>Owner</th>
-                  <th>Actions</th>
-                </tr>
-              </thead>
-              <tbody id="queueBody"></tbody>
-            </table>
-          </div>
-
-          <div class="hint">
-            Keys are <span class="mono">(ingest_job_id, row_number)</span>. That’s your primary key for stg_leads.
-          </div>
-        </div>
-
-        <!-- RIGHT: Detail -->
-        <div class="card">
-          <div class="detailHead">
-            <div>
-              <div class="detailKey">Lead Detail</div>
-              <div class="small" id="detailSub">Select a row from the queue.</div>
-            </div>
-            <div id="detailPill"></div>
-          </div>
-
-          <hr class="divider" />
-
-          <div id="detailEmpty" class="small" style="color:var(--muted);">
-            No lead selected.
-          </div>
-
-          <div id="detailForm" style="display:none;">
-            <div class="row">
-              <div>
-                <label>ingest_job_id</label>
-                <input id="d_ingest_job_id" class="mono" disabled />
-              </div>
-              <div>
-                <label>row_number</label>
-                <input id="d_row_number" class="mono" disabled />
-              </div>
-            </div>
-
-            <label>phone_enriched</label>
-            <input id="d_phone" placeholder="+44..." />
-
-            <label>enrichment_notes</label>
-            <textarea id="d_notes" placeholder="Add notes (why verified / changes / rejection reason etc.)"></textarea>
-
-            <label>verified_fields (JSON)</label>
-            <textarea id="d_verified" placeholder='{"job_title_verified":true,"company_verified":true}'></textarea>
-
-            <label>enriched_payload (JSON)</label>
-            <textarea id="d_payload" placeholder='{"linkedin_url":"...","title":"..."}'></textarea>
-
-            <div class="actions" style="margin-top:12px;">
-              <button id="saveBtn" class="btn-navy" type="button">Save</button>
-              <button id="releaseBtn" class="btn-ghost" type="button">Release</button>
-              <button id="doneBtn" class="btn" type="button">Mark Done</button>
-              <button id="rejectBtn" class="btn-danger" type="button">Reject</button>
-            </div>
-
-            <div class="status" id="detailStatus"></div>
-            <div class="hint">Owner-only updates enforced by RLS. If Save fails, you likely aren’t the owner.</div>
-          </div>
-        </div>
-      </div>
+    <div class="nav">
+      <a class="btn-nav" href="./index.html">Upload</a>
+      <a class="btn-nav" href="./admin.html">Admin Setup</a>
+      <a class="btn-nav" href="./workbench.html">Workbench</a>
+      <a class="btn-nav" href="#" onclick="logout()">Logout</a>
     </div>
   </div>
 
+  <div class="grid">
+
+    <!-- QUEUE -->
+    <div class="card">
+      <h2>Enrichment Queue</h2>
+      <div class="sub" id="queueStatus">Loading…</div>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Status</th>
+            <th>Lead</th>
+            <th>Company</th>
+            <th>Owner</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="queueBody"></tbody>
+      </table>
+    </div>
+
+    <!-- DETAIL -->
+    <div class="card">
+      <h2>Lead Detail</h2>
+      <div class="sub">Select a row from the queue.</div>
+
+      <div id="detailEmpty" class="small">No lead selected.</div>
+
+      <div id="detailForm" style="display:none">
+        <label>Phone</label>
+        <input id="phoneInput"/>
+
+        <label>Enrichment Notes</label>
+        <textarea id="notesInput"></textarea>
+
+        <label>Verified Fields (JSON)</label>
+        <textarea id="verifiedInput"></textarea>
+
+        <label>Enriched Payload (JSON)</label>
+        <textarea id="payloadInput"></textarea>
+
+        <div class="actions" style="margin-top:10px">
+          <button class="btn" onclick="saveLead()">Save</button>
+          <button class="btn-ghost" onclick="markDone()">Done</button>
+          <button class="btn-ghost" onclick="markRejected()">Reject</button>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
 <script>
-  // ===== CONFIG =====
-  // Paste the SAME anon key you use in index.html/admin.html
-  window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
-  const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
-  // ==================
-
-  if (!window.supabase) {
-    alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
-    throw new Error("Supabase SDK not loaded");
-  }
-
-  const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
-  const $ = (id) => document.getElementById(id);
-
-  let currentUserId = null;
-  let selected = null; // { ingest_job_id, row_number }
-  let selectedRowCache = null; // holds latest row data for pills etc.
-
-  $("loginBtn").onclick = login;
-  $("logoutBtn").onclick = logout;
-
-  $("refreshBtn").onclick = loadQueue;
-  $("viewFilter").onchange = loadQueue;
-  $("searchBox").oninput = debounce(loadQueue, 300);
-  $("clearBtn").onclick = () => { $("searchBox").value = ""; $("viewFilter").value = "pending"; loadQueue(); };
-
-  $("saveBtn").onclick = saveSelected;
-  $("releaseBtn").onclick = releaseSelected;
-  $("doneBtn").onclick = doneSelected;
-  $("rejectBtn").onclick = rejectSelected;
-
-  async function logout() {
-    await sb.auth.signOut();
-    location.reload();
-  }
-
-  async function isAdmin() {
-    const { data: userRes, error: userErr } = await sb.auth.getUser();
-    if (userErr || !userRes?.user) return false;
-
-    const { data, error } = await sb
-      .from("app_users")
-      .select("role")
-      .eq("user_id", userRes.user.id)
-      .single();
-
-    if (error) return false;
-    return data?.role === "admin";
-  }
-
-  function pillForStatus(status) {
-    if (status === "done") return `<span class="pill pill-ok">done</span>`;
-    if (status === "rejected") return `<span class="pill pill-bad">rejected</span>`;
-    if (status === "in_progress") return `<span class="pill pill-warn">in_progress</span>`;
-    return `<span class="pill">pending</span>`;
-  }
-
-  function setQueueStatus(msg) { $("queueStatus").textContent = msg || ""; }
-  function setDetailStatus(msg) { $("detailStatus").textContent = msg || ""; }
-
-  async function login() {
-    $("loginStatus").textContent = "Signing in…";
-    const { error } = await sb.auth.signInWithPassword({
-      email: $("email").value.trim(),
-      password: $("password").value
-    });
-    if (error) {
-      $("loginStatus").textContent = error.message;
-      return;
-    }
-    $("loginStatus").textContent = "";
-    await showApp();
-  }
-
-  async function showApp() {
-    const { data: userRes } = await sb.auth.getUser();
-    currentUserId = userRes?.user?.id || null;
-
-    $("loginCard").style.display = "none";
-    $("appWrap").style.display = "block";
-    $("logoutBtn").style.display = "inline-flex";
-
-    // Show admin link only for admins
-    const admin = await isAdmin();
-    if (admin) $("adminLink").style.display = "inline-flex";
-
-    await loadQueue();
-  }
-
-  function matchesSearch(row, q) {
-    if (!q) return true;
-
-    // We only have a small set of columns in v_enrichment_queue.
-    // For MVP: match key + notes + phone.
-    const hay = [
-      row.ingest_job_id,
-      String(row.row_number),
-      row.enrichment_status,
-      row.phone_enriched || "",
-      row.enrichment_notes || "",
-      row.enriched_by || ""
-    ].join(" ").toLowerCase();
-
-    return hay.includes(q);
-  }
-
-  async function loadQueue() {
-    setQueueStatus("Loading queue…");
-    const view = $("viewFilter").value;
-    const q = $("searchBox").value.trim().toLowerCase();
-
-    const { data: rows, error } = await sb
-      .from("v_enrichment_queue")
-      .select("*")
-      .limit(500);
-
-    if (error) {
-      setQueueStatus("❌ Failed to load queue: " + error.message);
-      return;
-    }
-
-    let filtered = rows || [];
-
-    if (view === "pending") {
-      filtered = filtered.filter(r => r.enrichment_status === "pending");
-    } else if (view === "mine") {
-      filtered = filtered.filter(r => r.enrichment_status === "in_progress" && r.enriched_by === currentUserId);
-    } else {
-      // all: pending + in_progress (already)
-    }
-
-    filtered = filtered.filter(r => matchesSearch(r, q));
-
-    // Render
-    const body = $("queueBody");
-    body.innerHTML = "";
-
-    if (!filtered.length) {
-      setQueueStatus("No rows.");
-      return;
-    }
-
-    setQueueStatus(`Showing ${filtered.length} row(s).`);
-
-    for (const r of filtered) {
-      const tr = document.createElement("tr");
-
-      const owner = r.enriched_by ? (r.enriched_by === currentUserId ? "me" : "other") : "-";
-      const canOpen = (r.enrichment_status === "pending") || (r.enrichment_status === "in_progress" && r.enriched_by === currentUserId);
-
-      tr.innerHTML = `
-        <td>${pillForStatus(r.enrichment_status)}</td>
-        <td class="mono">
-          ${r.ingest_job_id}<br/>
-          <span class="small">row ${r.row_number}</span>
-        </td>
-        <td>
-          ${owner}<br/>
-          <span class="small mono">${r.enriched_by ? r.enriched_by.slice(0,8) + "…" : ""}</span>
-        </td>
-        <td>
-          <div class="actions">
-            <button class="btn-ghost" type="button" ${canOpen ? "" : "disabled"}>Open</button>
-            ${r.enrichment_status === "pending" ? `<button class="btn" type="button">Claim</button>` : ``}
-          </div>
-        </td>
-      `;
-
-      const openBtn = tr.querySelectorAll("button")[0];
-      openBtn.onclick = () => openRow(r);
-
-      if (r.enrichment_status === "pending") {
-        const claimBtn = tr.querySelectorAll("button")[1];
-        claimBtn.onclick = async () => {
-          await claimThenOpen(r);
-        };
-      }
-
-      body.appendChild(tr);
-    }
-  }
-
-  async function claimThenOpen(row) {
-    setQueueStatus("Claiming lead…");
-    const { data, error } = await sb.rpc("claim_lead", {
-      p_ingest_job_id: row.ingest_job_id,
-      p_row_number: row.row_number
-    });
-
-    if (error) {
-      setQueueStatus("❌ claim_lead error: " + error.message);
-      return;
-    }
-
-    if (!data) {
-      setQueueStatus("⚠️ Already claimed by someone else.");
-      await loadQueue();
-      return;
-    }
-
-    setQueueStatus("✅ Claimed.");
-    await loadQueue();
-    await openRow({ ...row, enrichment_status: "in_progress", enriched_by: currentUserId });
-  }
-
-  async function openRow(row) {
-    // If pending, auto-claim first
-    if (row.enrichment_status === "pending") {
-      await claimThenOpen(row);
-      return;
-    }
-
-    // If in_progress but not mine, block edits
-    if (row.enrichment_status === "in_progress" && row.enriched_by !== currentUserId) {
-      setQueueStatus("⚠️ This lead is in progress by someone else.");
-      return;
-    }
-
-    selected = { ingest_job_id: row.ingest_job_id, row_number: row.row_number };
-    selectedRowCache = row;
-
-    $("detailEmpty").style.display = "none";
-    $("detailForm").style.display = "block";
-
-    $("d_ingest_job_id").value = row.ingest_job_id;
-    $("d_row_number").value = row.row_number;
-    $("detailSub").textContent = "Edit enrichment fields, then Save / Done / Reject.";
-    $("detailPill").innerHTML = pillForStatus(row.enrichment_status);
-    setDetailStatus("Loading lead…");
-
-    // Pull the live row from stg_leads (owner updates are protected by RLS)
-    const { data: lead, error } = await sb
-      .from("stg_leads")
-      .select("ingest_job_id,row_number,enrichment_status,enriched_by,enriched_at,phone_enriched,enrichment_notes,verified_fields,enriched_payload")
-      .eq("ingest_job_id", row.ingest_job_id)
-      .eq("row_number", row.row_number)
-      .single();
-
-    if (error) {
-      setDetailStatus("❌ Failed to load lead: " + error.message);
-      return;
-    }
-
-    $("d_phone").value = lead.phone_enriched || "";
-    $("d_notes").value = lead.enrichment_notes || "";
-    $("d_verified").value = lead.verified_fields ? JSON.stringify(lead.verified_fields, null, 2) : "";
-    $("d_payload").value = lead.enriched_payload ? JSON.stringify(lead.enriched_payload, null, 2) : "";
-
-    $("detailPill").innerHTML = pillForStatus(lead.enrichment_status);
-    setDetailStatus("");
-  }
-
-  function parseJsonOrNull(text, labelForError) {
-    const t = (text || "").trim();
-    if (!t) return null;
-    try {
-      return JSON.parse(t);
-    } catch (e) {
-      throw new Error(`${labelForError} must be valid JSON.`);
-    }
-  }
-
-  async function saveSelected() {
-    if (!selected) return;
-
-    setDetailStatus("Saving…");
-
-    let verified = null;
-    let payload = null;
-    try {
-      verified = parseJsonOrNull($("d_verified").value, "verified_fields");
-      payload = parseJsonOrNull($("d_payload").value, "enriched_payload");
-    } catch (e) {
-      setDetailStatus("❌ " + e.message);
-      return;
-    }
-
-    const updates = {
-      phone_enriched: $("d_phone").value.trim() || null,
-      enrichment_notes: $("d_notes").value.trim() || null,
-      verified_fields: verified,
-      enriched_payload: payload
-    };
-
-    const { error } = await sb
-      .from("stg_leads")
-      .update(updates)
-      .eq("ingest_job_id", selected.ingest_job_id)
-      .eq("row_number", selected.row_number);
-
-    if (error) {
-      setDetailStatus("❌ Save failed: " + error.message);
-      return;
-    }
-
-    setDetailStatus("✅ Saved.");
-    await loadQueue();
-  }
-
-  async function releaseSelected() {
-    if (!selected) return;
-    setDetailStatus("Releasing…");
-
-    const { data, error } = await sb.rpc("release_lead", {
-      p_ingest_job_id: selected.ingest_job_id,
-      p_row_number: selected.row_number
-    });
-
-    if (error) {
-      setDetailStatus("❌ release_lead error: " + error.message);
-      return;
-    }
-
-    if (!data) {
-      setDetailStatus("⚠️ Not released (maybe not yours or not in_progress).");
-      await loadQueue();
-      return;
-    }
-
-    setDetailStatus("✅ Released back to pending.");
-    selected = null;
-    selectedRowCache = null;
-    $("detailForm").style.display = "none";
-    $("detailEmpty").style.display = "block";
-    $("detailSub").textContent = "Select a row from the queue.";
-    $("detailPill").innerHTML = "";
-    await loadQueue();
-  }
-
-  async function doneSelected() {
-    if (!selected) return;
-    setDetailStatus("Marking done…");
-
-    const { data, error } = await sb.rpc("mark_lead_done", {
-      p_ingest_job_id: selected.ingest_job_id,
-      p_row_number: selected.row_number
-    });
-
-    if (error) {
-      setDetailStatus("❌ mark_lead_done error: " + error.message);
-      return;
-    }
-
-    if (!data) {
-      setDetailStatus("⚠️ Not marked done (maybe not yours or not in_progress).");
-      return;
-    }
-
-    setDetailStatus("✅ Marked done.");
-    await loadQueue();
-  }
-
-  async function rejectSelected() {
-    if (!selected) return;
-
-    const reason = prompt("Reject reason (required):");
-    if (!reason || !reason.trim()) {
-      setDetailStatus("⚠️ Reject cancelled (reason required).");
-      return;
-    }
-
-    setDetailStatus("Rejecting…");
-
-    const { data, error } = await sb.rpc("mark_lead_rejected", {
-      p_ingest_job_id: selected.ingest_job_id,
-      p_row_number: selected.row_number,
-      p_reason: reason.trim()
-    });
-
-    if (error) {
-      setDetailStatus("❌ mark_lead_rejected error: " + error.message);
-      return;
-    }
-
-    if (!data) {
-      setDetailStatus("⚠️ Not rejected (maybe not yours or not in_progress).");
-      return;
-    }
-
-    $("d_notes").value = reason.trim();
-    setDetailStatus("✅ Rejected.");
-    await loadQueue();
-  }
-
-  // Auto-show app if already logged in
-  sb.auth.getSession()
-    .then(async (r) => {
-      if (r.data.session) await showApp();
-    })
-    .catch(()=>{});
-
-  // Tiny debounce helper
-  function debounce(fn, ms){
-    let t = null;
-    return (...args) => {
-      clearTimeout(t);
-      t = setTimeout(() => fn(...args), ms);
-    };
-  }
+const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
+const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+let currentUserId = null;
+let activeRow = null;
+
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function pillForStatus(s){
+  return `<span class="pill ${s}">${s.replace("_"," ")}</span>`;
+}
+
+function setQueueStatus(t){document.getElementById("queueStatus").innerText=t}
+
+async function logout(){
+  await sb.auth.signOut();
+  location.href="./index.html";
+}
+
+async function init(){
+  const {data:{user}} = await sb.auth.getUser();
+  if(!user){location.href="./index.html";return;}
+  currentUserId=user.id;
+  loadQueue();
+}
+
+async function loadQueue(){
+  const {data:rows}=await sb.from("v_enrichment_queue").select("*");
+  const body=document.getElementById("queueBody");
+  body.innerHTML="";
+  setQueueStatus(`Showing ${rows.length} row(s)`);
+
+  rows.forEach(r=>{
+    const tr=document.createElement("tr");
+    const owner=r.enriched_by?(r.enriched_by===currentUserId?"me":"other"):"-";
+    tr.innerHTML=`
+      <td>${pillForStatus(r.enrichment_status)}</td>
+      <td><b>${escapeHtml(r.first_name||"")} ${escapeHtml(r.last_name||"")}</b><br><span class="small">${escapeHtml(r.email||"")}</span></td>
+      <td><b>${escapeHtml(r.company||"")}</b><br><span class="small">${escapeHtml(r.title||"")}</span></td>
+      <td>${owner}</td>
+      <td>
+        <button class="btn-ghost" onclick='openRow(${JSON.stringify(r)})'>Open</button>
+        ${r.enrichment_status==="pending"?`<button class="btn" onclick='claim(${JSON.stringify(r)})'>Claim</button>`:""}
+      </td>`;
+    body.appendChild(tr);
+  });
+}
+
+async function claim(r){
+  await sb.rpc("claim_lead",{p_ingest_job_id:r.ingest_job_id,p_row_number:r.row_number});
+  loadQueue();
+}
+
+function openRow(r){
+  activeRow=r;
+  document.getElementById("detailEmpty").style.display="none";
+  document.getElementById("detailForm").style.display="block";
+  phoneInput.value=r.phone_enriched||"";
+  notesInput.value=r.enrichment_notes||"";
+  verifiedInput.value=JSON.stringify(r.verified_fields||{},null,2);
+  payloadInput.value=JSON.stringify(r.enriched_payload||{},null,2);
+}
+
+async function saveLead(){
+  await sb.from("stg_leads").update({
+    phone_enriched:phoneInput.value,
+    enrichment_notes:notesInput.value,
+    verified_fields:JSON.parse(verifiedInput.value||"{}"),
+    enriched_payload:JSON.parse(payloadInput.value||"{}")
+  }).eq("ingest_job_id",activeRow.ingest_job_id)
+    .eq("row_number",activeRow.row_number);
+  loadQueue();
+}
+
+async function markDone(){
+  await sb.rpc("mark_lead_done",{p_ingest_job_id:activeRow.ingest_job_id,p_row_number:activeRow.row_number});
+  loadQueue();
+}
+
+async function markRejected(){
+  await sb.rpc("mark_lead_rejected",{p_ingest_job_id:activeRow.ingest_job_id,p_row_number:activeRow.row_number});
+  loadQueue();
+}
+
+init();
 </script>
-
 </body>
 </html>
