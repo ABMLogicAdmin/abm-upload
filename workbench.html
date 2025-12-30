@@ -37,8 +37,7 @@
       padding:32px 16px 60px;
     }
 
-    /* slightly wider than upload/admin */
-    .wrap{max-width:1200px;margin:0 auto}
+    .wrap{max-width:1320px;margin:0 auto}
 
     .header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
     .logo{height:34px;width:auto}
@@ -111,7 +110,6 @@
     .status{margin-top:14px;font-size:12.5px;white-space:pre-wrap}
     .hint{ font-size:12px;color:var(--muted);margin-top:10px; }
 
-    /* pills */
     .pill{
       display:inline-block;
       font-size:11px;
@@ -128,7 +126,6 @@
     .pill-warn{background:rgba(245,158,11,.14);border-color:rgba(245,158,11,.25)}
     .pill-bad{background:rgba(220,38,38,.12);border-color:rgba(220,38,38,.25)}
 
-    /* nav pill buttons */
     .nav{
       margin-top:10px;
       display:flex;
@@ -153,13 +150,12 @@
       gap:8px;
       margin-top:0;
     }
-    .nav a:hover, .nav button:hover{filter:brightness(.98)}
     .spacer{flex:1}
 
-    /* layout */
+    /* MAKE QUEUE WIDER */
     .grid{
       display:grid;
-      grid-template-columns: 1.35fr 1fr;
+      grid-template-columns: 1.65fr 1fr; /* was 1.35fr 1fr */
       gap:18px;
       align-items:start;
     }
@@ -172,22 +168,28 @@
       width:100%;
       border-collapse:separate;
       border-spacing:0;
-      font-size:13px;
     }
-    thead th{
+
+    /* slightly larger + clearer */
+    .queueTable{
+      font-size:13.5px; /* slightly larger */
+    }
+    .queueTable thead th{
       text-align:left;
-      font-size:12px;
+      font-size:12.5px;
       color:var(--muted);
       padding:12px 12px;
       border-bottom:1px solid rgba(34,35,61,.10);
+      white-space:nowrap;
     }
-    tbody td{
+    .queueTable tbody td{
       padding:12px 12px;
       border-bottom:1px solid rgba(34,35,61,.08);
       vertical-align:top;
     }
-    tbody tr:hover{background:rgba(48,173,247,.06);}
-    .small{font-size:11px;color:var(--muted)}
+    .queueTable tbody tr:hover{background:rgba(48,173,247,.06);}
+
+    .small{font-size:12px;color:var(--muted)} /* bumped */
     .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;}
 
     .actions{
@@ -201,6 +203,7 @@
       padding:8px 10px;
       font-size:12px;
       border-radius:999px;
+      white-space:nowrap;
     }
 
     .detailHead{
@@ -223,6 +226,9 @@
 
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+
+    /* keep key readable but compact */
+    .keyTiny{font-size:11px;color:var(--muted)}
   </style>
 </head>
 
@@ -279,9 +285,9 @@
             <div>
               <label>View</label>
               <select id="viewFilter">
-                <option value="pending" selected>Pending</option>
+                <option value="pending">Pending</option>
                 <option value="mine">In progress (mine)</option>
-                <option value="all">Pending + In progress (all)</option>
+                <option value="all" selected>Pending + In progress</option>
               </select>
             </div>
             <div>
@@ -297,12 +303,15 @@
           <div class="status" id="queueStatus"></div>
 
           <div style="overflow:auto; margin-top:10px;">
-            <table>
+            <table class="queueTable">
               <thead>
                 <tr>
                   <th>Status</th>
-                  <th>Lead</th>
+                  <th>First</th>
+                  <th>Last</th>
+                  <th>Email</th>
                   <th>Company</th>
+                  <th>Title</th>
                   <th>Owner</th>
                   <th>Actions</th>
                 </tr>
@@ -374,21 +383,15 @@
 
 <script>
   // ===== CONFIG =====
-  // Paste the SAME anon key you use in index.html/admin.html
   const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
   window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
   // ==================
-
-  if (!window.supabase) {
-    alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
-    throw new Error("Supabase SDK not loaded");
-  }
 
   const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
   const $ = (id) => document.getElementById(id);
 
   let currentUserId = null;
-  let selected = null; // { ingest_job_id, row_number }
+  let selected = null;
 
   $("loginBtn").onclick = login;
   $("logoutBtn").onclick = logout;
@@ -396,7 +399,7 @@
   $("refreshBtn").onclick = loadQueue;
   $("viewFilter").onchange = loadQueue;
   $("searchBox").oninput = debounce(loadQueue, 300);
-  $("clearBtn").onclick = () => { $("searchBox").value = ""; $("viewFilter").value = "pending"; loadQueue(); };
+  $("clearBtn").onclick = () => { $("searchBox").value = ""; loadQueue(); };
 
   $("saveBtn").onclick = saveSelected;
   $("releaseBtn").onclick = releaseSelected;
@@ -454,7 +457,6 @@
     $("appWrap").style.display = "block";
     $("logoutBtn").style.display = "inline-flex";
 
-    // Show admin link only for admins
     const admin = await isAdmin();
     if (admin) $("adminLink").style.display = "inline-flex";
 
@@ -463,7 +465,6 @@
 
   function matchesSearch(row, q) {
     if (!q) return true;
-
     const hay = [
       row.first_name || "",
       row.last_name || "",
@@ -477,8 +478,16 @@
       row.enrichment_notes || "",
       row.enriched_by || ""
     ].join(" ").toLowerCase();
-
     return hay.includes(q);
+  }
+
+  function escapeHtml(str){
+    return String(str ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#039;");
   }
 
   async function loadQueue() {
@@ -502,9 +511,7 @@
       filtered = filtered.filter(r => r.enrichment_status === "pending");
     } else if (view === "mine") {
       filtered = filtered.filter(r => r.enrichment_status === "in_progress" && r.enriched_by === currentUserId);
-    } else {
-      // all
-    }
+    } // else all
 
     filtered = filtered.filter(r => matchesSearch(r, q));
 
@@ -524,31 +531,17 @@
       const owner = r.enriched_by ? (r.enriched_by === currentUserId ? "me" : "other") : "-";
       const canOpen = (r.enrichment_status === "pending") || (r.enrichment_status === "in_progress" && r.enriched_by === currentUserId);
 
-      const leadName = [r.first_name, r.last_name].filter(Boolean).join(" ").trim();
-      const leadLine = leadName || "(no name)";
-      const leadEmail = r.email || "(no email)";
-      const companyLine = r.company || "(no company)";
-      const titleLine = r.title || "";
-
       tr.innerHTML = `
         <td>${pillForStatus(r.enrichment_status)}</td>
-
+        <td>${escapeHtml(r.first_name || "")}</td>
+        <td>${escapeHtml(r.last_name || "")}</td>
+        <td>${escapeHtml(r.email || "")}</td>
         <td>
-          <div style="font-weight:800;color:var(--brand-navy);">${escapeHtml(leadLine)}</div>
-          <div class="small">${escapeHtml(leadEmail)}</div>
+          <div style="font-weight:800;color:var(--brand-navy);">${escapeHtml(r.company || "")}</div>
+          <div class="keyTiny mono">${escapeHtml(String(r.ingest_job_id).slice(0,8))}… • row ${escapeHtml(String(r.row_number))}</div>
         </td>
-
-        <td>
-          <div style="font-weight:800;color:var(--brand-navy);">${escapeHtml(companyLine)}</div>
-          <div class="small">${titleLine ? escapeHtml(titleLine) : ""}</div>
-          <div class="small mono">${escapeHtml(String(r.ingest_job_id).slice(0,8))}… • row ${escapeHtml(String(r.row_number))}</div>
-        </td>
-
-        <td>
-          ${owner}<br/>
-          <span class="small mono">${r.enriched_by ? escapeHtml(String(r.enriched_by).slice(0,8) + "…") : ""}</span>
-        </td>
-
+        <td>${escapeHtml(r.title || "")}</td>
+        <td>${escapeHtml(owner)}</td>
         <td>
           <div class="actions">
             <button class="btn-ghost" type="button" ${canOpen ? "" : "disabled"}>Open</button>
@@ -596,13 +589,11 @@
   }
 
   async function openRow(row) {
-    // If pending, auto-claim first
     if (row.enrichment_status === "pending") {
       await claimThenOpen(row);
       return;
     }
 
-    // If in_progress but not mine, block edits
     if (row.enrichment_status === "in_progress" && row.enriched_by !== currentUserId) {
       setQueueStatus("⚠️ This lead is in progress by someone else.");
       return;
@@ -771,16 +762,6 @@
     await loadQueue();
   }
 
-  function escapeHtml(str){
-    return String(str ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#039;");
-  }
-
-  // Auto-show app if already logged in
   sb.auth.getSession()
     .then(async (r) => {
       if (r.data.session) await showApp();
