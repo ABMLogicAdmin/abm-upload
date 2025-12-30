@@ -729,7 +729,7 @@
     else statuses = [viewMode];
 
     const { data, error } = await sb
-      .from("v_enrichment_queue")
+      .from("v_enrichment_queue_all")
       .select("*")
       .in("enrichment_status", statuses)
       .order("enrichment_status", { ascending: true });
