@@ -806,7 +806,10 @@ function renderOutcome(){
     return;
   }
 
-  $("outcomePill").textContent = currentOutcome.outcome_type || "—";
+ $("outcomePill").textContent = currentOutcome.outcome_type
+    ? currentOutcome.outcome_type.toUpperCase()
+    : "—";
+
   $("outcomeType").value = currentOutcome.outcome_type || "";
   $("outcomeNotes").value = currentOutcome.outcome_notes || "";
 }
