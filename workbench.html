@@ -728,7 +728,8 @@ try {
     .from("app_users")
     .select("role")
     .eq("user_id", me.id)
-    .single();
+    .maybeSingle();
+
 
   if (roleErr) {
     console.warn("Could not load app role:", roleErr.message);
@@ -806,16 +807,19 @@ function renderOutcome(){
     return;
   }
 
- $("outcomePill").textContent = currentOutcome.outcome_type
-    ? currentOutcome.outcome_type.toUpperCase()
-    : "—";
-
+  $("outcomePill").textContent =
+    (currentOutcome && currentOutcome.outcome_type)
+      ? currentOutcome.outcome_type.toUpperCase()
+      : "—";
   $("outcomeType").value = currentOutcome.outcome_type || "";
   $("outcomeNotes").value = currentOutcome.outcome_notes || "";
 }
 
 function canEditOutcome(){
   if (!currentLead || !me) return false;
+
+  // Only allow outcomes AFTER enrichment is complete (MVP rule)
+  if (currentLead.enrichment_status !== "done") return false;
 
   // If enrichment rejected, treat outcomes as read-only (MVP)
   if (currentLead.enrichment_status === "rejected") return false;
@@ -1049,43 +1053,48 @@ async function openLead(row){
     renderQueue();
   }
 
-  function renderLeadDetail(){
-    if (!currentLead) return;
+function renderLeadDetail(){
+  if (!currentLead) return;
 
-    $("detailStatusPill").textContent = currentLead.enrichment_status || "—";
-    const isRejected = (currentLead.enrichment_status === "rejected");
-$("rejectedBanner").style.display = isRejected ? "block" : "none";
+  $("detailStatusPill").textContent = currentLead.enrichment_status || "—";
+  const isRejected = (currentLead.enrichment_status === "rejected");
+  $("rejectedBanner").style.display = isRejected ? "block" : "none";
 
-    
+  $("ingestJobId").value = currentLead.ingest_job_id || "";
+  $("rowNumber").value = currentLead.row_number ?? "";
 
-    $("ingestJobId").value = currentLead.ingest_job_id || "";
-    $("rowNumber").value = currentLead.row_number ?? "";
+  $("leadContext").style.display = "block";
+  $("ctxName").textContent = `${currentLead.first_name || ""} ${currentLead.last_name || ""}`.trim();
+  $("ctxEmail").textContent = currentLead.email || "";
+  $("ctxCompany").textContent = currentLead.company || "";
+  $("ctxTitle").textContent = currentLead.title || "";
+  const loc = [currentLead.city, currentLead.state, currentLead.country].filter(Boolean).join(", ");
+  $("ctxLocation").textContent = loc || "—";
+  $("ctxOwner").textContent = ownerLabel(currentLead);
 
-    $("leadContext").style.display = "block";
-    $("ctxName").textContent = `${currentLead.first_name || ""} ${currentLead.last_name || ""}`.trim();
-    $("ctxEmail").textContent = currentLead.email || "";
-    $("ctxCompany").textContent = currentLead.company || "";
-    $("ctxTitle").textContent = currentLead.title || "";
-    const loc = [currentLead.city, currentLead.state, currentLead.country].filter(Boolean).join(", ");
-    $("ctxLocation").textContent = loc || "—";
-    $("ctxOwner").textContent = ownerLabel(currentLead);
-    
-    $("phoneCountry").value = currentLead.phone_country_iso2 || "";
-    $("phoneDirect").value = currentLead.phone_direct || "";
-    $("phoneMobile").value = currentLead.phone_mobile || "";
-    $("enrichmentNotes").value = currentLead.enrichment_notes || "";
+  $("phoneCountry").value = currentLead.phone_country_iso2 || "";
+  $("phoneDirect").value = currentLead.phone_direct || "";
+  $("phoneMobile").value = currentLead.phone_mobile || "";
+  $("enrichmentNotes").value = currentLead.enrichment_notes || "";
 
-    $("verifiedFields").value = stringifyJsonMaybe(currentLead.verified_fields);
-    $("enrichedPayload").value = stringifyJsonMaybe(currentLead.enriched_payload);
-    $("rawPayload").value = stringifyJsonMaybe(currentLead.raw_payload);
+  $("verifiedFields").value = stringifyJsonMaybe(currentLead.verified_fields);
+  $("enrichedPayload").value = stringifyJsonMaybe(currentLead.enriched_payload);
+  $("rawPayload").value = stringifyJsonMaybe(currentLead.raw_payload);
 
- setDetailInputsDisabled();
-
+  if (typeof setDetailInputsDisabled === "function") {
+    setDetailInputsDisabled();
+  } else {
+    console.warn("setDetailInputsDisabled not defined (scope/brace issue).");
   }
+}
 
 
+
+// ------------------------------
+// UI locking (enrichment + outcomes)
+// ------------------------------
+function setDetailInputsDisabled(){
   const status = currentLead?.enrichment_status;
-
   const isDone = status === "done";
   const isRejected = status === "rejected";
 
@@ -1097,29 +1106,23 @@ $("rejectedBanner").style.display = isRejected ? "block" : "none";
 
   // Enrichment fields
   ["phoneCountry","phoneDirect","phoneMobile","enrichmentNotes"]
-    .forEach(id => $(id).disabled = enrichmentReadOnly);
+    .forEach(id => { if ($(id)) $(id).disabled = enrichmentReadOnly; });
 
   // Advanced JSON is ALWAYS read-only
-  $("verifiedFields").readOnly = true;
-  $("enrichedPayload").readOnly = true;
-
-  // Enrichment workflow buttons
-  $("saveBtn").disabled = enrichmentReadOnly;
-  $("doneBtn").disabled = enrichmentReadOnly;
-  $("rejectBtn").disabled = enrichmentReadOnly;
-  $("releaseBtn").disabled = enrichmentReadOnly;
+  if ($("verifiedFields")) $("verifiedFields").readOnly = true;
+  if ($("enrichedPayload")) $("enrichedPayload").readOnly = true;
 
   // Hide Save + Enrichment Done only when rejected
-  $("saveBtn").style.display = isRejected ? "none" : "inline-block";
-  $("doneBtn").style.display = isRejected ? "none" : "inline-block";
+  if ($("saveBtn")) $("saveBtn").style.display = isRejected ? "none" : "inline-block";
+  if ($("doneBtn")) $("doneBtn").style.display = isRejected ? "none" : "inline-block";
 
-  // Outcome controls (Option A)
-  $("outcomeType").disabled = outcomeReadOnly;
-  $("outcomeNotes").disabled = outcomeReadOnly;
-  $("saveOutcomeBtn").disabled = outcomeReadOnly;
+  // Outcome controls
+  if ($("outcomeType")) $("outcomeType").disabled = outcomeReadOnly;
+  if ($("outcomeNotes")) $("outcomeNotes").disabled = outcomeReadOnly;
+  if ($("saveOutcomeBtn")) $("saveOutcomeBtn").disabled = outcomeReadOnly;
 
-  // Explain why outcome is disabled (UX) — only when disabled
-  if (outcomeReadOnly){
+  // Explain why outcome is disabled (ONLY when disabled)
+  if ($("outcomeStatus") && outcomeReadOnly){
     if (!currentLead){
       $("outcomeStatus").textContent = "";
     } else if (!me){
@@ -1134,6 +1137,8 @@ $("rejectedBanner").style.display = isRejected ? "block" : "none";
       $("outcomeStatus").textContent = "Outcome is locked.";
     }
   }
+}
+
 
 
 
