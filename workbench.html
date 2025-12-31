@@ -1548,25 +1548,31 @@ function getAnonKey() {
   return null;
 }
 
-  function getAccessTokenFromLocalStorage() {
-    // Supabase stores auth like: sb-<project-ref>-auth-token
-    const key = `sb-${PROJECT_REF}-auth-token`;
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
+function getAccessTokenFromLocalStorage() {
+  // Find the actual supabase auth key (sometimes ends with .0 etc.)
+  const key = Object.keys(localStorage).find(
+    (k) => k.startsWith(`sb-${PROJECT_REF}-auth-token`)
+  );
+  if (!key) return null;
 
-    try {
-      const parsed = JSON.parse(raw);
-      // Supabase JS v2 stores { access_token, refresh_token, ... }
-      if (parsed && parsed.access_token) return parsed.access_token;
+  const raw = localStorage.getItem(key);
+  if (!raw) return null;
 
-      // Sometimes it's { currentSession: { access_token } }
-      if (parsed && parsed.currentSession && parsed.currentSession.access_token) return parsed.currentSession.access_token;
+  try {
+    const parsed = JSON.parse(raw);
 
-      return null;
-    } catch {
-      return null;
-    }
+    // Most common shape
+    if (parsed?.access_token) return parsed.access_token;
+
+    // Other possible shapes
+    if (parsed?.currentSession?.access_token) return parsed.currentSession.access_token;
+    if (parsed?.session?.access_token) return parsed.session.access_token;
+
+    return null;
+  } catch {
+    return null;
   }
+}
 
 async function isAdminUser() {
   return window.ABM_CURRENT_ROLE === "admin";
@@ -1608,6 +1614,7 @@ async function initAdminBox() {
     }
 
     const jwt = getAccessTokenFromLocalStorage();
+    console.log("JWT starts:", (jwt || "").slice(0, 12), "len:", (jwt || "").length);
     if (!jwt) {
       setStatus("ERROR: No Supabase user session found in localStorage.\n\nFix: log out and log back in to Workbench, then try again.");
       return;
