@@ -1477,5 +1477,194 @@ function setDetailInputsDisabled(){
     }
   }
 </script>
+  <!-- =========================
+     Admin: Generate Delivery CSV
+     Paste this block just above </body>
+========================= -->
+<div id="adminDeliveryExport" style="display:none; margin:16px 0; padding:16px; border:1px solid #e5e7eb; border-radius:12px; background:#fff;">
+  <h3 style="margin:0 0 8px 0;">Admin — Generate Delivery CSV</h3>
+  <p style="margin:0 0 12px 0; color:#4b5563;">
+    Generates a delivery-ready CSV server-side and returns a signed download link.
+  </p>
+
+  <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+    <input id="deliveryIdInput" type="text" placeholder="Paste delivery_id (uuid)"
+      style="min-width:420px; flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px;" />
+
+    <button id="btnGenerateDeliveryCsv"
+      style="padding:10px 12px; border:0; border-radius:10px; background:#111827; color:#fff; cursor:pointer;">
+      Generate CSV
+    </button>
+  </div>
+
+  <div id="deliveryExportStatus" style="margin-top:12px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; white-space:pre-wrap;"></div>
+
+  <div id="deliveryExportResult" style="display:none; margin-top:12px;">
+    <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener"
+       style="display:inline-block; margin-right:12px;">Open signed download link</a>
+
+    <button id="btnCopySignedUrl"
+      style="padding:8px 10px; border:1px solid #d1d5db; border-radius:10px; background:#fff; cursor:pointer;">
+      Copy link
+    </button>
+  </div>
+</div>
+
+<script>
+/**
+ * Admin Delivery CSV wiring (frontend)
+ * Requirements:
+ * - Verify JWT ON in Supabase Function settings
+ * - User must be logged in via Supabase Auth
+ * - Edge function must enforce admin role (server-side)
+ */
+
+(function () {
+  const PROJECT_REF = "mwfnbmkjetriunsddupr";
+  const EDGE_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/generate-delivery-csv`;
+
+  // --- Helpers ---
+  function setStatus(text) {
+    const el = document.getElementById("deliveryExportStatus");
+    el.textContent = text || "";
+  }
+
+  function showResult(url) {
+    const wrap = document.getElementById("deliveryExportResult");
+    const a = document.getElementById("deliverySignedUrl");
+    a.href = url;
+    a.textContent = url;
+    wrap.style.display = "block";
+  }
+
+  function hideResult() {
+    document.getElementById("deliveryExportResult").style.display = "none";
+  }
+
+function getAnonKey() {
+  if (window.ABM_SUPABASE_ANON_KEY) return window.ABM_SUPABASE_ANON_KEY;
+  return null;
+}
+
+  function getAccessTokenFromLocalStorage() {
+    // Supabase stores auth like: sb-<project-ref>-auth-token
+    const key = `sb-${PROJECT_REF}-auth-token`;
+    const raw = localStorage.getItem(key);
+    if (!raw) return null;
+
+    try {
+      const parsed = JSON.parse(raw);
+      // Supabase JS v2 stores { access_token, refresh_token, ... }
+      if (parsed && parsed.access_token) return parsed.access_token;
+
+      // Sometimes it's { currentSession: { access_token } }
+      if (parsed && parsed.currentSession && parsed.currentSession.access_token) return parsed.currentSession.access_token;
+
+      return null;
+    } catch {
+      return null;
+    }
+  }
+
+  async function isAdminUser() {
+    // We rely on your existing UI banner showing role, but we can also do a simple heuristic:
+    // If your page already knows role, expose it globally (recommended).
+    // For now: check if the page shows "Admin," in header, or if you set currentRole variable.
+    if (typeof currentRole !== "undefined") return currentRole === "admin";
+    const bodyText = document.body.innerText || "";
+    return bodyText.includes("Admin,");
+  }
+
+  async function initAdminBox() {
+    const box = document.getElementById("adminDeliveryExport");
+    if (!box) return;
+
+    const admin = await isAdminUser();
+    if (admin) box.style.display = "block";
+  }
+
+  // --- Main action ---
+  async function generateDeliveryCsv() {
+    hideResult();
+    setStatus("");
+
+    const deliveryId = (document.getElementById("deliveryIdInput").value || "").trim();
+    if (!deliveryId) {
+      setStatus("ERROR: Please paste a delivery_id first.");
+      return;
+    }
+
+    const anonKey = getAnonKey();
+    if (!anonKey) {
+      setStatus("ERROR: Could not find your anon key in this page.\n\nFix: ensure your workbench.html defines SUPABASE_ANON_KEY (or ANON_KEY) like your other pages do.");
+      return;
+    }
+
+    const jwt = getAccessTokenFromLocalStorage();
+    if (!jwt) {
+      setStatus("ERROR: No Supabase user session found in localStorage.\n\nFix: log out and log back in to Workbench, then try again.");
+      return;
+    }
+
+    setStatus("Calling Edge Function...\n" + EDGE_URL);
+
+    try {
+      const res = await fetch(EDGE_URL, {
+        method: "POST",
+        headers: {
+          "apikey": anonKey,
+          "Authorization": "Bearer " + jwt,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ delivery_id: deliveryId }),
+      });
+
+      const text = await res.text();
+      let json = null;
+      try { json = JSON.parse(text); } catch {}
+
+      if (!res.ok) {
+        setStatus(`HTTP ${res.status}\n` + (json ? JSON.stringify(json, null, 2) : text));
+        return;
+      }
+
+      if (!json || !json.ok) {
+        setStatus("Unexpected response:\n" + (json ? JSON.stringify(json, null, 2) : text));
+        return;
+      }
+
+      setStatus("SUCCESS:\n" + JSON.stringify(json, null, 2));
+      showResult(json.signed_url);
+
+    } catch (e) {
+      setStatus("ERROR (network/runtime):\n" + (e && e.message ? e.message : String(e)));
+    }
+  }
+
+  // --- Wire up buttons ---
+  document.addEventListener("DOMContentLoaded", async () => {
+    await initAdminBox();
+
+    const btn = document.getElementById("btnGenerateDeliveryCsv");
+    btn.addEventListener("click", generateDeliveryCsv);
+
+    const copyBtn = document.getElementById("btnCopySignedUrl");
+    copyBtn.addEventListener("click", async () => {
+      const a = document.getElementById("deliverySignedUrl");
+      const url = a.href;
+      try {
+        await navigator.clipboard.writeText(url);
+        setStatus("Copied signed_url to clipboard.");
+      } catch {
+        setStatus("Could not copy automatically. Manually copy this URL:\n" + url);
+      }
+    });
+  });
+})();
+</script>
+<!-- =========================
+     End Admin: Generate Delivery CSV
+========================= -->
+
 </body>
 </html>
