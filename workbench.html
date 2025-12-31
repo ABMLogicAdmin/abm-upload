@@ -1083,7 +1083,7 @@ $("rejectedBanner").style.display = isRejected ? "block" : "none";
 
   }
 
-function setDetailInputsDisabled(){
+
   const status = currentLead?.enrichment_status;
 
   const isDone = status === "done";
@@ -1113,25 +1113,26 @@ function setDetailInputsDisabled(){
   $("saveBtn").style.display = isRejected ? "none" : "inline-block";
   $("doneBtn").style.display = isRejected ? "none" : "inline-block";
 
-// Outcome controls (Option A: can still set outcome after done)
-$("outcomeType").disabled = outcomeReadOnly;
-$("outcomeNotes").disabled = outcomeReadOnly;
-$("saveOutcomeBtn").disabled = outcomeReadOnly;
+  // Outcome controls (Option A)
+  $("outcomeType").disabled = outcomeReadOnly;
+  $("outcomeNotes").disabled = outcomeReadOnly;
+  $("saveOutcomeBtn").disabled = outcomeReadOnly;
 
-// Explain why outcome is disabled (UX) — only when disabled
-if (outcomeReadOnly){
-  if (!currentLead){
-    $("outcomeStatus").textContent = "";
-  } else if (!me){
-    $("outcomeStatus").textContent = "Log in to set an outcome.";
-  } else if (!(myRole === "admin" || myRole === "ops")){
-    $("outcomeStatus").textContent = "You don’t have permission to set outcomes.";
-  } else if (currentLead.enrichment_status === "rejected"){
-    $("outcomeStatus").textContent = "Outcome is locked because the lead was rejected in enrichment.";
-  } else if (myRole === "ops" && currentLead.enriched_by !== me.id){
-    $("outcomeStatus").textContent = "Outcome is locked because you are not the lead owner (claim it first).";
-  } else {
-    $("outcomeStatus").textContent = "Outcome is locked.";
+  // Explain why outcome is disabled (UX) — only when disabled
+  if (outcomeReadOnly){
+    if (!currentLead){
+      $("outcomeStatus").textContent = "";
+    } else if (!me){
+      $("outcomeStatus").textContent = "Log in to set an outcome.";
+    } else if (!(myRole === "admin" || myRole === "ops")){
+      $("outcomeStatus").textContent = "You don’t have permission to set outcomes.";
+    } else if (currentLead.enrichment_status === "rejected"){
+      $("outcomeStatus").textContent = "Outcome is locked because the lead was rejected in enrichment.";
+    } else if (myRole === "ops" && currentLead.enriched_by !== me.id){
+      $("outcomeStatus").textContent = "Outcome is locked because you are not the lead owner (claim it first).";
+    } else {
+      $("outcomeStatus").textContent = "Outcome is locked.";
+    }
   }
 }
 
