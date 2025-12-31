@@ -826,17 +826,21 @@ function applyPrefixIfEmpty(inputEl, prefix){
 
   const v = (inputEl.value ?? "").trim();
 
-  // Treat blank OR just "+" as empty (common when users start typing)
+  // Empty or user started with "+"
   if (v === "" || v === "+") {
-    inputEl.value = prefix; // IMPORTANT: no trailing space
+    inputEl.value = prefix;
     return;
   }
 
-  // If it already starts with a +<digits>, never overwrite
-  if (/^\+\d{1,4}\b/.test(v)) return;
+  // If the field is ONLY a prefix (e.g. "+1", "+44"), treat it as auto-filled and replace it
+  if (/^\+\d{1,4}$/.test(v)) {
+    inputEl.value = prefix;
+    return;
+  }
 
-  // Otherwise: user typed something without a prefix — do not overwrite
+  // If it already contains a real number (e.g. "+1 212..." or "+4420..."), do not overwrite
 }
+
 
 
   function onPhoneCountryChange(){
