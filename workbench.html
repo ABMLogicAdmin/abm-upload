@@ -774,6 +774,8 @@ if (roleErr) {
 
 // Always render, even if role is null (it will show "User, email")
 renderWhoAmI();
+window.ABM_CURRENT_ROLE = myRole;
+
 
 } catch (e) {
   console.warn("Role lookup failed:", e);
@@ -1566,22 +1568,27 @@ function getAnonKey() {
     }
   }
 
-  async function isAdminUser() {
-    // We rely on your existing UI banner showing role, but we can also do a simple heuristic:
-    // If your page already knows role, expose it globally (recommended).
-    // For now: check if the page shows "Admin," in header, or if you set currentRole variable.
-    if (typeof currentRole !== "undefined") return currentRole === "admin";
-    const bodyText = document.body.innerText || "";
-    return bodyText.includes("Admin,");
+async function isAdminUser() {
+  return window.ABM_CURRENT_ROLE === "admin";
+}
+
+async function initAdminBox() {
+  const box = document.getElementById("adminDeliveryExport");
+  if (!box) return;
+
+  // Wait up to ~3 seconds for role to be set by afterLogin()
+  for (let i = 0; i < 30; i++) {
+    if (window.ABM_CURRENT_ROLE === "admin") {
+      box.style.display = "block";
+      return;
+    }
+    await new Promise(r => setTimeout(r, 100));
   }
 
-  async function initAdminBox() {
-    const box = document.getElementById("adminDeliveryExport");
-    if (!box) return;
+  // Not admin (or role never arrived)
+  box.style.display = "none";
+}
 
-    const admin = await isAdminUser();
-    if (admin) box.style.display = "block";
-  }
 
   // --- Main action ---
   async function generateDeliveryCsv() {
