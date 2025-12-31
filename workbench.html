@@ -591,7 +591,37 @@
 
         <label>enrichment_notes</label>
         <textarea id="enrichmentNotes" placeholder="Add notes (why verified / changes / rejection reason etc.)"></textarea>
+<!-- Qualification Outcome (Slice 5) -->
+<div id="outcomeBox" style="margin-top:12px; padding:12px; border:1px solid rgba(34,35,61,.12); border-radius:12px; background:#fff;">
+  <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+    <div style="font-weight:900; color:var(--brand-navy); font-size:12.5px;">Qualification Outcome</div>
+    <span class="detailPill" id="outcomePill">No outcome</span>
+  </div>
 
+  <div class="detailGrid" style="margin-top:8px;">
+    <div>
+      <label style="margin-top:0;">Outcome</label>
+      <select id="outcomeType">
+        <option value="" selected>Select outcome…</option>
+        <option value="single_touch">Single-touch</option>
+        <option value="double_touch">Double-touch</option>
+        <option value="hql">HQL</option>
+        <option value="bant">BANT</option>
+        <option value="rejected">Rejected</option>
+      </select>
+    </div>
+
+    <div>
+      <label style="margin-top:0;">Outcome notes (optional)</label>
+      <input id="outcomeNotes" placeholder="Reason / context (optional)" />
+    </div>
+  </div>
+
+  <button id="saveOutcomeBtn" class="btn" style="margin-top:10px;">Save Outcome</button>
+  <div class="muted" id="outcomeStatus" style="margin-top:8px;"></div>
+</div>
+
+        
           <details id="advancedBox" style="margin-top:10px;">
             <summary style="cursor:pointer; font-weight:800;">Advanced (read-only)</summary>
           
@@ -610,12 +640,12 @@
         <div class="footerBtns">
           <button id="saveBtn" class="btn-secondary">Save</button>
           <button id="releaseBtn" class="btn-ghost">Release</button>
-          <button id="doneBtn" class="btn">Mark Done</button>
+          <button id="doneBtn" class="btn">Enrichment Done</button>
           <button id="rejectBtn" class="btn-danger">Reject</button>
         </div>
 
         <div class="helpLine">
-          Owner-only updates enforced by RLS. If Save fails, you likely aren’t the owner (Claim first).
+          Enrichment actions are owner-only. Qualification outcomes can be set after enrichment is complete.
         </div>
 
         <div class="statusText" id="detailStatus"></div>
@@ -643,6 +673,9 @@
   let queueRows = [];            // loaded queue rows (from view)
   let currentLead = null;        // full row object currently opened
   let selectedLeadKey = null;    // `${ingest_job_id}:${row_number}`
+  let myRole = null;             // 'admin' | 'ops' | 'uploader' | null
+  let currentOutcome = null;     // lead_outcomes row or null
+
 
   // Events
   $("loginBtn").onclick = login;
@@ -657,6 +690,7 @@
   $("releaseBtn").onclick = releaseLead;
   $("doneBtn").onclick = markDone;
   $("rejectBtn").onclick = markRejected;
+  $("saveOutcomeBtn").onclick = saveOutcome;
 
   // Init: if already signed in, show app
   init();
@@ -688,6 +722,25 @@
       return;
     }
     me = userRes.user;
+    // Load my app role (admin / ops / uploader)
+try {
+  const { data: roleRow, error: roleErr } = await sb
+    .from("app_users")
+    .select("role")
+    .eq("user_id", me.id)
+    .single();
+
+  if (roleErr) {
+    console.warn("Could not load app role:", roleErr.message);
+    myRole = null;
+  } else {
+    myRole = roleRow?.role || null;
+  }
+} catch (e) {
+  console.warn("Role lookup failed:", e);
+  myRole = null;
+}
+
 
     $("loginCard").style.display = "none";
     $("topNav").style.display = "flex";
@@ -726,6 +779,110 @@
     if (error) throw error;
     return data;
   }
+
+  // ------------------------------
+// Slice 5 — Qualification Outcome helpers
+// ------------------------------
+
+async function fetchOutcome(ingestJobId, rowNumber){
+  const { data, error } = await sb
+    .from("lead_outcomes")
+    .select("outcome_type,outcome_notes,decided_by,decided_at,created_at,updated_at")
+    .eq("ingest_job_id", ingestJobId)
+    .eq("row_number", rowNumber)
+    .maybeSingle();
+
+  if (error) throw error;
+  return data; // null if none
+}
+
+function renderOutcome(){
+  $("outcomeStatus").textContent = "";
+
+  if (!currentOutcome){
+    $("outcomePill").textContent = "No outcome";
+    $("outcomeType").value = "";
+    $("outcomeNotes").value = "";
+    return;
+  }
+
+  $("outcomePill").textContent = currentOutcome.outcome_type || "—";
+  $("outcomeType").value = currentOutcome.outcome_type || "";
+  $("outcomeNotes").value = currentOutcome.outcome_notes || "";
+}
+
+function canEditOutcome(){
+  if (!currentLead || !me) return false;
+
+  // If enrichment rejected, treat outcomes as read-only (MVP)
+  if (currentLead.enrichment_status === "rejected") return false;
+
+  // Role gate
+  if (!(myRole === "admin" || myRole === "ops")) return false;
+
+  // Ownership gate for ops (admin can override)
+  const isOwner = currentLead.enriched_by && currentLead.enriched_by === me.id;
+  if (myRole === "ops" && !isOwner) return false;
+
+  return true;
+}
+
+async function loadOutcomeForCurrentLead(){
+  currentOutcome = null;
+  $("outcomeStatus").textContent = "Loading outcome…";
+
+  try{
+    currentOutcome = await fetchOutcome(currentLead.ingest_job_id, currentLead.row_number);
+    renderOutcome();
+    $("outcomeStatus").textContent = currentOutcome ? "Outcome loaded." : "No outcome set yet.";
+  }catch(e){
+    renderOutcome();
+    $("outcomeStatus").textContent = "Outcome load failed: " + (e?.message || e);
+  }
+
+  setDetailInputsDisabled();
+}
+
+async function saveOutcome(){
+  if (!currentLead){
+    $("outcomeStatus").textContent = "Open a lead first.";
+    return;
+  }
+
+  if (!canEditOutcome()){
+    $("outcomeStatus").textContent = "You can’t edit outcome for this lead (role/ownership/status).";
+    return;
+  }
+
+  const outcomeType = $("outcomeType").value;
+  const notes = ($("outcomeNotes").value || "").trim() || null;
+
+  if (!outcomeType){
+    $("outcomeStatus").textContent = "Select an outcome first.";
+    return;
+  }
+
+  $("outcomeStatus").textContent = "Saving outcome…";
+
+  const { data, error } = await sb.rpc("set_lead_outcome", {
+    p_ingest_job_id: currentLead.ingest_job_id,
+    p_row_number: currentLead.row_number,
+    p_outcome_type: outcomeType,
+    p_outcome_notes: notes
+  });
+
+  if (error){
+    $("outcomeStatus").textContent = "Save outcome failed: " + error.message;
+    return;
+  }
+
+  // RPC returns the saved row
+  currentOutcome = data || null;
+  renderOutcome();
+  $("outcomeStatus").textContent = "Outcome saved.";
+
+  setDetailInputsDisabled();
+}
 
   function leadKey(row){
     return `${row.ingest_job_id}:${row.row_number}`;
@@ -856,6 +1013,9 @@ async function openLead(row){
     // Merge: keep the nice “view” fields (first_name, company, title, etc.)
     // but overwrite with the real saved stg fields (phones/notes/status/etc.)
     currentLead = { ...row, ...full };
+
+    // Clear loading message on success
+    $("detailStatus").textContent = "";
   }catch(e){
     // Fallback: still open the view row if stg fetch fails
     currentLead = row;
@@ -863,6 +1023,7 @@ async function openLead(row){
   }
 
   renderLeadDetail();
+  await loadOutcomeForCurrentLead();
 }
 
 
@@ -924,29 +1085,36 @@ function setDetailInputsDisabled(){
 
   const isDone = status === "done";
   const isRejected = status === "rejected";
-  const isReadOnly = isDone || isRejected;
 
-  // Normal analyst fields
+  // Enrichment fields read-only when done OR rejected
+  const enrichmentReadOnly = isDone || isRejected;
+
+  // Outcome read-only based on role/ownership/status
+  const outcomeReadOnly = !canEditOutcome();
+
+  // Enrichment fields
   ["phoneCountry","phoneDirect","phoneMobile","enrichmentNotes"]
-    .forEach(id => $(id).disabled = isReadOnly);
+    .forEach(id => $(id).disabled = enrichmentReadOnly);
 
-  // Advanced JSON is ALWAYS read-only for analysts
+  // Advanced JSON is ALWAYS read-only
   $("verifiedFields").readOnly = true;
   $("enrichedPayload").readOnly = true;
 
-  // Buttons (rules)
-  // done: disable everything
-  // rejected: disable everything AND hide Save/Mark Done
-  $("saveBtn").disabled = isReadOnly;
-  $("doneBtn").disabled = isReadOnly;
-  $("rejectBtn").disabled = isReadOnly;
-  $("releaseBtn").disabled = isReadOnly;
+  // Enrichment workflow buttons
+  $("saveBtn").disabled = enrichmentReadOnly;
+  $("doneBtn").disabled = enrichmentReadOnly;
+  $("rejectBtn").disabled = enrichmentReadOnly;
+  $("releaseBtn").disabled = enrichmentReadOnly;
 
-  // Hide Save + Mark Done only when rejected (this is what you asked for)
+  // Hide Save + Enrichment Done only when rejected
   $("saveBtn").style.display = isRejected ? "none" : "inline-block";
   $("doneBtn").style.display = isRejected ? "none" : "inline-block";
-}
 
+  // Outcome controls (Option A: can still set outcome after done)
+  $("outcomeType").disabled = outcomeReadOnly;
+  $("outcomeNotes").disabled = outcomeReadOnly;
+  $("saveOutcomeBtn").disabled = outcomeReadOnly;
+}
 
 
   async function claimLead(row){
