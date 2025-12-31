@@ -393,16 +393,17 @@
     .wrapSmall{ max-width:760px; margin:0 auto; }
   </style>
 </head>
-
 <body>
   <div class="wrap">
-    <div class="header">
-      <img class="logo" src="https://abmlogic.com/abm-logic-email-logo.png" alt="ABM Logic">
-      <div>
-        <h1>Workbench <span class="pill">Enrichment / Validation</span></h1>
-        <p class="sub">Claim → Enrich → Save → Done / Reject. Owner-only updates enforced by RLS.</p>
-      </div>
-    </div>
+<div class="header">
+  <img class="logo" src="https://abmlogic.com/abm-logic-email-logo.png" alt="ABM Logic">
+  <div>
+    <h1>Workbench <span class="pill">Enrichment / Validation</span></h1>
+    <p class="sub">Claim → Enrich → Save → Done / Reject. Owner-only updates enforced by RLS.</p>
+    <div class="muted" id="whoAmI" style="margin-top:6px; font-weight:800;"></div>
+  </div>
+</div>
+
 
     <div class="nav" id="topNav" style="display:none;">
       <a href="./index.html">Upload</a>
@@ -675,6 +676,34 @@
   let selectedLeadKey = null;    // `${ingest_job_id}:${row_number}`
   let myRole = null;             // 'admin' | 'ops' | 'uploader' | null
   let currentOutcome = null;     // lead_outcomes row or null
+  
+function formatRole(role){
+  if (!role) return "User";
+  if (role === "admin") return "Admin";
+  if (role === "ops") return "Ops";
+  if (role === "uploader") return "Uploader";
+  return role;
+}
+
+function getDisplayName(user){
+  // Prefer user_metadata full_name/name if present; fallback to email
+  const md = user?.user_metadata || {};
+  return md.full_name || md.name || user?.email || "Unknown";
+}
+
+function renderWhoAmI(){
+  const el = $("whoAmI");
+  if (!el) return;
+
+  if (!me){
+    el.textContent = "";
+    return;
+  }
+
+  const roleLabel = formatRole(myRole);
+  const nameLabel = getDisplayName(me);
+  el.textContent = `${roleLabel}, ${nameLabel}`;
+}
 
 
   // Events
@@ -725,6 +754,8 @@
       return;
     }
     me = userRes.user;
+    renderWhoAmI();
+
     // Load my app role (admin / ops / uploader)
 try {
   const { data: roleRow, error: roleErr } = await sb
@@ -734,12 +765,16 @@ try {
     .maybeSingle();
 
 
-  if (roleErr) {
-    console.warn("Could not load app role:", roleErr.message);
-    myRole = null;
-  } else {
-    myRole = roleRow?.role || null;
-  }
+if (roleErr) {
+  console.warn("Could not load app role:", roleErr.message);
+  myRole = null;
+} else {
+  myRole = roleRow?.role || null;
+}
+
+// Always render, even if role is null (it will show "User, email")
+renderWhoAmI();
+
 } catch (e) {
   console.warn("Role lookup failed:", e);
   myRole = null;
