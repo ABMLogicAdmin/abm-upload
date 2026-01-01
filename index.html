@@ -165,7 +165,8 @@
   <div class="wrap">
 
     <div id="siteNav"></div>
-
+  <button id="logoutBtn" type="button" style="display:none;">Logout</button>
+    
     <div class="card" id="loginCard">
       <div class="row">
         <div>
@@ -367,9 +368,27 @@
       $("loginStatus").textContent = "";
       showApp();
     }
+async function logout() {
+  try {
+    await sb.auth.signOut();
+  } catch (e) {
+    console.warn("Logout error:", e);
+  }
+  location.href = "/abm-upload/index.html";
+}
 
+    $("logoutBtn")?.addEventListener("click", logout);
+    
     async function showApp() {
       const loginCard = $("loginCard");
+        // Set navbar identity AFTER login, then refresh navbar
+  const { data: userRes } = await sb.auth.getUser();
+  if (userRes?.user?.email) {
+    window.ABM_USER_EMAIL = userRes.user.email;
+    window.ABM_ROLE = "ops";
+    window.dispatchEvent(new Event("abm:nav:refresh"));
+  }
+
       const appCard = $("appCard");
       const status = $("status");
 
@@ -508,7 +527,9 @@
       .catch(()=>{});
   </script>
 
-  <button id="logoutBtn" type="button" style="display:none;">Logout</button>
   
 </body>
 </html>
+
+
+
