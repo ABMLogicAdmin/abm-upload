@@ -91,32 +91,6 @@
 
     .hint{ font-size:12px;color:var(--muted);margin-top:10px; }
 
-    /* Simple nav (nav.js injects markup that uses these classes) */
-    .nav{
-      margin-top:10px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .nav a, .nav button{
-      width:auto;
-      padding:9px 12px;
-      border-radius:999px;
-      border:1px solid rgba(34,35,61,.15);
-      background:#fff;
-      color:var(--brand-navy);
-      font-weight:700;
-      font-size:13px;
-      cursor:pointer;
-      text-decoration:none;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-    }
-    .nav a:hover, .nav button:hover{filter:brightness(.98)}
-    .nav .spacer{ flex: 1; }
-
     /* Custom dropdown */
     .dd { position: relative; margin-top: 7px; }
     .dd-btn{
@@ -213,18 +187,15 @@
   </style>
 </head>
 
-<body>
-  <div class="wrap">
-    <div class="header">
-      <img class="logo" src="https://abmlogic.com/abm-logic-email-logo.png" alt="ABM Logic">
-      <div>
-        <h1>Admin Setup <span class="pill">Clients / Campaigns / Sources</span></h1>
-        <p class="sub">Admin-only setup page. Non-admins are blocked.</p>
+<body
+  data-page-title="Admin Setup"
+  data-page-badge="Clients / Campaigns / Sources"
+  data-page-help="Admin-only setup page. Non-admins are blocked."
+>
 
-        <!-- Shared nav injection point -->
-        <div id="siteNav"></div>
-      </div>
-    </div>
+  <div class="wrap">
+    
+    <div id="siteNav"></div>
 
     <!-- LOGIN -->
     <div class="card" id="loginCard">
