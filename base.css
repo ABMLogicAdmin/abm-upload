@@ -22,10 +22,18 @@
   text-decoration: none;
 }
 
-.nav-logo {
-  height: 26px;
-  width: auto;
-  display: block;
+.nav .nav-brand {
+  flex: 0 0 auto;
+}
+
+/* Force nav logo size even if other CSS touches all images */
+.nav .nav-logo {
+  height: 26px !important;
+  width: auto !important;
+  max-width: 160px !important;
+  max-height: 26px !important;
+  object-fit: contain !important;
+  display: block !important;
 }
 
 .nav a,
