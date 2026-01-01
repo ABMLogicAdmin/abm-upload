@@ -382,12 +382,28 @@ async function logout() {
     async function showApp() {
       const loginCard = $("loginCard");
         // Set navbar identity AFTER login, then refresh navbar
-  const { data: userRes } = await sb.auth.getUser();
-  if (userRes?.user?.email) {
-    window.ABM_USER_EMAIL = userRes.user.email;
-    window.ABM_ROLE = "ops";
-    window.dispatchEvent(new Event("abm:nav:refresh"));
+      
+// Set navbar identity AFTER login, then refresh navbar
+const { data: userRes } = await sb.auth.getUser();
+const user = userRes?.user;
+
+if (user?.email) {
+  window.ABM_USER_EMAIL = user.email;
+  window.ABM_ROLE = "user"; // default until we fetch real role
+
+  // Fetch real role from app_users
+  const { data: roleRow, error: roleErr } = await sb
+    .from("app_users")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!roleErr && roleRow?.role) {
+    window.ABM_ROLE = roleRow.role; // "admin" or "ops"
   }
+
+  window.dispatchEvent(new Event("abm:nav:refresh"));
+}
 
       const appCard = $("appCard");
       const status = $("status");
@@ -526,12 +542,6 @@ async function logout() {
       .then(r => { if (r?.data?.session) showApp(); })
       .catch(()=>{});
   </script>
-
   
 </body>
 </html>
-
-
-
-
-
