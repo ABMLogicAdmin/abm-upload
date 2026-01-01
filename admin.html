@@ -483,6 +483,8 @@ async function showApp() {
 
   if (user?.email) window.ABM_USER_EMAIL = user.email;
   window.ABM_ROLE = "admin"; // this page is admin-only
+  window.dispatchEvent(new Event("abm:nav:refresh"));
+
 
   // HARD ADMIN GATE
   const admin = await isAdmin();
