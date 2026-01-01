@@ -667,6 +667,8 @@
   }
 
   const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
+  window.sb = sb;
+
   const $ = (id) => document.getElementById(id);
 
   // UI state
@@ -1627,7 +1629,7 @@ async function initAdminBox() {
       return;
     }
 
-    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await window.sb.auth.getSession();
     
     if (sessionError || !session) {
       setStatus("ERROR: No active Supabase session.\n\nFix: log out and log back in to Workbench, then try again.");
