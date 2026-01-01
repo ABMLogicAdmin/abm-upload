@@ -21,6 +21,10 @@
 
     host.innerHTML = `
       <div class="nav">
+        <a class="nav-brand" href="./index.html" aria-label="ABM Logic Home">
+          <img class="nav-logo" src="https://abmlogic.com/abm-logic-email-logo.png" alt="ABM Logic">
+        </a>
+    
         ${link("./index.html", "Upload", "upload")}
         ${link("./workbench.html", "Workbench", "workbench")}
         ${link("./admin.html", "Admin", "admin")}
