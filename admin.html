@@ -196,6 +196,7 @@
   <div class="wrap">
     
     <div id="siteNav"></div>
+    <button id="logoutBtn" type="button" style="display:none;">Logout</button>
 
     <!-- LOGIN -->
     <div class="card" id="loginCard">
@@ -467,14 +468,12 @@
 
       async function logout() {
     try {
-      await sb.auth.signOut();
+      await window.ABM.sb.auth.signOut();
     } catch (e) {
       console.warn("Logout error:", e);
     }
-    // Simple reset
     location.href = "/abm-upload/admin.html";
   }
-$("logoutBtn")?.addEventListener("click", logout);
 
 async function showApp() {
   // Get user + set navbar identity
@@ -612,7 +611,12 @@ async function showApp() {
       $("newSourceName").value = "";
       setAdminStatus("✅ Source created.");
     }
+document.addEventListener("DOMContentLoaded", () => {
+  const btn = document.getElementById("logoutBtn");
+  if (btn) btn.addEventListener("click", logout);
+});
 
+    
     // Auto-show app if already logged in
     sb.auth.getSession()
       .then(async (r) => {
@@ -620,9 +624,6 @@ async function showApp() {
       })
       .catch(()=>{});
   </script>
-
-  <button id="logoutBtn" type="button" style="display:none;">Logout</button>
-
   
 </body>
 </html>
