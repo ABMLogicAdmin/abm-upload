@@ -111,7 +111,6 @@
   // Wire buttons
   // =========================
   $("loginBtn")?.addEventListener("click", login);
-  $("logoutBtn")?.addEventListener("click", logout);
   $("refreshBtn")?.addEventListener("click", () => loadQueue());
   $("viewSelect")?.addEventListener("change", () => loadQueue());
   $("searchInput")?.addEventListener("input", renderQueue);
@@ -211,9 +210,14 @@
       $("whoAmI").textContent = `${window.ABM.currentRole || "user"}, ${name}`;
     }
 
-    $("loginCard").style.display = "none";
-    $("topNav").style.display = "flex";
-    $("appGrid").style.display = "grid";
+      const loginCard = $("loginCard");
+      if (loginCard) loginCard.style.display = "none";
+      
+      // old nav removed; nav.js injects it now, so do nothing here
+      
+      const appGrid = $("appGrid");
+      if (appGrid) appGrid.style.display = "grid";
+
 
     await loadQueue();
   }
