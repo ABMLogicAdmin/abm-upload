@@ -314,7 +314,7 @@
   </div>
 
   <!-- Shared nav -->
-  <script src="/abm-upload/nav.js?v=8" defer></script>
+  <script src="/abm-upload/nav.js?v=9" defer></script>
 
   <script>
     // ===== CONFIG =====
@@ -465,9 +465,28 @@
       showApp();
     }
 
-    async function showApp() {
-      // HARD ADMIN GATE
-      const admin = await isAdmin();
+      async function logout() {
+    try {
+      await sb.auth.signOut();
+    } catch (e) {
+      console.warn("Logout error:", e);
+    }
+    // Simple reset
+    location.href = "/abm-upload/admin.html";
+  }
+$("logoutBtn")?.addEventListener("click", logout);
+
+async function showApp() {
+  // Get user + set navbar identity
+  const { data: userRes } = await sb.auth.getUser();
+  const user = userRes?.user;
+
+  if (user?.email) window.ABM_USER_EMAIL = user.email;
+  window.ABM_ROLE = "admin"; // this page is admin-only
+
+  // HARD ADMIN GATE
+  const admin = await isAdmin();
+
       if (!admin) {
         document.body.innerHTML = `
           <div style="max-width:600px;margin:80px auto;text-align:center;font-family:Poppins,Arial,sans-serif;">
