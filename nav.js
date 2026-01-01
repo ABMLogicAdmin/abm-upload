@@ -1,112 +1,164 @@
-// nav.js — shared navigation for all GitHub Pages
-(() => {
-  // Simple helper
-  const $ = (id) => document.getElementById(id);
-
-  // Detect which page we are on (for active nav styling)
-  function currentPage() {
-    const path = (location.pathname || "").toLowerCase();
-    if (path.endsWith("/workbench.html")) return "workbench";
-    if (path.endsWith("/admin.html")) return "admin";
-    return "upload"; // index.html or anything else
+// nav.js — injects a consistent global navbar into #siteNav on every page
+(function () {
+  function getPageName() {
+    const p = (location.pathname || "").toLowerCase();
+    if (p.endsWith("/workbench.html")) return "Workbench";
+    if (p.endsWith("/admin.html")) return "Admin Setup";
+    if (p.endsWith("/index.html") || p.endsWith("/")) return "CSV Upload";
+    return "ABM Logic";
   }
 
-  // Build a nav link with active state
-  function link(href, label, key) {
-    const isActive = currentPage() === key;
-    const activeAttrs = isActive
-      ? 'aria-current="page" style="border-color:rgba(48,173,247,.55); background:rgba(48,173,247,.10);"'
-      : "";
-    return `<a href="${href}" ${activeAttrs}>${label}</a>`;
+  function getRole() {
+    // Prefer an explicit value if your pages set it (recommended)
+    if (window.ABM_ROLE) return String(window.ABM_ROLE);
+
+    // Fallback to localStorage if you already store it there
+    const ls =
+      localStorage.getItem("abm_role") ||
+      localStorage.getItem("role") ||
+      localStorage.getItem("user_role");
+
+    if (ls) return String(ls);
+
+    // Final fallback
+    return "user";
   }
 
-  // Main render function
-  async function render() {
-    const host = $("siteNav");
+  function roleLabel(role) {
+    const r = String(role || "").toLowerCase();
+    if (r.includes("admin")) return "ADMIN";
+    if (r.includes("ops")) return "OPS";
+    return r.toUpperCase() || "USER";
+  }
+
+  function setActiveTab(a, isActive) {
+    if (isActive) {
+      a.setAttribute("aria-current", "page");
+      a.style.borderColor = "rgba(48,173,247,.55)";
+      a.style.background = "rgba(48,173,247,.18)";
+    } else {
+      a.removeAttribute("aria-current");
+      a.style.borderColor = "";
+      a.style.background = "";
+    }
+  }
+
+  function buildNav() {
+    const host = document.getElementById("siteNav");
     if (!host) return;
 
-    // ---------- 1. Render NAV + PAGE HEADER ----------
-    host.innerHTML = `
-      <div class="nav">
-        <a class="nav-brand" href="./index.html" aria-label="ABM Logic Home">
-          <img
-            class="nav-logo"
-            src="https://abmlogic.com/abm-logic-email-logo.png"
-            alt="ABM Logic"
-          >
-        </a>
+    const pageTitle = (window.ABM_PAGE && window.ABM_PAGE.title) || getPageName();
+    const helpText = (window.ABM_PAGE && window.ABM_PAGE.help) || "";
 
-        ${link("./index.html", "Upload", "upload")}
-        ${link("./workbench.html", "Workbench", "workbench")}
-        ${link("./admin.html", "Admin", "admin")}
+    const role = roleLabel(getRole());
 
-        <span class="spacer"></span>
+    // Shell
+    const shell = document.createElement("div");
+    shell.className = "navShell";
 
-        <button id="navLogoutBtn" style="display:none;">Logout</button>
-      </div>
+    // Top row
+    const top = document.createElement("div");
+    top.className = "navTop";
 
-      <div class="pageHeader">
-        <div class="pageHeaderTop">
-          <h1 class="pageTitle">
-            ${document.body.dataset.pageTitle || ""}
-          </h1>
+    const brand = document.createElement("a");
+    brand.className = "nav-brand";
+    brand.href = "/abm-upload/index.html";
+    brand.setAttribute("aria-label", "ABM Logic Home");
 
-          ${
-            document.body.dataset.pageBadge
-              ? `<span class="pageBadge">${document.body.dataset.pageBadge}</span>`
-              : ""
-          }
-        </div>
+    const logo = document.createElement("img");
+    logo.className = "nav-logo";
+    logo.src = "/abm-upload/abm-logic-email-logo.png";
+    logo.alt = "ABM Logic";
+    brand.appendChild(logo);
 
-        ${
-          document.body.dataset.pageHelp
-            ? `<div class="pageHelp">${document.body.dataset.pageHelp}</div>`
-            : ""
-        }
+    const meta = document.createElement("div");
+    meta.className = "navMeta";
 
-        <div class="pageIdentity" id="pageIdentity" style="display:none;"></div>
-      </div>
-    `;
+    const titleRow = document.createElement("div");
+    titleRow.className = "navTitleRow";
 
-    // ---------- 2. Populate USER ROLE + EMAIL ----------
-    // Workbench sets: window.ABM.me and window.ABM.currentRole
-    const identEl = $("pageIdentity");
-    if (identEl) {
-      // Wait briefly for login to finish (important for beginners)
-      for (let i = 0; i < 30; i++) {
-        if (window.ABM?.me?.email) break;
-        await new Promise((r) => setTimeout(r, 100));
-      }
+    const h = document.createElement("h1");
+    h.className = "navTitle";
+    h.textContent = pageTitle;
 
-      if (window.ABM?.me?.email) {
-        const role = window.ABM.currentRole || "user";
-        const email = window.ABM.me.email;
-        identEl.textContent = `${role}, ${email}`;
-        identEl.style.display = "block";
-      } else {
-        identEl.style.display = "none";
-      }
+    const badge = document.createElement("span");
+    badge.className = "navBadge";
+    badge.textContent = role;
+
+    titleRow.appendChild(h);
+    titleRow.appendChild(badge);
+
+    const subRow = document.createElement("div");
+    subRow.className = "navSubRow";
+
+    if (helpText) {
+      const help = document.createElement("div");
+      help.className = "navHelp";
+      help.textContent = helpText;
+      subRow.appendChild(help);
     }
 
-    // ---------- 3. Logout button (only if auth exists) ----------
-    const btn = $("navLogoutBtn");
-    const sb = window.ABM?.sb;
-
-    if (btn && sb) {
-      btn.style.display = "inline-flex";
-      btn.addEventListener("click", async () => {
-        try {
-          await sb.auth.signOut();
-        } catch {}
-        location.href = "./index.html";
-      });
+    // Optional: show current user email if page sets it
+    if (window.ABM_USER_EMAIL) {
+      const ident = document.createElement("div");
+      ident.className = "navIdentity";
+      ident.textContent = window.ABM_USER_EMAIL;
+      subRow.appendChild(ident);
     }
+
+    meta.appendChild(titleRow);
+    meta.appendChild(subRow);
+
+    const spacer = document.createElement("div");
+    spacer.className = "navSpacer";
+
+    // Logout button (always on far right)
+    const logoutBtn = document.createElement("button");
+    logoutBtn.id = "navLogoutBtn";
+    logoutBtn.type = "button";
+    logoutBtn.textContent = "Logout";
+
+    top.appendChild(brand);
+    top.appendChild(meta);
+    top.appendChild(spacer);
+    top.appendChild(logoutBtn);
+
+    // Bottom row tabs
+    const bottom = document.createElement("div");
+    bottom.className = "navBottom";
+
+    const tabs = [
+      { label: "Upload", href: "/abm-upload/index.html", match: "/index.html" },
+      { label: "Workbench", href: "/abm-upload/workbench.html", match: "/workbench.html" },
+      { label: "Admin", href: "/abm-upload/admin.html", match: "/admin.html" },
+    ];
+
+    const path = (location.pathname || "").toLowerCase();
+
+    tabs.forEach(t => {
+      const a = document.createElement("a");
+      a.href = t.href;
+      a.textContent = t.label;
+      setActiveTab(a, path.endsWith(t.match));
+      bottom.appendChild(a);
+    });
+
+    shell.appendChild(top);
+    shell.appendChild(bottom);
+
+    host.innerHTML = "";
+    host.appendChild(shell);
+
+    // Wire logout:
+    // If your existing pages already attach logout logic to #logoutBtn,
+    // we forward-click it. Otherwise you can implement logout here.
+    logoutBtn.addEventListener("click", () => {
+      const existing = document.getElementById("logoutBtn");
+      if (existing) return existing.click();
+      // fallback: emit an event so your page scripts can listen
+      window.dispatchEvent(new CustomEvent("abm:logout"));
+    });
   }
 
-  // Run after DOM is ready
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", render);
-  } else {
-    render();
-  }
+  document.addEventListener("DOMContentLoaded", buildNav);
 })();
