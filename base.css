@@ -1,65 +1,285 @@
-/* base.css — shared styles used across all pages */
+/* base.css — shared styles used across all pages
+   Purpose:
+   - Global layout + typography
+   - Shared navigation (nav.js)
+   - Shared UI primitives (cards, inputs, buttons)
+*/
 
-/* Shared nav container */
-.nav {
-  display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  align-items: center;
+/* =========================
+   Root / Theme
+========================= */
+:root{
+  --brand-navy:#22233D;
+  --muted: rgba(17,24,39,.65);
+  --border: rgba(34,35,61,.15);
+  --shadow: 0 18px 40px rgba(15,23,42,.12);
+  --panel: rgba(255,255,255,.95);
+  --bg-top: rgba(48,173,247,.10);
+  --bg-bot: rgba(255,255,255,.92);
+}
 
-  /* white divider line under the whole nav */
-  border-bottom: 3px solid rgba(255, 255, 255, 0.9);
+*{ box-sizing:border-box; }
+
+html, body{
+  height:100%;
+}
+
+body{
+  margin:0;
+  font-family: Poppins, Arial, sans-serif;
+  color: var(--brand-navy);
+  background: linear-gradient(180deg, var(--bg-top), var(--bg-bot));
+}
+
+/* =========================
+   Global layout helpers
+========================= */
+.wrap{
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 18px 18px 40px;
+}
+
+.wrapSmall{
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 18px 18px 40px;
+}
+
+/* =========================
+   Shared Navigation (nav.js)
+========================= */
+
+/* Nav container injected by nav.js */
+.navShell{
+  width:100%;
+  border-bottom: 3px solid rgba(255,255,255,.90);
   padding-bottom: 12px;
   margin-bottom: 18px;
 }
 
-/* Brand/logo link in nav (NOT a pill/button) */
-.nav-brand {
-  display: inline-flex;
-  align-items: center;
-  padding: 0;               /* no pill padding */
-  border-radius: 0;         /* no rounding */
-  background: transparent;  /* no background */
-  border: 0;                /* no border */
-  text-decoration: none;
-  flex: 0 0 auto;
+/* Top row: logo + title/identity + logout */
+.navTop{
+  display:flex;
+  align-items:center;
+  gap: 12px;
 }
 
-/* Logo image sizing (robust against other CSS) */
-.nav .nav-logo {
+/* Brand/logo link (NOT a pill/button) */
+.nav-brand{
+  display:inline-flex;
+  align-items:center;
+  padding:0;
+  border-radius:0;
+  background:transparent;
+  border:0;
+  text-decoration:none;
+  flex:0 0 auto;
+}
+.nav-brand:hover{ filter:none; }
+
+/* Logo sizing */
+.nav-logo{
   height: 36px !important;
   width: auto !important;
   max-width: 220px !important;
   max-height: 36px !important;
   object-fit: contain !important;
-  display: block !important;
+  display:block !important;
 }
 
-/* Nav buttons/links (exclude the brand/logo link) */
-.nav a:not(.nav-brand),
-.nav button {
-  width: auto;
-  padding: 9px 12px;
+/* Title + help + identity block */
+.navMeta{
+  display:flex;
+  flex-direction:column;
+  gap: 4px;
+  min-width:0;
+  flex: 1;
+}
+
+.navTitleRow{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  flex-wrap:wrap;
+}
+
+.navTitle{
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--brand-navy);
+  line-height: 1.1;
+  margin:0;
+}
+
+.navBadge{
+  display:inline-flex;
+  align-items:center;
+  padding: 6px 10px;
   border-radius: 999px;
-  border: 1px solid rgba(34, 35, 61, 0.15);
-  background: #fff;
-  color: #22233D;
-  font-weight: 700;
-  font-size: 13px;
-  cursor: pointer;
-  text-decoration: none;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  font-weight: 800;
+  font-size: 12px;
+  background: rgba(48,173,247,.18);
+  border: 1px solid rgba(48,173,247,.28);
+  color: var(--brand-navy);
 }
 
-/* Hover styling (exclude brand/logo link) */
-.nav a:not(.nav-brand):hover,
-.nav button:hover {
-  filter: brightness(0.98);
+.navSubRow{
+  display:flex;
+  align-items:center;
+  gap: 12px;
+  flex-wrap:wrap;
+}
+
+.navHelp{
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.navIdentity{
+  font-size: 13px;
+  font-weight: 800;
+  color: rgba(17,24,39,.75);
 }
 
 /* Spacer pushes Logout to the right */
-.nav .spacer {
-  flex: 1;
+.navSpacer{ flex:1; }
+
+/* Bottom row: tabs */
+.navBottom{
+  margin-top: 12px;
+  display:flex;
+  align-items:center;
+  gap: 10px;
+  flex-wrap:wrap;
+}
+
+/* Buttons/links in nav (tabs + logout) */
+.navBottom a,
+.navBottom button,
+.navTop button{
+  width:auto;
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background:#fff;
+  color: var(--brand-navy);
+  font-weight: 700;
+  font-size: 13px;
+  cursor:pointer;
+  text-decoration:none;
+  display:inline-flex;
+  align-items:center;
+  gap: 8px;
+}
+.navBottom a:hover,
+.navBottom button:hover,
+.navTop button:hover{
+  filter: brightness(.98);
+}
+
+/* Active page styling is applied inline by nav.js, but this helps on focus */
+.navBottom a:focus,
+.navBottom button:focus,
+.navTop button:focus{
+  outline: 2px solid rgba(48,173,247,.35);
+  outline-offset: 2px;
+}
+
+/* =========================
+   Shared UI primitives
+========================= */
+.card{
+  background: var(--panel);
+  border: 1px solid rgba(34,35,61,.10);
+  border-radius: 16px;
+  box-shadow: var(--shadow);
+}
+
+.cardInner{
+  padding: 16px;
+}
+
+.muted{
+  color: var(--muted);
+}
+
+hr{
+  border:0;
+  border-top: 1px solid rgba(34,35,61,.12);
+  margin: 14px 0;
+}
+
+/* Inputs */
+label{
+  font-size: 12px;
+  font-weight: 800;
+  color: rgba(34,35,61,.85);
+  display:block;
+  margin-bottom: 6px;
+}
+
+input, select, textarea{
+  width: 100%;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(34,35,61,.14);
+  background: rgba(255,255,255,.9);
+  color: var(--brand-navy);
+  font-family: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+input:focus, select:focus, textarea:focus{
+  border-color: rgba(48,173,247,.55);
+  box-shadow: 0 0 0 3px rgba(48,173,247,.18);
+}
+
+textarea{
+  min-height: 90px;
+  resize: vertical;
+}
+
+/* Buttons */
+.btn{
+  width:auto;
+  padding: 10px 12px;
+  border-radius: 12px;
+  border: 1px solid var(--border);
+  background:#fff;
+  color: var(--brand-navy);
+  font-weight: 800;
+  font-size: 13px;
+  cursor:pointer;
+}
+
+.btn:hover{ filter: brightness(.98); }
+
+.btnPrimary{
+  border-color: rgba(48,173,247,.55);
+  background: rgba(48,173,247,.12);
+}
+
+.statusText{
+  margin-top: 10px;
+  font-size: 12.5px;
+  color: var(--muted);
+  white-space: pre-wrap;
+}
+
+/* =========================
+   Responsive
+========================= */
+@media (max-width: 900px){
+  .wrap, .wrapSmall{ padding: 14px 12px 28px; }
+  .navTop{ align-items:flex-start; }
+}
+
+@media (max-width: 640px){
+  .navTop{
+    flex-wrap:wrap;
+  }
+  .navSpacer{ display:none; }
+  .navBottom{ gap: 8px; }
 }
