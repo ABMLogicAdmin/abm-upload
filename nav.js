@@ -15,7 +15,7 @@
     return `<a href="${href}" ${active}>${label}</a>`;
   }
 
-  function render() {
+  async function render() {
     const host = $("siteNav");
     if (!host) return;
 
@@ -31,7 +31,45 @@
         <span class="spacer"></span>
         <button id="navLogoutBtn" style="display:none;">Logout</button>
       </div>
+    
+      <div class="pageHeader">
+        <div class="pageHeaderTop">
+          <h1 class="pageTitle">${document.body.dataset.pageTitle || ""}</h1>
+          ${
+            document.body.dataset.pageBadge
+              ? `<span class="pageBadge">${document.body.dataset.pageBadge}</span>`
+              : ""
+          }
+        </div>
+    
+        ${
+          document.body.dataset.pageHelp
+            ? `<div class="pageHelp">${document.body.dataset.pageHelp}</div>`
+            : ""
+        }
+    
+        <div class="pageIdentity" id="pageIdentity" style="display:none;"></div>
+      </div>
     `;
+
+      // Populate role + email (Workbench sets window.ABM.me/currentRole after login)
+      // We wait briefly to avoid timing issues.
+      const identEl = $("pageIdentity");
+      if (identEl) {
+        for (let i = 0; i < 30; i++) {
+          if (window.ABM?.me?.email) break;
+          await new Promise(r => setTimeout(r, 100));
+        }
+      
+        if (window.ABM?.me?.email) {
+          const role = window.ABM.currentRole || "user";
+          const email = window.ABM.me.email || "";
+          identEl.textContent = `${role}, ${email}`;
+          identEl.style.display = "block";
+        } else {
+          identEl.style.display = "none";
+        }
+      }
 
     // Optional: if Supabase client exists, show a real logout button
     // (This will work on pages that already load supabase-js + create window.ABM.sb)
