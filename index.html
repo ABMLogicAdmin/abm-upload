@@ -36,10 +36,7 @@
       padding:32px 16px 60px;
     }
     .wrap{max-width:760px;margin:0 auto}
-    .header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-    .logo{height:34px;width:auto}
-    h1{font-size:18px;margin:0;color:var(--brand-navy);font-weight:700}
-    .sub{margin:2px 0 0;color:var(--muted);font-size:12.5px}
+  
 
     .card{
       margin-top:18px;
@@ -75,18 +72,7 @@
     .btn:hover{filter:brightness(.98)}
     .btn:active{transform:translateY(1px)}
     .status{margin-top:14px;font-size:12.5px;white-space:pre-wrap}
-    .pill{
-      display:inline-block;
-      font-size:11px;
-      font-weight:700;
-      color:var(--brand-navy);
-      background:rgba(48,173,247,18);
-      border:1px solid rgba(48,173,247,28);
-      padding:4px 8px;
-      border-radius:999px;
-      margin-left:8px;
-      vertical-align:middle;
-    }
+    
     @media (max-width:640px){.row{grid-template-columns:1fr}}
 
     /* Link-styled button */
@@ -167,46 +153,18 @@
       border:1px solid var(--border);
       font-size:13px;
     }
-
-    /* Simple nav (nav.js injects this markup) */
-    .nav{
-      margin-top:10px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .nav a, .nav button{
-      width:auto;
-      padding:9px 12px;
-      border-radius:999px;
-      border:1px solid rgba(34,35,61,.15);
-      background:#fff;
-      color:var(--brand-navy);
-      font-weight:700;
-      font-size:13px;
-      cursor:pointer;
-      text-decoration:none;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-    }
-    .nav a:hover, .nav button:hover{filter:brightness(.98)}
-    .nav .spacer{ flex: 1; }
   </style>
 </head>
 
-<body>
+<body
+  data-page-title="CSV Upload"
+  data-page-badge="Partner / Batch Ingest"
+  data-page-help="Uploads a CSV to Storage and creates an ingest_jobs record."
+>
+
   <div class="wrap">
-    <div class="header">
-      <img class="logo" src="https://abmlogic.com/abm-logic-email-logo.png" alt="ABM Logic">
-      <div>
-        <h1>CSV Upload <span class="pill">Partner / Batch Ingest</span></h1>
-        <p class="sub">Uploads a CSV to Storage and creates an ingest_jobs record.</p>
-        <!-- Shared nav injection point -->
-        <div id="siteNav"></div>
-      </div>
-    </div>
+
+    <div id="siteNav"></div>
 
     <div class="card" id="loginCard">
       <div class="row">
@@ -551,7 +509,3 @@
   </script>
 </body>
 </html>
-
-
-
-
