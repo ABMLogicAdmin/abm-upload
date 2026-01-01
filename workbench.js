@@ -5,83 +5,161 @@
   // =========================
   const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
-  // =========================
+    // =========================
 
   if (!window.supabase) {
-    alert("Supabase SDK failed to load. Check CDN/network.");
+    alert("Supabase SDK failed to load. Check the <script> tag in workbench.html.");
     throw new Error("Supabase SDK not loaded");
   }
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Shared globals for admin-export.js
+  // Expose for admin-export.js (CSV export)
   window.ABM = {
     SUPABASE_URL,
     SUPABASE_ANON_KEY,
     sb,
+    me: null,
     currentRole: null,
-    me: null
   };
 
   const $ = (id) => document.getElementById(id);
 
+  // =========================
+  // Phone country → dial code
+  // =========================
+  // Format: [ISO2, Country Name, DialCode]
+  const COUNTRY_DIAL_CODES = [
+    ["AF","Afghanistan","+93"], ["AL","Albania","+355"], ["DZ","Algeria","+213"], ["AR","Argentina","+54"],
+    ["AM","Armenia","+374"], ["AU","Australia","+61"], ["AT","Austria","+43"], ["AZ","Azerbaijan","+994"],
+    ["BH","Bahrain","+973"], ["BD","Bangladesh","+880"], ["BY","Belarus","+375"], ["BE","Belgium","+32"],
+    ["BR","Brazil","+55"], ["BG","Bulgaria","+359"], ["CA","Canada","+1"], ["CL","Chile","+56"],
+    ["CN","China","+86"], ["CO","Colombia","+57"], ["HR","Croatia","+385"], ["CY","Cyprus","+357"],
+    ["CZ","Czechia","+420"], ["DK","Denmark","+45"], ["EG","Egypt","+20"], ["EE","Estonia","+372"],
+    ["FI","Finland","+358"], ["FR","France","+33"], ["GE","Georgia","+995"], ["DE","Germany","+49"],
+    ["GH","Ghana","+233"], ["GR","Greece","+30"], ["HK","Hong Kong","+852"], ["HU","Hungary","+36"],
+    ["IS","Iceland","+354"], ["IN","India","+91"], ["ID","Indonesia","+62"], ["IE","Ireland","+353"],
+    ["IL","Israel","+972"], ["IT","Italy","+39"], ["JP","Japan","+81"], ["JO","Jordan","+962"],
+    ["KZ","Kazakhstan","+7"], ["KE","Kenya","+254"], ["KW","Kuwait","+965"], ["LV","Latvia","+371"],
+    ["LB","Lebanon","+961"], ["LT","Lithuania","+370"], ["LU","Luxembourg","+352"], ["MY","Malaysia","+60"],
+    ["MT","Malta","+356"], ["MX","Mexico","+52"], ["MA","Morocco","+212"], ["NL","Netherlands","+31"],
+    ["NZ","New Zealand","+64"], ["NG","Nigeria","+234"], ["NO","Norway","+47"], ["PK","Pakistan","+92"],
+    ["PE","Peru","+51"], ["PH","Philippines","+63"], ["PL","Poland","+48"], ["PT","Portugal","+351"],
+    ["QA","Qatar","+974"], ["RO","Romania","+40"], ["RU","Russia","+7"], ["SA","Saudi Arabia","+966"],
+    ["RS","Serbia","+381"], ["SG","Singapore","+65"], ["SK","Slovakia","+421"], ["SI","Slovenia","+386"],
+    ["ZA","South Africa","+27"], ["KR","South Korea","+82"], ["ES","Spain","+34"], ["LK","Sri Lanka","+94"],
+    ["SE","Sweden","+46"], ["CH","Switzerland","+41"], ["TW","Taiwan","+886"], ["TH","Thailand","+66"],
+    ["TN","Tunisia","+216"], ["TR","Türkiye","+90"], ["UA","Ukraine","+380"], ["AE","United Arab Emirates","+971"],
+    ["GB","United Kingdom","+44"], ["US","United States","+1"], ["VN","Vietnam","+84"]
+  ];
+
+  const DIAL_BY_ISO2 = Object.fromEntries(COUNTRY_DIAL_CODES.map(([iso, , dial]) => [iso, dial]));
+
+  function applyDialCodeToInput(inputEl, dialCode) {
+    if (!inputEl || !dialCode) return;
+
+    const v = (inputEl.value || "").trim();
+
+    // Empty -> just insert
+    if (!v) {
+      inputEl.value = dialCode + " ";
+      return;
+    }
+
+    // If already has +digits prefix -> replace prefix
+    if (/^\+\d+/.test(v)) {
+      inputEl.value = v.replace(/^\+\d+/, dialCode);
+      return;
+    }
+
+    // Otherwise -> prepend
+    inputEl.value = dialCode + " " + v;
+  }
+
+  function setupPhoneCountryDropdown() {
+    const sel = $("phoneCountry");
+    const direct = $("phoneDirect");
+    const mobile = $("phoneMobile");
+    if (!sel || !direct || !mobile) return;
+
+    // Populate options (sorted by name)
+    sel.innerHTML =
+      `<option value="">Select country…</option>` +
+      COUNTRY_DIAL_CODES
+        .slice()
+        .sort((a, b) => a[1].localeCompare(b[1]))
+        .map(([iso, name, dial]) => `<option value="${iso}">${name} (${dial})</option>`)
+        .join("");
+
+    sel.addEventListener("change", () => {
+      const iso2 = sel.value;
+      const dial = DIAL_BY_ISO2[iso2];
+      if (!dial) return;
+      applyDialCodeToInput(direct, dial);
+      applyDialCodeToInput(mobile, dial);
+    });
+  }
+
+  // =========================
   // State
+  // =========================
   let queueRows = [];
   let currentLead = null;
   let selectedKey = null;
 
-  // Wire UI
-  $("loginBtn").addEventListener("click", login);
-  $("logoutBtn").addEventListener("click", logout);
+  // =========================
+  // Wire buttons
+  // =========================
+  $("loginBtn")?.addEventListener("click", login);
+  $("logoutBtn")?.addEventListener("click", logout);
+  $("refreshBtn")?.addEventListener("click", () => loadQueue());
+  $("viewSelect")?.addEventListener("change", () => loadQueue());
+  $("searchInput")?.addEventListener("input", renderQueue);
+  $("clearBtn")?.addEventListener("click", () => { $("searchInput").value = ""; renderQueue(); });
 
-  $("refreshBtn").addEventListener("click", () => loadQueue());
-  $("viewSelect").addEventListener("change", () => loadQueue());
-  $("searchInput").addEventListener("input", renderQueue);
-  $("clearBtn").addEventListener("click", () => {
-    $("searchInput").value = "";
-    renderQueue();
-  });
-
-  $("saveBtn").addEventListener("click", saveLead);
-  $("releaseBtn").addEventListener("click", releaseLead);
-  $("doneBtn").addEventListener("click", markDone);
-  $("rejectBtn").addEventListener("click", markRejected);
-
-  $("saveOutcomeBtn").addEventListener("click", saveOutcome);
+  $("saveBtn")?.addEventListener("click", saveLead);
+  $("releaseBtn")?.addEventListener("click", releaseLead);
+  $("doneBtn")?.addEventListener("click", markDone);
+  $("rejectBtn")?.addEventListener("click", markRejected);
+  $("saveOutcomeBtn")?.addEventListener("click", saveOutcome);
 
   init();
 
-  // -------------------------
-  // INIT / AUTH
-  // -------------------------
+  // =========================
+  // Helpers
+  // =========================
+  function setLoginStatus(t) { if ($("loginStatus")) $("loginStatus").textContent = t || ""; }
+  function setDetailStatus(t) { if ($("detailStatus")) $("detailStatus").textContent = t || ""; }
+  function setOutcomeStatus(t) { if ($("outcomeStatus")) $("outcomeStatus").textContent = t || ""; }
+
+  function leadKey(r) { return `${r.ingest_job_id}:${r.row_number}`; }
+
+  function stringifyMaybe(v) {
+    if (v == null) return "";
+    if (typeof v === "string") return v;
+    try { return JSON.stringify(v, null, 2); } catch { return String(v); }
+  }
+
+  function mapViewToStatuses(view) {
+    if (view === "pending_in_progress") return ["pending", "in_progress"];
+    if (view === "pending") return ["pending"];
+    if (view === "in_progress") return ["in_progress"];
+    if (view === "done") return ["done"];
+    if (view === "rejected") return ["rejected"];
+    return ["pending", "in_progress"];
+  }
+
+  // =========================
+  // Init / Auth
+  // =========================
   async function init() {
+    // Populate phone dropdown early (safe even before login)
+    setupPhoneCountryDropdown();
+
     const { data } = await sb.auth.getSession();
     if (data?.session?.user) {
       await afterLogin();
     }
-  }
-
-  function setLoginStatus(t) { $("loginStatus").textContent = t || ""; }
-  function setDetailStatus(t) { $("detailStatus").textContent = t || ""; }
-  function setOutcomeStatus(t) { $("outcomeStatus").textContent = t || ""; }
-
-  function formatRole(role) {
-    if (!role) return "User";
-    if (role === "admin") return "Admin";
-    if (role === "ops") return "Ops";
-    if (role === "uploader") return "Uploader";
-    return role;
-  }
-
-  function displayName(user) {
-    const md = user?.user_metadata || {};
-    return md.full_name || md.name || user?.email || "Unknown";
-  }
-
-  function renderWhoAmI() {
-    const el = $("whoAmI");
-    if (!window.ABM.me) { el.textContent = ""; return; }
-    el.textContent = `${formatRole(window.ABM.currentRole)}, ${displayName(window.ABM.me)}`;
   }
 
   async function login() {
@@ -91,7 +169,7 @@
     const password = $("password").value;
 
     if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
-      setLoginStatus("ERROR: Set SUPABASE_ANON_KEY in workbench.js (public anon key).");
+      setLoginStatus("ERROR: Paste your Supabase anon public key into workbench.js");
       return;
     }
 
@@ -111,23 +189,27 @@
       setLoginStatus("Login succeeded but user fetch failed.");
       return;
     }
+
     window.ABM.me = userRes.user;
 
-    // Role lookup (UI only; server enforcement still via RLS/Edge/RPC)
+    // Role lookup (UI-only; server enforcement still via RLS/Edge)
     try {
-      const { data: roleRow, error: roleErr } = await sb
+      const { data: roleRow } = await sb
         .from("app_users")
         .select("role")
         .eq("user_id", window.ABM.me.id)
         .maybeSingle();
 
-      if (roleErr) window.ABM.currentRole = null;
-      else window.ABM.currentRole = roleRow?.role || null;
+      window.ABM.currentRole = roleRow?.role || null;
     } catch {
       window.ABM.currentRole = null;
     }
 
-    renderWhoAmI();
+    if ($("whoAmI")) {
+      const md = window.ABM.me.user_metadata || {};
+      const name = md.full_name || md.name || window.ABM.me.email || "User";
+      $("whoAmI").textContent = `${window.ABM.currentRole || "user"}, ${name}`;
+    }
 
     $("loginCard").style.display = "none";
     $("topNav").style.display = "flex";
@@ -141,39 +223,15 @@
     location.reload();
   }
 
-  // -------------------------
-  // QUEUE
-  // -------------------------
-  function leadKey(r) {
-    return `${r.ingest_job_id}:${r.row_number}`;
-  }
-
-  function pill(text) {
-    return `<span class="detailPill">${text || "-"}</span>`;
-  }
-
-  function ownerLabel(r) {
-    if (!r?.enriched_by) return "-";
-    if (window.ABM.me && r.enriched_by === window.ABM.me.id) return "me";
-    return "•";
-  }
-
-  function mapViewToStatuses(view) {
-    if (view === "pending_in_progress") return ["pending", "in_progress"];
-    if (view === "pending") return ["pending"];
-    if (view === "in_progress") return ["in_progress"];
-    if (view === "done") return ["done"];
-    if (view === "rejected") return ["rejected"];
-    return ["pending", "in_progress"];
-  }
-
+  // =========================
+  // Queue
+  // =========================
   async function loadQueue() {
     setDetailStatus("");
 
     const view = $("viewSelect").value;
     const statuses = mapViewToStatuses(view);
 
-    // Query stg_leads directly (matches your schema)
     const { data, error } = await sb
       .from("stg_leads")
       .select(`
@@ -205,9 +263,11 @@
 
   function renderQueue() {
     const body = $("queueBody");
+    if (!body) return;
+
     const search = ($("searchInput").value || "").trim().toLowerCase();
 
-    const rows = queueRows.filter(r => {
+    const rows = (queueRows || []).filter(r => {
       if (!search) return true;
       const hay = [
         r.first_name, r.last_name, r.email, r.company, r.title, r.enrichment_status
@@ -215,14 +275,16 @@
       return hay.includes(search);
     });
 
-    $("queueCount").textContent = `Showing ${rows.length} row(s).`;
+    if ($("queueCount")) $("queueCount").textContent = `Showing ${rows.length} row(s).`;
 
     body.innerHTML = rows.map(r => {
       const key = leadKey(r);
       const selected = selectedKey === key ? "selected-row" : "";
+      const owner = (!r.enriched_by) ? "-" : (r.enriched_by === window.ABM.me?.id ? "me" : "•");
+
       return `
         <tr class="${selected}" data-key="${key}">
-          <td>${pill(r.enrichment_status)}</td>
+          <td><span class="detailPill">${r.enrichment_status || "-"}</span></td>
           <td>${r.first_name || ""}</td>
           <td>${r.last_name || ""}</td>
           <td><strong>${r.email || ""}</strong></td>
@@ -231,7 +293,7 @@
             <div class="muted">${(r.ingest_job_id || "").slice(0,8)}… • row ${r.row_number}</div>
           </td>
           <td>${r.title || ""}</td>
-          <td>${ownerLabel(r)}</td>
+          <td>${owner}</td>
           <td style="text-align:right;">
             <div class="actions">
               <button class="btn-ghost" data-action="open">Open</button>
@@ -264,9 +326,9 @@
     });
   }
 
-  // -------------------------
-  // LEAD DETAIL
-  // -------------------------
+  // =========================
+  // Lead detail
+  // =========================
   async function fetchLead(ingest_job_id, row_number) {
     const { data, error } = await sb
       .from("stg_leads")
@@ -274,6 +336,7 @@
       .eq("ingest_job_id", ingest_job_id)
       .eq("row_number", row_number)
       .single();
+
     if (error) throw error;
     return data;
   }
@@ -293,17 +356,26 @@
       $("ctxEmail").textContent = lead.email || "";
       $("ctxCompany").textContent = lead.company || "";
       $("ctxTitle").textContent = lead.title || "";
-      $("ctxOwner").textContent =
-        (lead.enriched_by === window.ABM.me?.id) ? "me" : (lead.enriched_by ? "•" : "-");
+      $("ctxOwner").textContent = (lead.enriched_by === window.ABM.me?.id) ? "me" : (lead.enriched_by ? "•" : "-");
 
       $("ingestJobId").value = lead.ingest_job_id;
       $("rowNumber").value = lead.row_number;
 
-      // Matches schema
+      // Set country first
       $("phoneCountry").value = lead.phone_country_iso2 || "";
+
+      // Set fields from DB
       $("phoneDirect").value = lead.phone_direct || "";
       $("phoneMobile").value = lead.phone_mobile || "";
       $("enrichmentNotes").value = lead.enrichment_notes || "";
+
+      // If a country is selected, ensure dial code is present (but don't overwrite real numbers)
+      const iso2 = lead.phone_country_iso2 || "";
+      const dial = DIAL_BY_ISO2[iso2];
+      if (dial) {
+        if (!($("phoneDirect").value || "").trim()) applyDialCodeToInput($("phoneDirect"), dial);
+        if (!($("phoneMobile").value || "").trim()) applyDialCodeToInput($("phoneMobile"), dial);
+      }
 
       $("verifiedFields").value = stringifyMaybe(lead.verified_fields);
       $("enrichedPayload").value = stringifyMaybe(lead.enriched_payload);
@@ -313,23 +385,14 @@
       $("rejectedBanner").style.display = isRejected ? "block" : "none";
 
       await loadOutcome(lead);
-
       renderQueue();
+
       setDetailStatus("");
     } catch (e) {
       setDetailStatus("ERROR opening lead:\n" + (e?.message || String(e)));
     }
   }
 
-  function stringifyMaybe(v) {
-    if (v == null) return "";
-    if (typeof v === "string") return v;
-    try { return JSON.stringify(v, null, 2); } catch { return String(v); }
-  }
-
-  // -------------------------
-  // ACTIONS
-  // -------------------------
   function requireCurrentLead() {
     if (!currentLead) {
       setDetailStatus("Select a lead first.");
@@ -338,17 +401,19 @@
     return true;
   }
 
+  // =========================
+  // Actions
+  // =========================
   async function claimLead(ingest_job_id, row_number) {
     setDetailStatus("Claiming lead…");
 
     try {
-      // Minimal: update directly. RLS should enforce who can do this.
       const { error } = await sb
         .from("stg_leads")
         .update({
           enrichment_status: "in_progress",
           enriched_by: window.ABM.me.id,
-          enriched_at: new Date().toISOString()
+          enriched_at: new Date().toISOString(),
         })
         .eq("ingest_job_id", ingest_job_id)
         .eq("row_number", row_number);
@@ -372,10 +437,10 @@
 
     const payload = {
       phone_country_iso2: $("phoneCountry").value || null,
-      phone_direct: $("phoneDirect").value.trim() || null,
-      phone_mobile: $("phoneMobile").value.trim() || null,
-      enrichment_notes: $("enrichmentNotes").value.trim() || null,
-      enriched_at: new Date().toISOString()
+      phone_direct: ($("phoneDirect").value || "").trim() || null,
+      phone_mobile: ($("phoneMobile").value || "").trim() || null,
+      enrichment_notes: ($("enrichmentNotes").value || "").trim() || null,
+      enriched_at: new Date().toISOString(),
     };
 
     try {
@@ -408,7 +473,7 @@
         .update({
           enrichment_status: "pending",
           enriched_by: null,
-          enriched_at: null
+          enriched_at: null,
         })
         .eq("ingest_job_id", ingest_job_id)
         .eq("row_number", row_number);
@@ -438,7 +503,7 @@
         .from("stg_leads")
         .update({
           enrichment_status: "done",
-          enriched_at: new Date().toISOString()
+          enriched_at: new Date().toISOString(),
         })
         .eq("ingest_job_id", ingest_job_id)
         .eq("row_number", row_number);
@@ -463,15 +528,16 @@
     const row_number = parseInt($("rowNumber").value, 10);
 
     try {
-      const existing = $("enrichmentNotes").value || "";
-      const notes = (reason ? `[REJECTED] ${reason}\n\n` : "[REJECTED]\n\n") + existing;
+      const existing = ($("enrichmentNotes").value || "").trim();
+      const prefix = reason ? `[REJECTED] ${reason}` : "[REJECTED]";
+      const notes = existing ? `${prefix}\n\n${existing}` : prefix;
 
       const { error } = await sb
         .from("stg_leads")
         .update({
           enrichment_status: "rejected",
           enrichment_notes: notes,
-          enriched_at: new Date().toISOString()
+          enriched_at: new Date().toISOString(),
         })
         .eq("ingest_job_id", ingest_job_id)
         .eq("row_number", row_number);
@@ -489,25 +555,30 @@
   function clearDetail() {
     $("detailStatusPill").textContent = "No lead selected";
     $("leadContext").style.display = "none";
+
     $("ingestJobId").value = "";
     $("rowNumber").value = "";
+
     $("phoneCountry").value = "";
     $("phoneDirect").value = "";
     $("phoneMobile").value = "";
     $("enrichmentNotes").value = "";
+
     $("verifiedFields").value = "";
     $("enrichedPayload").value = "";
     $("rawPayload").value = "";
+
     $("rejectedBanner").style.display = "none";
+
     $("outcomePill").textContent = "No outcome";
     $("outcomeType").value = "";
     $("outcomeNotes").value = "";
     setOutcomeStatus("");
   }
 
-  // -------------------------
-  // OUTCOMES (matches schema)
-  // -------------------------
+  // =========================
+  // Outcomes
+  // =========================
   async function loadOutcome(lead) {
     try {
       const { data, error } = await sb
@@ -531,6 +602,7 @@
       $("outcomeType").value = data.outcome_type || "";
       $("outcomeNotes").value = data.outcome_notes || "";
     } catch (e) {
+      // Don’t fail the whole page if outcomes fail
       console.warn("Outcome load failed:", e?.message || e);
     }
   }
@@ -540,8 +612,9 @@
 
     const ingest_job_id = $("ingestJobId").value;
     const row_number = parseInt($("rowNumber").value, 10);
+
     const outcome_type = $("outcomeType").value || null;
-    const outcome_notes = $("outcomeNotes").value.trim() || null;
+    const outcome_notes = ($("outcomeNotes").value || "").trim() || null;
 
     if (!outcome_type) {
       setOutcomeStatus("Pick an outcome first.");
@@ -556,7 +629,7 @@
         row_number,
         outcome_type,
         outcome_notes,
-        decided_by: window.ABM.me?.id || null
+        decided_by: window.ABM.me?.id || null,
       };
 
       const { error } = await sb
