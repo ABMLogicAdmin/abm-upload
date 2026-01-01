@@ -9,401 +9,23 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
+  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <style>
-    :root{
-      --brand-primary:#30ADF7;
-      --brand-navy:#22233D;
-      --brand-bg:#E6F6FF;
-      --text:#111827;
-      --muted:#6b7280;
-      --border:#e5e7eb;
-      --card:#ffffff;
-      --radius:14px;
-      --shadow:0 10px 35px rgba(17,24,39,.12);
-    }
-
-    html, body { color-scheme: light; }
-    *{ box-sizing:border-box; }
-
-    body{
-      font-family:Poppins,Arial,sans-serif;
-      background:linear-gradient(180deg,var(--brand-bg),#ffffff 55%);
-      color:var(--text);
-      margin:0;
-      padding:28px 16px 70px;
-    }
-
-    .wrap{
-      max-width: 1600px;
-      margin: 0 auto;
-      padding: 0 12px;
-    }
-    .header{ display:flex; align-items:center; gap:14px; margin-bottom:12px; }
-    .logo{ height:34px; width:auto; }
-    h1{ font-size:18px; margin:0; color:var(--brand-navy); font-weight:800; }
-    .sub{ margin:2px 0 0; color:var(--muted); font-size:12.5px; }
-
-    .pill{
-      display:inline-block;
-      font-size:11px;
-      font-weight:800;
-      color:var(--brand-navy);
-      background:rgba(48,173,247,.18);
-      border:1px solid rgba(48,173,247,.28);
-      padding:4px 8px;
-      border-radius:999px;
-      margin-left:8px;
-      vertical-align:middle;
-    }
-
-    .card{
-      background:var(--card);
-      border:1px solid var(--border);
-      border-radius:var(--radius);
-      padding:18px;
-      box-shadow:var(--shadow);
-    }
-
-    label{
-      display:block;
-      margin-top:12px;
-      font-size:12.5px;
-      color:var(--brand-navy);
-      font-weight:700;
-    }
-
-    input,button,select,textarea{
-      width:100%;
-      padding:11px 12px;
-      margin-top:7px;
-      font-size:14px;
-      border-radius:10px;
-      border:1px solid var(--border);
-      font-family:inherit;
-      background:#fff;
-      color:var(--text);
-    }
-    textarea{ min-height:90px; resize:vertical; }
-
-    .btn{
-      border:none;
-      background:var(--brand-primary);
-      color:#fff;
-      font-weight:800;
-      cursor:pointer;
-      margin-top:14px;
-      text-align:center;
-    }
-    .btn:hover{ filter:brightness(.98); }
-    .btn:active{ transform:translateY(1px); }
-
-    .btn-secondary{
-      border:none;
-      background:var(--brand-navy);
-      color:#fff;
-      font-weight:800;
-      cursor:pointer;
-    }
-
-    .btn-ghost{
-      background:#fff;
-      color:var(--brand-navy);
-      border:1px solid rgba(34,35,61,.18);
-      font-weight:800;
-      cursor:pointer;
-    }
-
-    .btn-danger{
-      border:none;
-      background:#ef4444;
-      color:#fff;
-      font-weight:900;
-      cursor:pointer;
-    }
-
-    .nav{
-      margin-top:8px;
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-    .nav a, .nav button{
-      width:auto;
-      padding:9px 12px;
-      border-radius:999px;
-      border:1px solid rgba(34,35,61,.15);
-      background:#fff;
-      color:var(--brand-navy);
-      font-weight:800;
-      font-size:13px;
-      cursor:pointer;
-      text-decoration:none;
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-    }
-    .nav a:hover, .nav button:hover{ filter:brightness(.98); }
-    .nav .spacer{ flex:1; }
-
-    .statusText{
-      margin-top:12px;
-      font-size:12.5px;
-      white-space:pre-wrap;
-      color:var(--brand-navy);
-    }
-    .muted{ color:var(--muted); font-size:12px; }
-    code{ background:rgba(17,24,39,.04); padding:2px 6px; border-radius:8px; }
-
-    /* =========================
-       Layout (fixed, stable)
-       ========================= */
-    .grid{
-      margin-top:16px;
-      display:grid;
-      grid-template-columns: 1.2fr 1fr; /* queue left, detail compact */
-      gap:14px;
-      align-items:start;
-    }
-
-    /* allow grid children to shrink so the table doesn't force page width */
-    .grid > .card{ min-width:0; }
-
-    @media (max-width: 980px){
-      .grid{ grid-template-columns: 1fr; }
-    }
-
-    /* Queue controls */
-    .queueHead{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:10px;
-    }
-    .queueTitle{
-      font-weight:900;
-      color:var(--brand-navy);
-      font-size:13px;
-      margin:0;
-    }
-
-    .queueControls{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin:12px 0 8px;
-      align-items:flex-end;
-    }
-    .queueControls > div{
-      flex: 1 1 220px;
-      min-width: 200px;
-    }
-    .queueControls > div:last-child{
-      flex: 0 0 140px;
-      min-width: 120px;
-    }
-    @media (max-width:980px){
-      .queueControls > div,
-      .queueControls > div:last-child{
-        flex: 1 1 100%;
-        min-width: 0;
-      }
-    }
-
-    .smallBtn{
-      padding:10px 12px;
-      margin-top:0;
-      border-radius:12px;
-      font-size:13px;
-      font-weight:900;
-    }
-
-    /* Queue table */
-    table{
-      width:100%;
-      border-collapse:separate;
-      border-spacing:0;
-      margin-top:10px;
-    }
-    thead th{
-      text-align:left;
-      font-size:12px;
-      color:var(--muted);
-      font-weight:900;
-      padding:10px 10px;
-      border-bottom:1px solid rgba(34,35,61,.12);
-      white-space:nowrap;
-    }
-    tbody td{
-      padding:12px 10px;
-      border-bottom:1px solid rgba(34,35,61,.08);
-      vertical-align:top;
-      font-size:13.5px;
-    }
-
-    .leadPrimary{
-      font-weight:900;
-      color:var(--brand-navy);
-      font-size:14px;
-      line-height:1.1;
-    }
-
-    .companyPrimary{
-      font-weight:900;
-      color:var(--brand-navy);
-      font-size:13.5px;
-      line-height:1.1;
-    }
-    .companySecondary{
-      color:var(--muted);
-      font-size:12px;
-      margin-top:3px;
-      line-height:1.25;
-    }
-
-    .pillStatus{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      padding:4px 9px;
-      border-radius:999px;
-      font-size:11px;
-      font-weight:900;
-      border:1px solid rgba(34,35,61,.12);
-      background:#fff;
-      color:var(--brand-navy);
-      white-space:nowrap;
-    }
-    .pill-pending{ background:rgba(48,173,247,.12); border-color:rgba(48,173,247,.35); }
-    .pill-inprogress{ background:rgba(245,158,11,.14); border-color:rgba(245,158,11,.35); }
-    .pill-done{ background:rgba(34,197,94,.14); border-color:rgba(34,197,94,.35); }
-    .pill-rejected{ background:rgba(239,68,68,.12); border-color:rgba(239,68,68,.35); }
-
-    .actions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-    }
-    .actions button{
-      width:auto;
-      padding:8px 10px;
-      margin-top:0;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:900;
-    }
-
-    tr.selected-row td{
-      background: rgba(48, 173, 247, 0.12);
-      border-bottom-color: rgba(48,173,247,.28);
-    }
-    tr.selected-row td:first-child{
-      border-top-left-radius:10px;
-      border-bottom-left-radius:10px;
-    }
-    tr.selected-row td:last-child{
-      border-top-right-radius:10px;
-      border-bottom-right-radius:10px;
-    }
-
-    .detailHead{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:8px;
-    }
-    .detailTitle{
-      font-weight:900;
-      color:var(--brand-navy);
-      font-size:13px;
-      margin:0;
-    }
-    .detailPill{
-      display:inline-block;
-      font-size:11px;
-      font-weight:900;
-      padding:4px 8px;
-      border-radius:999px;
-      border:1px solid rgba(34,35,61,.12);
-      background:#fff;
-      color:var(--brand-navy);
-      white-space:nowrap;
-    }
-
-    .leadContext{
-      padding:12px;
-      margin:10px 0 12px;
-      background:#f8fafc;
-      border:1px solid #e5e7eb;
-      border-radius:12px;
-      font-size:13px;
-    }
-    .leadContext .row{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-    }
-    @media (max-width:980px){
-      .leadContext .row{ grid-template-columns: 1fr; }
-    }
-    .ctxItem strong{ color:var(--brand-navy); font-weight:900; }
-    .ctxItem span{ color:var(--text); }
-
-    .detailGrid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:10px;
-    }
-
-    /* Slightly tighten lead detail typography */
-    .card:last-child{ font-size:13px; }
-    .card:last-child label{ font-size:12px; }
-
-    @media (max-width:980px){
-      .detailGrid{ grid-template-columns: 1fr; }
-    }
-
-    .footerBtns{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:12px;
-    }
-    .footerBtns button{
-      width:auto;
-      margin-top:0;
-      padding:10px 12px;
-      border-radius:999px;
-      font-size:13px;
-      font-weight:900;
-    }
-
-    .helpLine{
-      margin-top:10px;
-      font-size:11.5px;
-      color:var(--muted);
-      line-height:1.35;
-    }
-
-    .wrapSmall{ max-width:760px; margin:0 auto; }
-  </style>
+  <!-- Your CSS -->
+  <link rel="stylesheet" href="./workbench.css" />
 </head>
+
 <body>
   <div class="wrap">
-<div class="header">
-  <img class="logo" src="https://abmlogic.com/abm-logic-email-logo.png" alt="ABM Logic">
-  <div>
-    <h1>Workbench <span class="pill">Enrichment / Validation</span></h1>
-    <p class="sub">Claim → Enrich → Save → Done / Reject. Owner-only updates enforced by RLS.</p>
-    <div class="muted" id="whoAmI" style="margin-top:6px; font-weight:800;"></div>
-  </div>
-</div>
-
+    <div class="header">
+      <img class="logo" src="https://abmlogic.com/abm-logic-email-logo.png" alt="ABM Logic">
+      <div>
+        <h1>Workbench <span class="pill">Enrichment / Validation</span></h1>
+        <p class="sub">Claim → Enrich → Save → Done / Reject. Owner-only updates enforced by RLS.</p>
+        <div class="muted" id="whoAmI" style="margin-top:6px; font-weight:800;"></div>
+      </div>
+    </div>
 
     <div class="nav" id="topNav" style="display:none;">
       <a href="./index.html">Upload</a>
@@ -416,7 +38,7 @@
     <!-- LOGIN -->
     <div class="wrapSmall">
       <div class="card" id="loginCard">
-        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="twoCol">
           <div>
             <label>Email</label>
             <input id="email" type="email" autocomplete="username" />
@@ -426,9 +48,9 @@
             <input id="password" type="password" autocomplete="current-password" />
           </div>
         </div>
+
         <button class="btn" id="loginBtn">Sign in</button>
         <div class="statusText" id="loginStatus"></div>
-        <div class="helpLine">If login works but the queue won’t load, it’s usually RLS or missing view permissions.</div>
       </div>
     </div>
 
@@ -461,14 +83,14 @@
             <input id="searchInput" placeholder="Search text (optional)" />
           </div>
 
-          <div style="display:flex; align-items:end;">
+          <div class="clearWrap">
             <button id="clearBtn" class="btn-ghost smallBtn" style="width:100%;">Clear</button>
           </div>
         </div>
 
         <div class="muted" id="queueCount">Showing 0 row(s).</div>
 
-        <div style="overflow-x:auto; overflow-y:auto; max-width:100%; width:100%; margin-top:8px;">
+        <div class="tableWrap">
           <table>
             <thead>
               <tr>
@@ -487,7 +109,7 @@
         </div>
 
         <div class="helpLine">
-          Keys are <code>(ingest_job_id, row_number)</code>. That’s your primary key for stg_leads.
+          Keys are <code>(ingest_job_id, row_number)</code>.
         </div>
       </div>
 
@@ -499,12 +121,11 @@
             <div class="muted">Edit enrichment fields, then Save / Done / Reject.</div>
           </div>
           <span class="detailPill" id="detailStatusPill">No lead selected</span>
-          </div>
+        </div>
 
-<div id="rejectedBanner" style="display:none; margin:10px 0 6px; padding:10px 12px; border-radius:12px; border:1px solid rgba(239,68,68,.35); background:rgba(239,68,68,.08); font-weight:900; color:#991b1b;">
-  Rejected — read-only
-</div>
-
+        <div id="rejectedBanner" class="rejectedBanner" style="display:none;">
+          Rejected — read-only
+        </div>
 
         <div class="leadContext" id="leadContext" style="display:none;">
           <div class="row">
@@ -512,7 +133,6 @@
             <div class="ctxItem"><strong>Email:</strong> <span id="ctxEmail"></span></div>
             <div class="ctxItem"><strong>Company:</strong> <span id="ctxCompany"></span></div>
             <div class="ctxItem"><strong>Job title:</strong> <span id="ctxTitle"></span></div>
-            <div class="ctxItem"><strong>Location:</strong> <span id="ctxLocation"></span></div>
             <div class="ctxItem"><strong>Owner:</strong> <span id="ctxOwner"></span></div>
           </div>
         </div>
@@ -526,117 +146,79 @@
             <label>row_number</label>
             <input id="rowNumber" readonly />
           </div>
+
           <div>
             <label>Phone country</label>
             <select id="phoneCountry">
               <option value="" selected>Select country…</option>
               <option value="GB">United Kingdom (+44)</option>
               <option value="US">United States (+1)</option>
-              <option value="CA">Canada (+1)</option>
               <option value="IE">Ireland (+353)</option>
               <option value="DE">Germany (+49)</option>
               <option value="FR">France (+33)</option>
-              <option value="ES">Spain (+34)</option>
-              <option value="IT">Italy (+39)</option>
               <option value="NL">Netherlands (+31)</option>
               <option value="BE">Belgium (+32)</option>
-              <option value="CH">Switzerland (+41)</option>
-              <option value="SE">Sweden (+46)</option>
-              <option value="NO">Norway (+47)</option>
-              <option value="DK">Denmark (+45)</option>
-              <option value="FI">Finland (+358)</option>
-              <option value="PL">Poland (+48)</option>
-              <option value="AT">Austria (+43)</option>
-              <option value="PT">Portugal (+351)</option>
-              <option value="CZ">Czechia (+420)</option>
-              <option value="HU">Hungary (+36)</option>
-              <option value="RO">Romania (+40)</option>
-              <option value="GR">Greece (+30)</option>
-              <option value="TR">Turkey (+90)</option>
-
               <option value="IN">India (+91)</option>
-              <option value="PK">Pakistan (+92)</option>
-              <option value="BD">Bangladesh (+880)</option>
-              <option value="LK">Sri Lanka (+94)</option>
-
-              <option value="AE">United Arab Emirates (+971)</option>
-              <option value="SA">Saudi Arabia (+966)</option>
-              <option value="QA">Qatar (+974)</option>
-
-              <option value="SG">Singapore (+65)</option>
-              <option value="MY">Malaysia (+60)</option>
-              <option value="AU">Australia (+61)</option>
-              <option value="NZ">New Zealand (+64)</option>
-              <option value="JP">Japan (+81)</option>
-              <option value="KR">South Korea (+82)</option>
-
-              <option value="ZA">South Africa (+27)</option>
-              <option value="NG">Nigeria (+234)</option>
-              <option value="KE">Kenya (+254)</option>
-
-              <option value="BR">Brazil (+55)</option>
-              <option value="MX">Mexico (+52)</option>
-              <option value="AR">Argentina (+54)</option>
             </select>
           </div>
 
           <div>
             <label>Direct / Desk phone</label>
-            <input id="phoneDirect" placeholder="+44…" />
+            <input id="phoneDirect" placeholder="+…" />
           </div>
+
           <div>
             <label>Mobile phone</label>
-            <input id="phoneMobile" placeholder="+44…" />
+            <input id="phoneMobile" placeholder="+…" />
           </div>
         </div>
 
         <label>enrichment_notes</label>
         <textarea id="enrichmentNotes" placeholder="Add notes (why verified / changes / rejection reason etc.)"></textarea>
-<!-- Qualification Outcome (Slice 5) -->
-<div id="outcomeBox" style="margin-top:12px; padding:12px; border:1px solid rgba(34,35,61,.12); border-radius:12px; background:#fff;">
-  <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-    <div style="font-weight:900; color:var(--brand-navy); font-size:12.5px;">Qualification Outcome</div>
-    <span class="detailPill" id="outcomePill">No outcome</span>
-  </div>
 
-  <div class="detailGrid" style="margin-top:8px;">
-    <div>
-      <label style="margin-top:0;">Outcome</label>
-      <select id="outcomeType">
-        <option value="" selected>Select outcome…</option>
-        <option value="single_touch">Single-touch</option>
-        <option value="double_touch">Double-touch</option>
-        <option value="hql">HQL</option>
-        <option value="bant">BANT</option>
-        <option value="rejected">Rejected</option>
-      </select>
-    </div>
+        <!-- Qualification Outcome -->
+        <div id="outcomeBox" class="box">
+          <div class="boxHead">
+            <div class="boxTitle">Qualification Outcome</div>
+            <span class="detailPill" id="outcomePill">No outcome</span>
+          </div>
 
-    <div>
-      <label style="margin-top:0;">Outcome notes (optional)</label>
-      <input id="outcomeNotes" placeholder="Reason / context (optional)" />
-    </div>
-  </div>
-
-  <button id="saveOutcomeBtn" class="btn" style="margin-top:10px;">Save Outcome</button>
-  <div class="muted" id="outcomeStatus" style="margin-top:8px;"></div>
-</div>
-
-        
-          <details id="advancedBox" style="margin-top:10px;">
-            <summary style="cursor:pointer; font-weight:800;">Advanced (read-only)</summary>
-          
-            <div style="margin-top:10px;">
-              <label>verified_fields (JSON)</label>
-              <textarea id="verifiedFields" readonly placeholder='{"job_title_verified":true,"company_verified":true}'></textarea>
-          
-              <label>enriched_payload (JSON)</label>
-              <textarea id="enrichedPayload" readonly placeholder='{"linkedin_url":".","title":"."}'></textarea>
+          <div class="detailGrid" style="margin-top:8px;">
+            <div>
+              <label style="margin-top:0;">Outcome</label>
+              <select id="outcomeType">
+                <option value="" selected>Select outcome…</option>
+                <option value="single_touch">Single-touch</option>
+                <option value="double_touch">Double-touch</option>
+                <option value="hql">HQL</option>
+                <option value="bant">BANT</option>
+                <option value="rejected">Rejected</option>
+              </select>
             </div>
-          </details>
 
-        <label>raw_payload (read-only)</label>
-        <textarea id="rawPayload" readonly placeholder="Will populate after you Open a lead…"></textarea>
+            <div>
+              <label style="margin-top:0;">Outcome notes (optional)</label>
+              <input id="outcomeNotes" placeholder="Reason / context (optional)" />
+            </div>
+          </div>
+
+          <button id="saveOutcomeBtn" class="btn" style="margin-top:10px;">Save Outcome</button>
+          <div class="muted" id="outcomeStatus" style="margin-top:8px;"></div>
+        </div>
+
+        <details id="advancedBox" style="margin-top:10px;">
+          <summary style="cursor:pointer; font-weight:800;">Advanced (read-only)</summary>
+          <div style="margin-top:10px;">
+            <label>verified_fields (JSON)</label>
+            <textarea id="verifiedFields" readonly></textarea>
+
+            <label>enriched_payload (JSON)</label>
+            <textarea id="enrichedPayload" readonly></textarea>
+
+            <label>raw_payload (read-only)</label>
+            <textarea id="rawPayload" readonly></textarea>
+          </div>
+        </details>
 
         <div class="footerBtns">
           <button id="saveBtn" class="btn-secondary">Save</button>
@@ -645,1060 +227,33 @@
           <button id="rejectBtn" class="btn-danger">Reject</button>
         </div>
 
-        <div class="helpLine">
-          Enrichment actions are owner-only. Qualification outcomes can be set after enrichment is complete.
-        </div>
-
         <div class="statusText" id="detailStatus"></div>
       </div>
     </div>
+
+    <!-- Admin — Generate Delivery CSV -->
+    <div class="card" id="adminDeliveryExport" style="display:none; margin-top:18px;">
+      <div style="font-weight:900; color:#22233D;">Admin — Generate Delivery CSV</div>
+      <div class="muted" style="margin-top:4px;">Generates a delivery-ready CSV server-side and returns a signed download link.</div>
+
+      <label>delivery_id</label>
+      <input id="deliveryIdInput" placeholder="paste a delivery_id UUID" />
+
+      <button id="btnGenerateDeliveryCsv" class="btn-secondary" style="margin-top:10px;">Generate CSV</button>
+
+      <div class="statusText" id="deliveryExportStatus"></div>
+
+      <div id="deliveryExportResult" style="display:none; margin-top:12px;">
+        <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener">Open signed download link</a>
+
+        <button id="btnCopySignedUrl" class="btn-ghost" style="width:auto; margin-left:10px;">Copy link</button>
+      </div>
+    </div>
+
   </div>
 
-<script>
-  // ===== CONFIG =====
-  // Must match your other pages
-  window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
-  const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
-  // ==================
-
-  if (!window.supabase) {
-    alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
-    throw new Error("Supabase SDK not loaded");
-  }
-
-  const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
-  window.sb = sb;
-
-  const $ = (id) => document.getElementById(id);
-
-  // UI state
-  let me = null;                 // user object
-  let queueRows = [];            // loaded queue rows (from view)
-  let currentLead = null;        // full row object currently opened
-  let selectedLeadKey = null;    // `${ingest_job_id}:${row_number}`
-  let myRole = null;             // 'admin' | 'ops' | 'uploader' | null
-  let currentOutcome = null;     // lead_outcomes row or null
-  
-function formatRole(role){
-  if (!role) return "User";
-  if (role === "admin") return "Admin";
-  if (role === "ops") return "Ops";
-  if (role === "uploader") return "Uploader";
-  return role;
-}
-
-function getDisplayName(user){
-  // Prefer user_metadata full_name/name if present; fallback to email
-  const md = user?.user_metadata || {};
-  return md.full_name || md.name || user?.email || "Unknown";
-}
-
-function renderWhoAmI(){
-  const el = $("whoAmI");
-  if (!el) return;
-
-  if (!me){
-    el.textContent = "";
-    return;
-  }
-
-  const roleLabel = formatRole(myRole);
-  const nameLabel = getDisplayName(me);
-  el.textContent = `${roleLabel}, ${nameLabel}`;
-}
-
-
-  // Events
-  $("loginBtn").onclick = login;
-  $("logoutBtn").onclick = logout;
-
-  $("refreshBtn").onclick = () => loadQueue(true);
-  $("viewSelect").onchange = () => loadQueue();
-  $("searchInput").oninput = () => renderQueue();
-  $("clearBtn").onclick = () => { $("searchInput").value = ""; renderQueue(); };
-
-  $("saveBtn").onclick = saveLead;
-  $("releaseBtn").onclick = releaseLead;
-  $("doneBtn").onclick = markDone;
-  $("rejectBtn").onclick = markRejected;
-  $("saveOutcomeBtn").onclick = saveOutcome;
-    // Phone country → auto-prefix phone inputs
-  $("phoneCountry").onchange = onPhoneCountryChange;
-
-
-  // Init: if already signed in, show app
-  init();
-
-  async function init(){
-    const { data } = await sb.auth.getSession();
-    if (data?.session?.user){
-      await afterLogin();
-    }
-  }
-
-  async function login(){
-    $("loginStatus").textContent = "Signing in…";
-    const email = $("email").value.trim();
-    const password = $("password").value;
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error){
-      $("loginStatus").textContent = error.message;
-      return;
-    }
-    $("loginStatus").textContent = "Signed in.";
-    await afterLogin();
-  }
-
-  async function afterLogin(){
-    const { data: userRes, error: userErr } = await sb.auth.getUser();
-    if (userErr || !userRes?.user){
-      $("loginStatus").textContent = "Login succeeded but user fetch failed.";
-      return;
-    }
-    me = userRes.user;
-    renderWhoAmI();
-
-    // Load my app role (admin / ops / uploader)
-try {
-  const { data: roleRow, error: roleErr } = await sb
-    .from("app_users")
-    .select("role")
-    .eq("user_id", me.id)
-    .maybeSingle();
-
-
-if (roleErr) {
-  console.warn("Could not load app role:", roleErr.message);
-  myRole = null;
-} else {
-  myRole = roleRow?.role || null;
-}
-
-// Always render, even if role is null (it will show "User, email")
-renderWhoAmI();
-window.ABM_CURRENT_ROLE = myRole;
-
-
-} catch (e) {
-  console.warn("Role lookup failed:", e);
-  myRole = null;
-}
-
-
-    $("loginCard").style.display = "none";
-    $("topNav").style.display = "flex";
-    $("appGrid").style.display = "grid";
-
-    await loadQueue(true);
-  }
-
-  async function logout(){
-    await sb.auth.signOut();
-    location.reload();
-  }
-
-  function statusPillClass(s){
-    if (s === "pending") return "pillStatus pill-pending";
-    if (s === "in_progress") return "pillStatus pill-inprogress";
-    if (s === "done") return "pillStatus pill-done";
-    if (s === "rejected") return "pillStatus pill-rejected";
-    return "pillStatus";
-  }
-
-    // ------------------------------
-  // Phone country → calling code helpers
-  // ------------------------------
-  const COUNTRY_CALLING = {
-    GB: "44",
-    US: "1",
-    CA: "1",
-    IE: "353",
-    DE: "49",
-    FR: "33",
-    ES: "34",
-    IT: "39",
-    NL: "31",
-    BE: "32",
-    CH: "41",
-    SE: "46",
-    NO: "47",
-    DK: "45",
-    FI: "358",
-    PL: "48",
-    AT: "43",
-    PT: "351",
-    CZ: "420",
-    HU: "36",
-    RO: "40",
-    GR: "30",
-    TR: "90",
-    IN: "91",
-    PK: "92",
-    BD: "880",
-    LK: "94",
-    AE: "971",
-    SA: "966",
-    QA: "974",
-    SG: "65",
-    MY: "60",
-    AU: "61",
-    NZ: "64",
-    JP: "81",
-    KR: "82",
-    ZA: "27",
-    NG: "234",
-    KE: "254",
-    BR: "55",
-    MX: "52",
-    AR: "54"
-  };
-
-  function normalizePhonePrefix(s){
-    // If it already starts with +<digits> keep it, otherwise blank
-    const t = (s || "").trim();
-    const m = t.match(/^\+(\d{1,4})\b/);
-    return m ? `+${m[1]}` : "";
-  }
-
-function applyPrefixIfEmpty(inputEl, prefix){
-  if (!inputEl) return;
-
-  const v = (inputEl.value ?? "").trim();
-
-  // Empty or user started with "+"
-  if (v === "" || v === "+") {
-    inputEl.value = prefix;
-    return;
-  }
-
-  // If the field is ONLY a prefix (e.g. "+1", "+44"), treat it as auto-filled and replace it
-  if (/^\+\d{1,4}$/.test(v)) {
-    inputEl.value = prefix;
-    return;
-  }
-
-  // If it already contains a real number (e.g. "+1 212..." or "+4420..."), do not overwrite
-}
-
-
-
-  function onPhoneCountryChange(){
-    const iso2 = $("phoneCountry")?.value || "";
-    const code = COUNTRY_CALLING[iso2];
-    const prefix = code ? `+${code}` : "";
-
-    // Update placeholders regardless
-    if ($("phoneDirect")) $("phoneDirect").placeholder = prefix ? `${prefix}…` : "+…";
-    if ($("phoneMobile")) $("phoneMobile").placeholder = prefix ? `${prefix}…` : "+…";
-
-    if (!prefix) return;
-
-    // Only populate if empty (no overwriting)
-    applyPrefixIfEmpty($("phoneDirect"), prefix);
-    applyPrefixIfEmpty($("phoneMobile"), prefix);
-  }
-
-  
-  function ownerLabel(row){
-    if (!row?.enriched_by) return "-";
-    if (me && row.enriched_by === me.id) return "me";
-    return "•";
-  }
-
-  async function fetchLeadFromStg(ingestJobId, rowNumber){
-    const { data, error } = await sb
-      .from("stg_leads")
-      .select("*")
-      .eq("ingest_job_id", ingestJobId)
-      .eq("row_number", rowNumber)
-      .single();
-
-    if (error) throw error;
-    return data;
-  }
-
-  // ------------------------------
-// Slice 5 — Qualification Outcome helpers
-// ------------------------------
-
-async function fetchOutcome(ingestJobId, rowNumber){
-  const { data, error } = await sb
-    .from("lead_outcomes")
-    .select("outcome_type,outcome_notes,decided_by,decided_at,created_at,updated_at")
-    .eq("ingest_job_id", ingestJobId)
-    .eq("row_number", rowNumber)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data; // null if none
-}
-
-function renderOutcome(){
-  $("outcomeStatus").textContent = "";
-
-  if (!currentOutcome){
-    $("outcomePill").textContent = "No outcome";
-    $("outcomeType").value = "";
-    $("outcomeNotes").value = "";
-    return;
-  }
-
-  $("outcomePill").textContent =
-    (currentOutcome && currentOutcome.outcome_type)
-      ? currentOutcome.outcome_type.toUpperCase()
-      : "—";
-  $("outcomeType").value = currentOutcome.outcome_type || "";
-  $("outcomeNotes").value = currentOutcome.outcome_notes || "";
-}
-
-function canEditOutcome(){
-  if (!currentLead || !me) return false;
-
-  // Only allow outcomes AFTER enrichment is complete (MVP rule)
-  if (currentLead.enrichment_status !== "done") return false;
-
-  // If enrichment rejected, treat outcomes as read-only (MVP)
-  if (currentLead.enrichment_status === "rejected") return false;
-
-  // Role gate
-  if (!(myRole === "admin" || myRole === "ops")) return false;
-
-  // Ownership gate for ops (admin can override)
-  const isOwner = currentLead.enriched_by && currentLead.enriched_by === me.id;
-  if (myRole === "ops" && !isOwner) return false;
-
-  return true;
-}
-
-async function loadOutcomeForCurrentLead(){
-  currentOutcome = null;
-  $("outcomeStatus").textContent = "Loading outcome…";
-
-  try{
-    currentOutcome = await fetchOutcome(currentLead.ingest_job_id, currentLead.row_number);
-    renderOutcome();
-    $("outcomeStatus").textContent = currentOutcome ? "Outcome loaded." : "No outcome set yet.";
-  }catch(e){
-    renderOutcome();
-    $("outcomeStatus").textContent = "Outcome load failed: " + (e?.message || e);
-  }
-
-  setDetailInputsDisabled();
-}
-
-async function saveOutcome(){
-  if (!currentLead){
-    $("outcomeStatus").textContent = "Open a lead first.";
-    return;
-  }
-
-  if (!canEditOutcome()){
-    $("outcomeStatus").textContent = "You can’t edit outcome for this lead (role/ownership/status).";
-    return;
-  }
-
-  const outcomeType = $("outcomeType").value;
-  const notes = ($("outcomeNotes").value || "").trim() || null;
-
-  if (!outcomeType){
-    $("outcomeStatus").textContent = "Select an outcome first.";
-    return;
-  }
-
-  $("outcomeStatus").textContent = "Saving outcome…";
-
-  const { data, error } = await sb.rpc("set_lead_outcome", {
-    p_ingest_job_id: currentLead.ingest_job_id,
-    p_row_number: currentLead.row_number,
-    p_outcome_type: outcomeType,
-    p_outcome_notes: notes
-  });
-
-  if (error){
-    $("outcomeStatus").textContent = "Save outcome failed: " + error.message;
-    return;
-  }
-
-  // RPC returns the saved row
-  currentOutcome = data || null;
-  renderOutcome();
-  $("outcomeStatus").textContent = "Outcome saved.";
-
-  setDetailInputsDisabled();
-}
-
-  function leadKey(row){
-    return `${row.ingest_job_id}:${row.row_number}`;
-  }
-
-  async function loadQueue(forceClearDetail=false){
-    $("detailStatus").textContent = "";
-    const viewMode = $("viewSelect").value;
-
-    let statuses = [];
-    if (viewMode === "pending_in_progress") statuses = ["pending","in_progress"];
-    else statuses = [viewMode];
-
-    const { data, error } = await sb
-      .from("v_enrichment_queue_all")
-      .select("*")
-      .in("enrichment_status", statuses)
-      .order("enrichment_status", { ascending: true });
-
-    if (error){
-      $("queueCount").textContent = "Queue load failed.";
-      $("detailStatus").textContent = "Error loading queue: " + error.message;
-      queueRows = [];
-      renderQueue();
-      return;
-    }
-
-    queueRows = data || [];
-    $("queueCount").textContent = `Showing ${queueRows.length} row(s).`;
-
-    if (forceClearDetail){
-      if (selectedLeadKey && !queueRows.some(r => leadKey(r) === selectedLeadKey)){
-        clearDetail();
-      }
-    }
-
-    renderQueue();
-  }
-
-  function renderQueue(){
-    const tbody = $("queueBody");
-    tbody.innerHTML = "";
-
-    const q = ($("searchInput").value || "").toLowerCase().trim();
-
-    const filtered = queueRows.filter(r => {
-      if (!q) return true;
-      const hay = [
-        r.first_name, r.last_name, r.email, r.company, r.title, r.country, r.city
-      ].filter(Boolean).join(" ").toLowerCase();
-      return hay.includes(q);
-    });
-
-    $("queueCount").textContent = `Showing ${filtered.length} row(s).`;
-
-    for (const row of filtered){
-      const tr = document.createElement("tr");
-      const isSelected = selectedLeadKey && (leadKey(row) === selectedLeadKey);
-      if (isSelected) tr.classList.add("selected-row");
-
-      const tdStatus = document.createElement("td");
-      tdStatus.innerHTML = `<span class="${statusPillClass(row.enrichment_status)}">${row.enrichment_status}</span>`;
-      tr.appendChild(tdStatus);
-
-      const tdFirst = document.createElement("td");
-      tdFirst.textContent = row.first_name || "";
-      tr.appendChild(tdFirst);
-
-      const tdLast = document.createElement("td");
-      tdLast.textContent = row.last_name || "";
-      tr.appendChild(tdLast);
-
-      const tdEmail = document.createElement("td");
-      tdEmail.innerHTML = `<div class="leadPrimary">${escapeHtml(row.email || "")}</div>`;
-      tr.appendChild(tdEmail);
-
-      const tdCompany = document.createElement("td");
-      tdCompany.innerHTML = `
-        <div class="companyPrimary">${escapeHtml(row.company || "")}</div>
-        <div class="companySecondary">${escapeHtml(shortKey(row.ingest_job_id, row.row_number))}</div>
-      `;
-      tr.appendChild(tdCompany);
-
-      const tdTitle = document.createElement("td");
-      tdTitle.textContent = row.title || "";
-      tr.appendChild(tdTitle);
-
-      const tdOwner = document.createElement("td");
-      tdOwner.textContent = ownerLabel(row);
-      tr.appendChild(tdOwner);
-
-      const tdActions = document.createElement("td");
-      tdActions.style.textAlign = "right";
-      const actionWrap = document.createElement("div");
-      actionWrap.className = "actions";
-
-      const openBtn = document.createElement("button");
-      openBtn.className = "btn-ghost";
-      openBtn.textContent = "Open";
-      openBtn.onclick = () => openLead(row);
-      actionWrap.appendChild(openBtn);
-
-      if (row.enrichment_status === "pending"){
-        const claimBtn = document.createElement("button");
-        claimBtn.className = "btn";
-        claimBtn.textContent = "Claim";
-        claimBtn.onclick = () => claimLead(row);
-        actionWrap.appendChild(claimBtn);
-      }
-
-      tdActions.appendChild(actionWrap);
-      tr.appendChild(tdActions);
-
-      tbody.appendChild(tr);
-    }
-  }
-
-async function openLead(row){
-  // Keep the row highlighted immediately
-  selectedLeadKey = leadKey(row);
-  renderQueue();
-
-  $("detailStatus").textContent = "Loading lead…";
-
-  try{
-    const full = await fetchLeadFromStg(row.ingest_job_id, row.row_number);
-
-    // Merge: keep the nice “view” fields (first_name, company, title, etc.)
-    // but overwrite with the real saved stg fields (phones/notes/status/etc.)
-    currentLead = { ...row, ...full };
-
-    // Clear loading message on success
-    $("detailStatus").textContent = "";
-  }catch(e){
-    // Fallback: still open the view row if stg fetch fails
-    currentLead = row;
-    $("detailStatus").textContent = "Opened, but failed to load saved fields: " + (e?.message || e);
-  }
-
-  renderLeadDetail();
-  await loadOutcomeForCurrentLead();
-}
-
-
-  function clearDetail(){
-    currentLead = null;
-    selectedLeadKey = null;
-    $("leadContext").style.display = "none";
-    $("detailStatusPill").textContent = "No lead selected";
-
-    $("ingestJobId").value = "";
-    $("rowNumber").value = "";
-    $("phoneCountry").value = "";
-    $("phoneDirect").value = "";
-    $("phoneMobile").value = "";
-    $("enrichmentNotes").value = "";
-    $("verifiedFields").value = "";
-    $("enrichedPayload").value = "";
-    $("rawPayload").value = "";
-
-    renderQueue();
-  }
-
-function renderLeadDetail(){
-  if (!currentLead) return;
-
-  $("detailStatusPill").textContent = currentLead.enrichment_status || "—";
-  const isRejected = (currentLead.enrichment_status === "rejected");
-  $("rejectedBanner").style.display = isRejected ? "block" : "none";
-
-  $("ingestJobId").value = currentLead.ingest_job_id || "";
-  $("rowNumber").value = currentLead.row_number ?? "";
-
-  $("leadContext").style.display = "block";
-  $("ctxName").textContent = `${currentLead.first_name || ""} ${currentLead.last_name || ""}`.trim();
-  $("ctxEmail").textContent = currentLead.email || "";
-  $("ctxCompany").textContent = currentLead.company || "";
-  $("ctxTitle").textContent = currentLead.title || "";
-  const loc = [currentLead.city, currentLead.state, currentLead.country].filter(Boolean).join(", ");
-  $("ctxLocation").textContent = loc || "—";
-  $("ctxOwner").textContent = ownerLabel(currentLead);
-
-  $("phoneCountry").value = currentLead.phone_country_iso2 || "";
-  $("phoneDirect").value = currentLead.phone_direct || "";
-  $("phoneMobile").value = currentLead.phone_mobile || "";
-  $("enrichmentNotes").value = currentLead.enrichment_notes || "";
-    // Ensure placeholders/prefix behaviour is consistent after loading a lead
-  onPhoneCountryChange();
-
-
-  $("verifiedFields").value = stringifyJsonMaybe(currentLead.verified_fields);
-  $("enrichedPayload").value = stringifyJsonMaybe(currentLead.enriched_payload);
-  $("rawPayload").value = stringifyJsonMaybe(currentLead.raw_payload);
-
-  if (typeof setDetailInputsDisabled === "function") {
-    setDetailInputsDisabled();
-  } else {
-    console.warn("setDetailInputsDisabled not defined (scope/brace issue).");
-  }
-}
-
-
-
-// ------------------------------
-// UI locking (enrichment + outcomes)
-// ------------------------------
-function setDetailInputsDisabled(){
-  const status = currentLead?.enrichment_status;
-  const isDone = status === "done";
-  const isRejected = status === "rejected";
-
-  // Enrichment fields read-only when done OR rejected
-  const enrichmentReadOnly = isDone || isRejected;
-
-  // Outcome read-only based on role/ownership/status
-  const outcomeReadOnly = !canEditOutcome();
-
-  // Enrichment fields
-  ["phoneCountry","phoneDirect","phoneMobile","enrichmentNotes"]
-    .forEach(id => { if ($(id)) $(id).disabled = enrichmentReadOnly; });
-
-  // Advanced JSON is ALWAYS read-only
-  if ($("verifiedFields")) $("verifiedFields").readOnly = true;
-  if ($("enrichedPayload")) $("enrichedPayload").readOnly = true;
-
-  // Hide Save + Enrichment Done only when rejected
-  if ($("saveBtn")) $("saveBtn").style.display = isRejected ? "none" : "inline-block";
-  if ($("doneBtn")) $("doneBtn").style.display = isRejected ? "none" : "inline-block";
-
-  // Outcome controls
-  if ($("outcomeType")) $("outcomeType").disabled = outcomeReadOnly;
-  if ($("outcomeNotes")) $("outcomeNotes").disabled = outcomeReadOnly;
-  if ($("saveOutcomeBtn")) $("saveOutcomeBtn").disabled = outcomeReadOnly;
-
-  // Explain why outcome is disabled (ONLY when disabled)
-  if ($("outcomeStatus") && outcomeReadOnly){
-    if (!currentLead){
-      $("outcomeStatus").textContent = "";
-    } else if (!me){
-      $("outcomeStatus").textContent = "Log in to set an outcome.";
-    } else if (!(myRole === "admin" || myRole === "ops")){
-      $("outcomeStatus").textContent = "You don’t have permission to set outcomes.";
-    } else if (currentLead.enrichment_status === "rejected"){
-      $("outcomeStatus").textContent = "Outcome is locked because the lead was rejected in enrichment.";
-    } else if (myRole === "ops" && currentLead.enriched_by !== me.id){
-      $("outcomeStatus").textContent = "Outcome is locked because you are not the lead owner (claim it first).";
-    } else {
-      $("outcomeStatus").textContent = "Outcome is locked.";
-    }
-  }
-}
-
-
-
-
-  async function claimLead(row){
-    $("detailStatus").textContent = "Claiming lead…";
-    const { data, error } = await sb.rpc("claim_lead", {
-      p_ingest_job_id: row.ingest_job_id,
-      p_row_number: row.row_number
-    });
-
-    if (error){
-      $("detailStatus").textContent = "Claim failed: " + error.message;
-      return;
-    }
-
-    await loadQueue(true);
-    const updated = queueRows.find(r => leadKey(r) === leadKey(row));
-    if (updated) openLead(updated);
-
-    $("detailStatus").textContent = (data === true) ? "Claimed." : "Claim returned false (already owned / not claimable).";
-  }
-
-  async function releaseLead(){
-    if (!currentLead){
-      $("detailStatus").textContent = "Open a lead first.";
-      return;
-    }
-    $("detailStatus").textContent = "Releasing lead…";
-    const { data, error } = await sb.rpc("release_lead", {
-      p_ingest_job_id: currentLead.ingest_job_id,
-      p_row_number: currentLead.row_number
-    });
-    if (error){
-      $("detailStatus").textContent = "Release failed: " + error.message;
-      return;
-    }
-    await loadQueue(true);
-    clearDetail();
-    $("detailStatus").textContent = (data === true) ? "Released." : "Release returned false.";
-  }
-
-  async function saveLead(){
-    if (!currentLead){
-      $("detailStatus").textContent = "Open a lead first.";
-      return;
-    }
-
-    $("detailStatus").textContent = "Saving…";
-
-    const verified = parseJsonTextarea($("verifiedFields").value);
-    if (verified === "__invalid__"){
-      $("detailStatus").textContent = "verified_fields JSON is invalid. Fix it and try again.";
-      return;
-    }
-
-    const enriched = parseJsonTextarea($("enrichedPayload").value);
-    if (enriched === "__invalid__"){
-      $("detailStatus").textContent = "enriched_payload JSON is invalid. Fix it and try again.";
-      return;
-    }
-
-    const update = {
-      phone_country_iso2: $("phoneCountry").value || null,
-      phone_direct: ($("phoneDirect").value || "").trim() || null,
-      phone_mobile: ($("phoneMobile").value || "").trim() || null,
-      enrichment_notes: ($("enrichmentNotes").value || "").trim() || null,
-      verified_fields: verified === "__blank__" ? null : verified,
-      enriched_payload: enriched === "__blank__" ? null : enriched
-    };
-
-    const { error } = await sb
-      .from("stg_leads")
-      .update(update)
-      .eq("ingest_job_id", currentLead.ingest_job_id)
-      .eq("row_number", currentLead.row_number);
-
-    if (error){
-      $("detailStatus").textContent = "Save failed: " + error.message;
-      return;
-    }
-
-    await loadQueue(true);
-
-    try{
-      const full = await fetchLeadFromStg(currentLead.ingest_job_id, currentLead.row_number);
-      currentLead = full;
-      selectedLeadKey = leadKey(full);
-
-      renderQueue();
-      renderLeadDetail();
-
-      $("detailStatus").textContent = "Saved.";
-    }catch(e){
-      $("detailStatus").textContent = "Saved, but failed to reload full lead: " + (e?.message || e);
-    }
-  }
-
-  async function markDone(){
-    if (!currentLead){
-      $("detailStatus").textContent = "Open a lead first.";
-      return;
-    }
-    $("detailStatus").textContent = "Marking done…";
-    const { data, error } = await sb.rpc("mark_lead_done", {
-      p_ingest_job_id: currentLead.ingest_job_id,
-      p_row_number: currentLead.row_number
-    });
-    if (error){
-      $("detailStatus").textContent = "Mark done failed: " + error.message;
-      return;
-    }
-
-    const viewMode = $("viewSelect").value;
-    await loadQueue(true);
-
-    if (viewMode !== "done"){
-      clearDetail();
-    } else {
-      const updated = queueRows.find(r => leadKey(r) === selectedLeadKey);
-      if (updated) openLead(updated);
-    }
-
-    $("detailStatus").textContent = (data === true) ? "Marked done." : "Mark done returned false.";
-  }
-
-  async function markRejected(){
-    if (!currentLead){
-      $("detailStatus").textContent = "Open a lead first.";
-      return;
-    }
-
-    const reason = ($("enrichmentNotes").value || "").trim();
-    if (!reason){
-      $("detailStatus").textContent = "Add a rejection reason in notes, then Reject.";
-      return;
-    }
-
-    $("detailStatus").textContent = "Marking rejected…";
-
-    const { error } = await sb.rpc("mark_lead_rejected", {
-      p_ingest_job_id: currentLead.ingest_job_id,
-      p_row_number: currentLead.row_number,
-      p_reason: reason
-    });
-
-    if (error){
-      $("detailStatus").textContent = "Reject failed: " + error.message;
-      return;
-    }
-
-    const viewMode = $("viewSelect").value;
-    await loadQueue(true);
-
-    if (viewMode !== "rejected"){
-      clearDetail();
-    } else {
-      const updated = queueRows.find(r => leadKey(r) === selectedLeadKey);
-      if (updated) openLead(updated);
-    }
-
-    $("detailStatus").textContent = "Rejected.";
-  }
-
-  function escapeHtml(str){
-    return String(str || "")
-      .replaceAll("&", "&amp;")
-      .replaceAll("<", "&lt;")
-      .replaceAll(">", "&gt;")
-      .replaceAll('"', "&quot;")
-      .replaceAll("'", "&#039;");
-  }
-
-  function shortKey(ingest_job_id, row_number){
-    if (!ingest_job_id) return "";
-    const s = String(ingest_job_id);
-    return `${s.slice(0,8)}… • row ${row_number}`;
-  }
-
-  function stringifyJsonMaybe(val){
-    if (val === null || val === undefined) return "";
-    try{
-      if (typeof val === "string"){
-        const trimmed = val.trim();
-        if (!trimmed) return "";
-        const parsed = JSON.parse(trimmed);
-        return JSON.stringify(parsed, null, 2);
-      }
-      return JSON.stringify(val, null, 2);
-    }catch{
-      return String(val);
-    }
-  }
-
-  function parseJsonTextarea(text){
-    const t = (text || "").trim();
-    if (!t) return "__blank__";
-    try{
-      return JSON.parse(t);
-    }catch{
-      return "__invalid__";
-    }
-  }
-</script>
-  <!-- =========================
-     Admin: Generate Delivery CSV
-     Paste this block just above </body>
-========================= -->
-<div id="adminDeliveryExport" style="display:none; margin:16px 0; padding:16px; border:1px solid #e5e7eb; border-radius:12px; background:#fff;">
-  <h3 style="margin:0 0 8px 0;">Admin — Generate Delivery CSV</h3>
-  <p style="margin:0 0 12px 0; color:#4b5563;">
-    Generates a delivery-ready CSV server-side and returns a signed download link.
-  </p>
-
-  <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
-    <input id="deliveryIdInput" type="text" placeholder="Paste delivery_id (uuid)"
-      style="min-width:420px; flex:1; padding:10px 12px; border:1px solid #d1d5db; border-radius:10px;" />
-
-    <button id="btnGenerateDeliveryCsv"
-      style="padding:10px 12px; border:0; border-radius:10px; background:#111827; color:#fff; cursor:pointer;">
-      Generate CSV
-    </button>
-  </div>
-
-  <div id="deliveryExportStatus" style="margin-top:12px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; white-space:pre-wrap;"></div>
-
-   <div id="deliveryExportResult" style="display:none; margin-top:12px;">
-    <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener"
-       style="display:inline-block; margin-right:12px;">
-       Open signed download link
-    </a>
-  
-    <!-- ✅ NEW: Download button -->
-    <button id="btnDownloadCsv"
-      style="padding:8px 10px; border:1px solid #d1d5db; border-radius:10px; background:#f9fafb; cursor:pointer; margin-right:8px;">
-      Download CSV
-    </button>
-  
-    <button id="btnCopySignedUrl"
-      style="padding:8px 10px; border:1px solid #d1d5db; border-radius:10px; background:#fff; cursor:pointer;">
-      Copy link
-    </button>
-  </div>
-</div>
-
-
-<script>
-/**
- * Admin Delivery CSV wiring (frontend)
- * Requirements:
- * - Verify JWT ON in Supabase Function settings
- * - User must be logged in via Supabase Auth
- * - Edge function must enforce admin role (server-side)
- */
-
-(function () {
-  const PROJECT_REF = "mwfnbmkjetriunsddupr";
-  const EDGE_URL = `https://${PROJECT_REF}.supabase.co/functions/v1/generate-delivery-csv`;
-
-  // --- Helpers ---
-  function setStatus(text) {
-    const el = document.getElementById("deliveryExportStatus");
-    el.textContent = text || "";
-  }
-
-  function showResult(url) {
-    const wrap = document.getElementById("deliveryExportResult");
-    const a = document.getElementById("deliverySignedUrl");
-    a.href = url;
-    a.textContent = url;
-  
-    document.getElementById("btnDownloadCsv").onclick = () =>
-      window.open(url, "_blank", "noopener,noreferrer");
-  
-    wrap.style.display = "block";
-  }
-
-
-  function hideResult() {
-    document.getElementById("deliveryExportResult").style.display = "none";
-  }
-
-function getAnonKey() {
-  if (window.ABM_SUPABASE_ANON_KEY) return window.ABM_SUPABASE_ANON_KEY;
-  return null;
-}
-
-function getAccessTokenFromLocalStorage() {
-  // Find the actual supabase auth key (sometimes ends with .0 etc.)
-  const key = Object.keys(localStorage).find(
-    (k) => k.startsWith(`sb-${PROJECT_REF}-auth-token`)
-  );
-  if (!key) return null;
-
-  const raw = localStorage.getItem(key);
-  if (!raw) return null;
-
-  try {
-    const parsed = JSON.parse(raw);
-
-    // Most common shape
-    if (parsed?.access_token) return parsed.access_token;
-
-    // Other possible shapes
-    if (parsed?.currentSession?.access_token) return parsed.currentSession.access_token;
-    if (parsed?.session?.access_token) return parsed.session.access_token;
-
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-async function isAdminUser() {
-  return window.ABM_CURRENT_ROLE === "admin";
-}
-
-async function initAdminBox() {
-  const box = document.getElementById("adminDeliveryExport");
-  if (!box) return;
-
-  // Wait up to ~3 seconds for role to be set by afterLogin()
-  for (let i = 0; i < 30; i++) {
-    if (window.ABM_CURRENT_ROLE === "admin") {
-      box.style.display = "block";
-      return;
-    }
-    await new Promise(r => setTimeout(r, 100));
-  }
-
-  // Not admin (or role never arrived)
-  box.style.display = "none";
-}
-
-
-  // --- Main action ---
-  async function generateDeliveryCsv() {
-    hideResult();
-    setStatus("");
-
-    const deliveryId = (document.getElementById("deliveryIdInput").value || "").trim();
-    if (!deliveryId) {
-      setStatus("ERROR: Please paste a delivery_id first.");
-      return;
-    }
-
-    const anonKey = getAnonKey();
-    if (!anonKey) {
-      setStatus("ERROR: Could not find your anon key in this page.\n\nFix: ensure your workbench.html defines SUPABASE_ANON_KEY (or ANON_KEY) like your other pages do.");
-      return;
-    }
-
-    const { data: { session }, error: sessionError } = await window.sb.auth.getSession();
-    
-    if (sessionError || !session) {
-      setStatus("ERROR: No active Supabase session.\n\nFix: log out and log back in to Workbench, then try again.");
-      return;
-    }
-    
-    const jwt = session.access_token;
-    console.log("JWT starts:", (jwt || "").slice(0, 12), "len:", (jwt || "").length);
-
-
-    setStatus("Calling Edge Function...\n" + EDGE_URL);
-
-    try {
-      const res = await fetch(EDGE_URL, {
-        method: "POST",
-        headers: {
-          "apikey": anonKey,
-          "Authorization": "Bearer " + jwt,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ delivery_id: deliveryId }),
-      });
-
-      const text = await res.text();
-      let json = null;
-      try { json = JSON.parse(text); } catch {}
-
-      if (!res.ok) {
-        setStatus(`HTTP ${res.status}\n` + (json ? JSON.stringify(json, null, 2) : text));
-        return;
-      }
-
-      if (!json || !json.ok) {
-        setStatus("Unexpected response:\n" + (json ? JSON.stringify(json, null, 2) : text));
-        return;
-      }
-
-      setStatus("SUCCESS:\n" + JSON.stringify(json, null, 2));
-      showResult(json.signed_url);
-
-    } catch (e) {
-      setStatus("ERROR (network/runtime):\n" + (e && e.message ? e.message : String(e)));
-    }
-  }
-
-  // --- Wire up buttons ---
-  document.addEventListener("DOMContentLoaded", async () => {
-    await initAdminBox();
-
-    const btn = document.getElementById("btnGenerateDeliveryCsv");
-    btn.addEventListener("click", generateDeliveryCsv);
-
-    const copyBtn = document.getElementById("btnCopySignedUrl");
-    copyBtn.addEventListener("click", async () => {
-      const a = document.getElementById("deliverySignedUrl");
-      const url = a.href;
-      try {
-        await navigator.clipboard.writeText(url);
-        setStatus("Copied signed_url to clipboard.");
-      } catch {
-        setStatus("Could not copy automatically. Manually copy this URL:\n" + url);
-      }
-    });
-  });
-})();
-</script>
-<!-- =========================
-     End Admin: Generate Delivery CSV
-========================= -->
-
+  <!-- Load your logic -->
+  <script src="./workbench.js"></script>
+  <script src="./admin-export.js"></script>
 </body>
 </html>
