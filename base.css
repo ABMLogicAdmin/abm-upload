@@ -7,36 +7,36 @@
   flex-wrap: wrap;
   align-items: center;
 
-  /* the white divider line */
+  /* white divider line under the whole nav */
   border-bottom: 3px solid rgba(255, 255, 255, 0.9);
   padding-bottom: 12px;
   margin-bottom: 18px;
 }
 
-/* Brand logo inside nav */
+/* Brand/logo link in nav (NOT a pill/button) */
 .nav-brand {
   display: inline-flex;
   align-items: center;
-  padding: 6px 8px;
-  border-radius: 10px;
+  padding: 0;               /* no pill padding */
+  border-radius: 0;         /* no rounding */
+  background: transparent;  /* no background */
+  border: 0;                /* no border */
   text-decoration: none;
-}
-
-.nav .nav-brand {
   flex: 0 0 auto;
 }
 
-/* Force nav logo size even if other CSS touches all images */
+/* Logo image sizing (robust against other CSS) */
 .nav .nav-logo {
-  height: 26px !important;
+  height: 28px !important;
   width: auto !important;
-  max-width: 160px !important;
-  max-height: 26px !important;
+  max-width: 180px !important;
+  max-height: 28px !important;
   object-fit: contain !important;
   display: block !important;
 }
 
-.nav a,
+/* Nav buttons/links (exclude the brand/logo link) */
+.nav a:not(.nav-brand),
 .nav button {
   width: auto;
   padding: 9px 12px;
@@ -53,11 +53,13 @@
   gap: 8px;
 }
 
-.nav a:hover,
+/* Hover styling (exclude brand/logo link) */
+.nav a:not(.nav-brand):hover,
 .nav button:hover {
   filter: brightness(0.98);
 }
 
+/* Spacer pushes Logout to the right */
 .nav .spacer {
   flex: 1;
 }
