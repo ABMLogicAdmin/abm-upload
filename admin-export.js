@@ -1,15 +1,17 @@
 // admin-export.js
 (() => {
-  function $(id) { return document.getElementById(id); }
+  const $ = (id) => document.getElementById(id);
 
-  function setStatus(text) {
+  function setStatus(msg) {
     const el = $("deliveryExportStatus");
-    if (el) el.textContent = text || "";
+    if (el) el.textContent = msg || "";
   }
 
   function showResult(url) {
     const wrap = $("deliveryExportResult");
     const a = $("deliverySignedUrl");
+    if (!wrap || !a) return;
+
     a.href = url;
     a.textContent = "Open signed download link";
     wrap.style.display = "block";
@@ -24,17 +26,14 @@
     const box = $("adminDeliveryExport");
     if (!box) return;
 
-    // wait briefly for role to load
+    // Wait briefly for role to load
     for (let i = 0; i < 30; i++) {
       if (window.ABM?.currentRole) break;
-      await new Promise(r => setTimeout(r, 100));
+      await new Promise((r) => setTimeout(r, 100));
     }
 
-    if (window.ABM?.currentRole === "admin") {
-      box.style.display = "block";
-    } else {
-      box.style.display = "none";
-    }
+    // Only show to admin
+    box.style.display = window.ABM?.currentRole === "admin" ? "block" : "none";
   }
 
   async function generateDeliveryCsv() {
@@ -46,21 +45,28 @@
       return;
     }
 
-    const deliveryId = ($("deliveryIdInput").value || "").trim();
+    const deliveryId = ($("deliveryIdInput")?.value || "").trim();
     if (!deliveryId) {
       setStatus("ERROR: Please paste a delivery_id first.");
       return;
     }
 
-    // Get session and ensure we have a valid JWT
-    const { data: { session }, error: sessionError } = await window.ABM.sb.auth.getSession();
-    if (sessionError || !session?.access_token) {
-      setStatus("ERROR: No active Supabase session.\n\nFix: log out and log back in.");
+    // Get a REAL user JWT (access token)
+    const { data, error: sessionError } = await window.ABM.sb.auth.getSession();
+    if (sessionError) {
+      setStatus("ERROR: Could not read session.\n" + sessionError.message);
+      return;
+    }
+
+    const session = data?.session;
+    const accessToken = session?.access_token;
+
+    if (!accessToken) {
+      setStatus("ERROR: No active session token.\nFix: log out and log back in.");
       return;
     }
 
     const EDGE_URL = `${window.ABM.SUPABASE_URL}/functions/v1/generate-delivery-csv`;
-
     setStatus("Calling Edge Function...\n" + EDGE_URL);
 
     try {
@@ -68,29 +74,36 @@
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "apikey": window.ABM.SUPABASE_ANON_KEY,
-          "Authorization": `Bearer ${session.access_token}`,
+          apikey: window.ABM.SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${accessToken}`,
         },
         body: JSON.stringify({ delivery_id: deliveryId }),
       });
 
       const text = await res.text();
       let json = null;
-      try { json = JSON.parse(text); } catch {}
+      try {
+        json = JSON.parse(text);
+      } catch {
+        // non-json response
+      }
 
       if (!res.ok) {
-        setStatus(`HTTP ${res.status}\n` + (json ? JSON.stringify(json, null, 2) : text));
+        setStatus(
+          `HTTP ${res.status}\n` + (json ? JSON.stringify(json, null, 2) : text)
+        );
         return;
       }
 
       if (!json?.ok || !json?.signed_url) {
-        setStatus("Unexpected response:\n" + (json ? JSON.stringify(json, null, 2) : text));
+        setStatus(
+          "Unexpected response:\n" + (json ? JSON.stringify(json, null, 2) : text)
+        );
         return;
       }
 
       setStatus("SUCCESS");
       showResult(json.signed_url);
-
     } catch (e) {
       setStatus("ERROR (network/runtime):\n" + (e?.message || String(e)));
     }
@@ -99,22 +112,19 @@
   document.addEventListener("DOMContentLoaded", async () => {
     await initAdminBox();
 
-    const btn = $("btnGenerateDeliveryCsv");
-    if (btn) btn.addEventListener("click", generateDeliveryCsv);
+    $("btnGenerateDeliveryCsv")?.addEventListener("click", generateDeliveryCsv);
 
-    const copyBtn = $("btnCopySignedUrl");
-    if (copyBtn) {
-      copyBtn.addEventListener("click", async () => {
-        const a = $("deliverySignedUrl");
-        const url = a?.href || "";
-        try {
-          await navigator.clipboard.writeText(url);
-          setStatus("Copied signed_url to clipboard.");
-        } catch {
-          setStatus("Could not copy automatically. Manually copy this URL:\n" + url);
-        }
-      });
-    }
+    $("btnCopySignedUrl")?.addEventListener("click", async () => {
+      const a = $("deliverySignedUrl");
+      const url = a?.href || "";
+      if (!url || url === "#") return;
+
+      try {
+        await navigator.clipboard.writeText(url);
+        setStatus("Copied signed_url to clipboard.");
+      } catch {
+        setStatus("Could not copy automatically. Manually copy this URL:\n" + url);
+      }
+    });
   });
 })();
-
