@@ -89,12 +89,13 @@
 
     .hint{ font-size:12px;color:var(--muted);margin-top:10px; }
 
-    /* Simple nav */
+    /* Simple nav (nav.js injects markup that uses these classes) */
     .nav{
       margin-top:10px;
       display:flex;
       gap:10px;
       flex-wrap:wrap;
+      align-items:center;
     }
     .nav a, .nav button{
       width:auto;
@@ -112,6 +113,7 @@
       gap:8px;
     }
     .nav a:hover, .nav button:hover{filter:brightness(.98)}
+    .nav .spacer{ flex: 1; }
 
     /* Custom dropdown */
     .dd { position: relative; margin-top: 7px; }
@@ -217,11 +219,8 @@
         <h1>Admin Setup <span class="pill">Clients / Campaigns / Sources</span></h1>
         <p class="sub">Admin-only setup page. Non-admins are blocked.</p>
 
-        <div class="nav">
-          <a href="./index.html">← Upload</a>
-          <a href="./workbench.html">Workbench</a>
-          <button id="logoutBtn" type="button" style="margin-left:auto;">Logout</button>
-        </div>
+        <!-- Shared nav injection point -->
+        <div id="siteNav"></div>
       </div>
     </div>
 
@@ -247,7 +246,7 @@
       <p class="adminTitle">Admin setup</p>
       <p class="adminNote">Create Clients, Campaigns, and Sources. This page requires admin role.</p>
 
-      <!-- Client picker (helps campaign creation default client) -->
+      <!-- Client picker -->
       <label>Selected Client (used as default for new Campaign)</label>
       <div class="dd" id="ddClient"></div>
 
@@ -305,7 +304,7 @@
       <div class="row">
         <div>
           <label>New source name</label>
-          <input id="newSourceName" placeholder="e.g. Manual Upload / StackAdapt / Benchmark" />
+          <input id="newSourceName" placeholder="e.g. Manual Upload / Partner / Platform" />
         </div>
         <div>
           <label>Source system</label>
@@ -341,291 +340,292 @@
     </div>
   </div>
 
-<script>
-  // ===== CONFIG =====
-  // Keep anon public key here (safe to be public). Security comes from RLS + auth.
-  // If you rotate the key in Supabase, update it here too.
-  window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
-  const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
-  // ==================
+  <!-- Shared nav -->
+  <script src="./nav.js?v=1"></script>
 
-  if (!window.supabase) {
-    alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
-    throw new Error("Supabase SDK not loaded");
-  }
+  <script>
+    // ===== CONFIG =====
+    // Keep anon public key here (safe to be public). Security comes from RLS + auth.
+    window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
+    const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
+    // ==================
 
-  const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
-  const $ = (id) => document.getElementById(id);
-
-  const state = {
-    client: { value: "", label: "Select client…", items: [] }
-  };
-
-  const cache = { clients: [] };
-
-  $("loginBtn").onclick = login;
-  $("logoutBtn").onclick = logout;
-
-  // Close dropdown when clicking outside
-  document.addEventListener("click", (e) => {
-    const el = $("ddClient");
-    if (el && !el.contains(e.target)) el.classList.remove("open");
-  });
-
-  async function logout() {
-    await sb.auth.signOut();
-    location.reload();
-  }
-
-  async function isAdmin() {
-    const { data: userRes, error: userErr } = await sb.auth.getUser();
-    if (userErr || !userRes?.user) return false;
-
-    const { data, error } = await sb
-      .from("app_users")
-      .select("role")
-      .eq("user_id", userRes.user.id)
-      .single();
-
-    if (error) {
-      console.error("Admin check failed:", error);
-      return false;
+    if (!window.supabase) {
+      alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
+      throw new Error("Supabase SDK not loaded");
     }
-    return data?.role === "admin";
-  }
 
-  // ✅ FIXED: filterMenu now receives placeholder so re-render works after selection
-  function renderDropdown(containerId, key, placeholder) {
-    const container = $(containerId);
-    container.innerHTML = "";
+    const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
 
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "dd-btn";
-    btn.innerHTML = `<span>${state[key].label || placeholder}</span><span class="dd-caret">▾</span>`;
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      container.classList.toggle("open");
-      const search = container.querySelector(".dd-search");
-      if (search) {
-        search.value = "";
-        search.focus();
-        filterMenu(containerId, key, "", placeholder);
-      }
+    // Expose for nav.js logout
+    window.ABM = window.ABM || {};
+    window.ABM.sb = sb;
+
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+      client: { value: "", label: "Select client…", items: [] }
+    };
+
+    const cache = { clients: [] };
+
+    $("loginBtn").onclick = login;
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      const el = $("ddClient");
+      if (el && !el.contains(e.target)) el.classList.remove("open");
     });
 
-    const menu = document.createElement("div");
-    menu.className = "dd-menu";
+    async function isAdmin() {
+      const { data: userRes, error: userErr } = await sb.auth.getUser();
+      if (userErr || !userRes?.user) return false;
 
-    const search = document.createElement("input");
-    search.className = "dd-search";
-    search.placeholder = "Type to filter…";
-    search.addEventListener("input", () => filterMenu(containerId, key, search.value, placeholder));
-    menu.appendChild(search);
+      const { data, error } = await sb
+        .from("app_users")
+        .select("role")
+        .eq("user_id", userRes.user.id)
+        .single();
 
-    const list = document.createElement("div");
-    list.className = "dd-list";
-    menu.appendChild(list);
-
-    container.appendChild(btn);
-    container.appendChild(menu);
-
-    filterMenu(containerId, key, "", placeholder);
-  }
-
-  // ✅ FIXED: added placeholder param so it exists inside click handler
-  function filterMenu(containerId, key, query, placeholder) {
-    const container = $(containerId);
-    const list = container.querySelector(".dd-list");
-    if (!list) return;
-
-    const q = (query || "").toLowerCase().trim();
-    list.innerHTML = "";
-
-    const items = (state[key].items || []).filter(it =>
-      !q || (it.label || "").toLowerCase().includes(q)
-    );
-
-    if (!items.length) {
-      const empty = document.createElement("div");
-      empty.className = "dd-meta";
-      empty.style.padding = "10px";
-      empty.textContent = "No matches.";
-      list.appendChild(empty);
-      return;
+      if (error) {
+        console.error("Admin check failed:", error);
+        return false;
+      }
+      return data?.role === "admin";
     }
 
-    for (const it of items) {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "dd-item";
-      b.textContent = it.label;
+    function renderDropdown(containerId, key, placeholder) {
+      const container = $(containerId);
+      container.innerHTML = "";
 
-      b.addEventListener("click", () => {
-        state[key].value = it.value;
-        state[key].label = it.label;
-        container.classList.remove("open");
-        renderDropdown(containerId, key, placeholder);
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "dd-btn";
+      btn.innerHTML = `<span>${state[key].label || placeholder}</span><span class="dd-caret">▾</span>`;
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        container.classList.toggle("open");
+        const search = container.querySelector(".dd-search");
+        if (search) {
+          search.value = "";
+          search.focus();
+          filterMenu(containerId, key, "", placeholder);
+        }
       });
 
-      list.appendChild(b);
-    }
-  }
+      const menu = document.createElement("div");
+      menu.className = "dd-menu";
 
-  function setAdminStatus(msg) {
-    $("adminStatus").textContent = msg || "";
-  }
+      const search = document.createElement("input");
+      search.className = "dd-search";
+      search.placeholder = "Type to filter…";
+      search.addEventListener("input", () => filterMenu(containerId, key, search.value, placeholder));
+      menu.appendChild(search);
 
-  async function login() {
-    $("loginStatus").textContent = "Signing in…";
+      const list = document.createElement("div");
+      list.className = "dd-list";
+      menu.appendChild(list);
 
-    const { error } = await sb.auth.signInWithPassword({
-      email: $("email").value.trim(),
-      password: $("password").value
-    });
+      container.appendChild(btn);
+      container.appendChild(menu);
 
-    if (error) {
-      $("loginStatus").textContent = error.message;
-      return;
+      filterMenu(containerId, key, "", placeholder);
     }
 
-    $("loginStatus").textContent = "";
-    showApp();
-  }
+    function filterMenu(containerId, key, query, placeholder) {
+      const container = $(containerId);
+      const list = container.querySelector(".dd-list");
+      if (!list) return;
 
-  async function showApp() {
-    // HARD ADMIN GATE
-    const admin = await isAdmin();
-    if (!admin) {
-      document.body.innerHTML = `
-        <div style="max-width:600px;margin:80px auto;text-align:center;font-family:Poppins,Arial,sans-serif;">
-          <h2>Access denied</h2>
-          <p>You do not have permission to view this page.</p>
-          <p style="color:#6b7280;font-size:13px;">(Your app_users.role is not admin.)</p>
-        </div>
-      `;
-      return;
+      const q = (query || "").toLowerCase().trim();
+      list.innerHTML = "";
+
+      const items = (state[key].items || []).filter(it =>
+        !q || (it.label || "").toLowerCase().includes(q)
+      );
+
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "dd-meta";
+        empty.style.padding = "10px";
+        empty.textContent = "No matches.";
+        list.appendChild(empty);
+        return;
+      }
+
+      for (const it of items) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "dd-item";
+        b.textContent = it.label;
+
+        b.addEventListener("click", () => {
+          state[key].value = it.value;
+          state[key].label = it.label;
+          container.classList.remove("open");
+          renderDropdown(containerId, key, placeholder);
+        });
+
+        list.appendChild(b);
+      }
     }
 
-    $("loginCard").style.display = "none";
-    $("appCard").style.display = "block";
-    setAdminStatus("Loading clients…");
+    function setAdminStatus(msg) {
+      $("adminStatus").textContent = msg || "";
+    }
 
-    try {
+    async function login() {
+      $("loginStatus").textContent = "Signing in…";
+
+      const { error } = await sb.auth.signInWithPassword({
+        email: $("email").value.trim(),
+        password: $("password").value
+      });
+
+      if (error) {
+        $("loginStatus").textContent = error.message;
+        return;
+      }
+
+      $("loginStatus").textContent = "";
+      showApp();
+    }
+
+    async function showApp() {
+      // HARD ADMIN GATE
+      const admin = await isAdmin();
+      if (!admin) {
+        document.body.innerHTML = `
+          <div style="max-width:600px;margin:80px auto;text-align:center;font-family:Poppins,Arial,sans-serif;">
+            <h2>Access denied</h2>
+            <p>You do not have permission to view this page.</p>
+            <p style="color:#6b7280;font-size:13px;">(Your app_users.role is not admin.)</p>
+          </div>
+        `;
+        return;
+      }
+
+      const loginCard = $("loginCard");
+      const appCard = $("appCard");
+      if (loginCard) loginCard.style.display = "none";
+      if (appCard) appCard.style.display = "block";
+
+      setAdminStatus("Loading clients…");
+
+      try {
+        await loadClients();
+
+        state.client.label = "Select client…";
+        state.client.value = "";
+        state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
+        renderDropdown("ddClient", "client", "Select client…");
+
+        setAdminStatus("");
+
+        // Wire buttons
+        $("createClientBtn").onclick = createClient;
+        $("createCampaignBtn").onclick = createCampaign;
+        $("createSourceBtn").onclick = createSource;
+
+      } catch (e) {
+        setAdminStatus(String(e?.message || e));
+      }
+    }
+
+    async function loadClients() {
+      const { data: clients, error } = await sb
+        .from("clients")
+        .select("client_id, name")
+        .order("name");
+
+      if (error) throw new Error(`Failed to load clients: ${error.message}`);
+      cache.clients = clients || [];
+    }
+
+    async function refreshClientsAfterChange() {
       await loadClients();
-
-      state.client.label = "Select client…";
-      state.client.value = "";
       state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
+
+      const stillExists = cache.clients.some(c => c.client_id === state.client.value);
+      if (!stillExists) {
+        state.client.value = "";
+        state.client.label = "Select client…";
+      }
       renderDropdown("ddClient", "client", "Select client…");
-
-      setAdminStatus("");
-
-      // Wire buttons
-      $("createClientBtn").onclick = createClient;
-      $("createCampaignBtn").onclick = createCampaign;
-      $("createSourceBtn").onclick = createSource;
-
-    } catch (e) {
-      setAdminStatus(String(e?.message || e));
     }
-  }
 
-  async function loadClients() {
-    const { data: clients, error } = await sb
-      .from("clients")
-      .select("client_id, name")
-      .order("name");
+    async function createClient() {
+      setAdminStatus("Creating client…");
 
-    if (error) throw new Error(`Failed to load clients: ${error.message}`);
-    cache.clients = clients || [];
-  }
+      const name = $("newClientName").value.trim();
+      const status = $("newClientStatus").value;
 
-  async function refreshClientsAfterChange() {
-    await loadClients();
-    state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
+      if (!name) return setAdminStatus("Client name is required.");
 
-    // keep selected client if still exists
-    const stillExists = cache.clients.some(c => c.client_id === state.client.value);
-    if (!stillExists) {
-      state.client.value = "";
-      state.client.label = "Select client…";
+      const { error } = await sb.from("clients").insert({ name, status });
+      if (error) return setAdminStatus(`❌ Client create failed: ${error.message}`);
+
+      $("newClientName").value = "";
+      setAdminStatus("✅ Client created. Refreshing clients…");
+      await refreshClientsAfterChange();
+      setAdminStatus("✅ Done.");
     }
-    renderDropdown("ddClient", "client", "Select client…");
-  }
 
-  async function createClient() {
-    setAdminStatus("Creating client…");
+    async function createCampaign() {
+      setAdminStatus("Creating campaign…");
 
-    const name = $("newClientName").value.trim();
-    const status = $("newClientStatus").value;
+      const name = $("newCampaignName").value.trim();
+      const type = $("newCampaignType").value.trim() || null;
+      const status = $("newCampaignStatus").value;
 
-    if (!name) return setAdminStatus("Client name is required.");
+      const overrideClientId = $("newCampaignClientId").value.trim();
+      const client_id = overrideClientId || state.client.value;
 
-    const { error } = await sb.from("clients").insert({ name, status });
-    if (error) return setAdminStatus(`❌ Client create failed: ${error.message}`);
+      if (!client_id) return setAdminStatus("Select a Client above OR paste a Client ID in the override field.");
+      if (!name) return setAdminStatus("Campaign name is required.");
 
-    $("newClientName").value = "";
-    setAdminStatus("✅ Client created. Refreshing clients…");
-    await refreshClientsAfterChange();
-    setAdminStatus("✅ Done.");
-  }
+      const payload = { client_id, name, status };
+      if (type) payload.type = type;
 
-  async function createCampaign() {
-    setAdminStatus("Creating campaign…");
+      const { error } = await sb.from("campaigns").insert(payload);
+      if (error) return setAdminStatus(`❌ Campaign create failed: ${error.message}`);
 
-    const name = $("newCampaignName").value.trim();
-    const type = $("newCampaignType").value.trim() || null;
-    const status = $("newCampaignStatus").value;
+      $("newCampaignName").value = "";
+      $("newCampaignType").value = "";
+      $("newCampaignClientId").value = "";
 
-    const overrideClientId = $("newCampaignClientId").value.trim();
-    const client_id = overrideClientId || state.client.value;
+      setAdminStatus("✅ Campaign created.");
+    }
 
-    if (!client_id) return setAdminStatus("Select a Client above OR paste a Client ID in the override field.");
-    if (!name) return setAdminStatus("Campaign name is required.");
+    async function createSource() {
+      setAdminStatus("Creating source…");
 
-    const payload = { client_id, name, status };
-    if (type) payload.type = type;
+      const source_name = $("newSourceName").value.trim();
+      const source_system = $("newSourceSystem").value;
+      const source_channel = $("newSourceChannel").value;
 
-    const { error } = await sb.from("campaigns").insert(payload);
-    if (error) return setAdminStatus(`❌ Campaign create failed: ${error.message}`);
+      if (!source_name) return setAdminStatus("Source name is required.");
 
-    $("newCampaignName").value = "";
-    $("newCampaignType").value = "";
-    $("newCampaignClientId").value = "";
+      const { error } = await sb.from("sources").insert({
+        source_name,
+        source_system,
+        source_channel
+      });
 
-    setAdminStatus("✅ Campaign created.");
-  }
+      if (error) return setAdminStatus(`❌ Source create failed: ${error.message}`);
 
-  async function createSource() {
-    setAdminStatus("Creating source…");
+      $("newSourceName").value = "";
+      setAdminStatus("✅ Source created.");
+    }
 
-    const source_name = $("newSourceName").value.trim();
-    const source_system = $("newSourceSystem").value;
-    const source_channel = $("newSourceChannel").value;
-
-    if (!source_name) return setAdminStatus("Source name is required.");
-
-    const { error } = await sb.from("sources").insert({
-      source_name,
-      source_system,
-      source_channel
-    });
-
-    if (error) return setAdminStatus(`❌ Source create failed: ${error.message}`);
-
-    $("newSourceName").value = "";
-    setAdminStatus("✅ Source created.");
-  }
-
-  // Auto-show app if already logged in
-  sb.auth.getSession()
-    .then(async (r) => {
-      if (r.data.session) showApp();
-    })
-    .catch(()=>{});
-</script>
+    // Auto-show app if already logged in
+    sb.auth.getSession()
+      .then(async (r) => {
+        if (r.data.session) showApp();
+      })
+      .catch(()=>{});
+  </script>
 
 </body>
 </html>
