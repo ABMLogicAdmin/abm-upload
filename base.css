@@ -83,10 +83,10 @@ body{
 }
 /* Logo sizing */
 .nav-logo{
-  height: 36px !important;
+  height: 44px !important;
   width: auto !important;
   max-width: 220px !important;
-  max-height: 36px !important;
+  max-height: 44px !important;
   object-fit: contain !important;
   display:block !important;
 }
