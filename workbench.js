@@ -127,11 +127,13 @@
   // =========================
   // Helpers
   // =========================
-  function showEmptyState(show) {
-  const el = document.getElementById("emptyState");
-  if (!el) return;
-  el.style.display = show ? "block" : "none";
-  }
+ function showEmptyState(show) {
+  const empty = document.getElementById("emptyState");
+  if (empty) empty.style.display = show ? "block" : "none";
+
+  const ctx = document.getElementById("leadContext");
+  if (ctx) ctx.style.display = show ? "none" : "block";
+}
 
   function setLoginStatus(t) { if ($("loginStatus")) $("loginStatus").textContent = t || ""; }
   function setDetailStatus(t) { if ($("detailStatus")) $("detailStatus").textContent = t || ""; }
@@ -365,7 +367,6 @@
 
       $("detailStatusPill").textContent = lead.enrichment_status || "unknown";
 
-      $("leadContext").style.display = "block";
       $("ctxName").textContent = `${lead.first_name || ""} ${lead.last_name || ""}`.trim();
       $("ctxEmail").textContent = lead.email || "";
       $("ctxCompany").textContent = lead.company || "";
@@ -568,9 +569,9 @@
   }
 
   function clearDetail() {
+    showEmptyState(true);
     $("detailStatusPill").textContent = "No lead selected";
-    $("leadContext").style.display = "none";
-
+    
     $("ingestJobId").value = "";
     $("rowNumber").value = "";
 
