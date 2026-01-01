@@ -66,18 +66,21 @@ body{
 }
 
 /* Brand/logo link (NOT a pill/button) */
-.nav-brand{
-  display:inline-flex;
-  align-items:center;
-  padding:0;
-  border-radius:0;
-  background:transparent;
-  border:0;
-  text-decoration:none;
-  flex:0 0 auto;
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  text-decoration: none;
+  cursor: pointer;
+  pointer-events: auto;
 }
-.nav-brand:hover{ filter:none; }
 
+.nav-brand * {
+  pointer-events: none; /* lets the link receive the click */
+}
 /* Logo sizing */
 .nav-logo{
   height: 36px !important;
