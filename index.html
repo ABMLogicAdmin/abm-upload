@@ -166,12 +166,13 @@
       font-size:13px;
     }
 
-    /* Simple nav */
+    /* Simple nav (nav.js injects this markup) */
     .nav{
       margin-top:10px;
       display:flex;
       gap:10px;
       flex-wrap:wrap;
+      align-items:center;
     }
     .nav a, .nav button{
       width:auto;
@@ -189,6 +190,7 @@
       gap:8px;
     }
     .nav a:hover, .nav button:hover{filter:brightness(.98)}
+    .nav .spacer{ flex: 1; }
   </style>
 </head>
 
@@ -199,13 +201,8 @@
       <div>
         <h1>CSV Upload <span class="pill">Partner / Batch Ingest</span></h1>
         <p class="sub">Uploads a CSV to Storage and creates an ingest_jobs record.</p>
-
-        <div class="nav">
-          <a href="./index.html">Upload</a>
-          <a id="adminLink" href="./admin.html" style="display:none;">Admin Setup</a>
-          <a href="./workbench.html">Workbench</a>
-          <button id="logoutBtn" type="button" style="margin-left:auto; display:none;">Logout</button>
-        </div>
+        <!-- Shared nav injection point -->
+        <div id="siteNav"></div>
       </div>
     </div>
 
@@ -253,317 +250,302 @@
     </div>
   </div>
 
-<script>
-  // ===== CONFIG =====
-  // Use your REAL anon key here (Supabase Dashboard → Settings → API → anon public)
-  window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
-  const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
-  // ==================
+  <!-- Shared Nav -->
+  <script src="./nav.js?v=1"></script>
 
-  if (!window.supabase) {
-    alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
-    throw new Error("Supabase SDK not loaded");
-  }
+  <script>
+    // ===== CONFIG =====
+    // Supabase anon public key (OK to be in frontend)
+    window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
+    const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
+    // ==================
 
-  // IMPORTANT: name the client sb to avoid 'supabase already declared' collisions
-  const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
-  const $ = (id) => document.getElementById(id);
-
-  // Dropdown state
-  const state = {
-    client:   { value: "", label: "Select client…", items: [] },
-    campaign: { value: "", label: "Select campaign…", items: [] },
-    source:   { value: "", label: "Select source…", items: [] }
-  };
-
-  // Raw caches (used for filtering campaigns by selected client)
-  const cache = { clients: [], campaigns: [], sources: [] };
-
-  $("loginBtn").onclick = login;
-  $("uploadBtn").onclick = uploadCsv;
-  $("logoutBtn").onclick = logout;
-
-  // Close dropdowns when clicking outside
-  document.addEventListener("click", (e) => {
-    ["ddClient","ddCampaign","ddSource"].forEach(id => {
-      const el = $(id);
-      if (!el) return;
-      if (!el.contains(e.target)) el.classList.remove("open");
-    });
-  });
-
-  async function logout() {
-    await sb.auth.signOut();
-    location.reload();
-  }
-
-  async function isAdmin() {
-    const { data: userRes, error: userErr } = await sb.auth.getUser();
-    if (userErr || !userRes?.user) return false;
-
-    const { data, error } = await sb
-      .from("app_users")
-      .select("role")
-      .eq("user_id", userRes.user.id)
-      .single();
-
-    if (error) {
-      console.error("Admin check failed:", error);
-      return false;
-    }
-    return data.role === "admin";
-  }
-
-  function renderDropdown(containerId, key, placeholder) {
-    const container = $(containerId);
-    container.innerHTML = "";
-
-    const btn = document.createElement("button");
-    btn.type = "button";
-    btn.className = "dd-btn";
-    btn.innerHTML = `<span>${state[key].label || placeholder}</span><span class="dd-caret">▾</span>`;
-    btn.addEventListener("click", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      container.classList.toggle("open");
-      const search = container.querySelector(".dd-search");
-      if (search) {
-        search.value = "";
-        search.focus();
-        filterMenu(containerId, key, "");
-      }
-    });
-
-    const menu = document.createElement("div");
-    menu.className = "dd-menu";
-
-    const search = document.createElement("input");
-    search.className = "dd-search";
-    search.placeholder = "Type to filter…";
-    search.addEventListener("input", () => filterMenu(containerId, key, search.value));
-    menu.appendChild(search);
-
-    const list = document.createElement("div");
-    list.className = "dd-list";
-    menu.appendChild(list);
-
-    container.appendChild(btn);
-    container.appendChild(menu);
-
-    filterMenu(containerId, key, "");
-  }
-
-  function filterMenu(containerId, key, query) {
-    const container = $(containerId);
-    const list = container.querySelector(".dd-list");
-    if (!list) return;
-
-    const q = (query || "").toLowerCase().trim();
-    list.innerHTML = "";
-
-    const items = (state[key].items || []).filter(it =>
-      !q || (it.label || "").toLowerCase().includes(q)
-    );
-
-    if (!items.length) {
-      const empty = document.createElement("div");
-      empty.className = "dd-meta";
-      empty.style.padding = "10px";
-      empty.textContent = "No matches.";
-      list.appendChild(empty);
-      return;
+    if (!window.supabase) {
+      alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
+      throw new Error("Supabase SDK not loaded");
     }
 
-    for (const it of items) {
-      const b = document.createElement("button");
-      b.type = "button";
-      b.className = "dd-item";
-      b.textContent = it.label;
+    // Create client
+    const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
 
-      b.addEventListener("click", () => {
-        state[key].value = it.value;
-        state[key].label = it.label;
-        container.classList.remove("open");
+    // Make it available for nav.js logout if you want it later
+    window.ABM = window.ABM || {};
+    window.ABM.sb = sb;
 
-        if (key === "client") {
-          applyCampaignFilterForSelectedClient();
-          renderDropdown("ddCampaign", "campaign", "Select campaign…");
+    const $ = (id) => document.getElementById(id);
+
+    // Dropdown state
+    const state = {
+      client:   { value: "", label: "Select client…", items: [] },
+      campaign: { value: "", label: "Select campaign…", items: [] },
+      source:   { value: "", label: "Select source…", items: [] }
+    };
+
+    // Raw caches (used for filtering campaigns by selected client)
+    const cache = { clients: [], campaigns: [], sources: [] };
+
+    $("loginBtn").addEventListener("click", login);
+    $("uploadBtn").addEventListener("click", uploadCsv);
+
+    // Close dropdowns when clicking outside
+    document.addEventListener("click", (e) => {
+      ["ddClient","ddCampaign","ddSource"].forEach(id => {
+        const el = $(id);
+        if (!el) return;
+        if (!el.contains(e.target)) el.classList.remove("open");
+      });
+    });
+
+    function renderDropdown(containerId, key, placeholder) {
+      const container = $(containerId);
+      container.innerHTML = "";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "dd-btn";
+      btn.innerHTML = `<span>${state[key].label || placeholder}</span><span class="dd-caret">▾</span>`;
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        container.classList.toggle("open");
+        const search = container.querySelector(".dd-search");
+        if (search) {
+          search.value = "";
+          search.focus();
+          filterMenu(containerId, key, "");
         }
-
-        renderDropdown(containerId, key, "");
       });
 
-      list.appendChild(b);
-    }
-  }
+      const menu = document.createElement("div");
+      menu.className = "dd-menu";
 
-  function applyCampaignFilterForSelectedClient() {
-    const clientId = state.client.value;
+      const search = document.createElement("input");
+      search.className = "dd-search";
+      search.placeholder = "Type to filter…";
+      search.addEventListener("input", () => filterMenu(containerId, key, search.value));
+      menu.appendChild(search);
 
-    state.campaign.label = "Select campaign…";
-    state.campaign.value = "";
+      const list = document.createElement("div");
+      list.className = "dd-list";
+      menu.appendChild(list);
 
-    if (!clientId) {
-      state.campaign.items = [];
-      return;
-    }
+      container.appendChild(btn);
+      container.appendChild(menu);
 
-    const filtered = (cache.campaigns || []).filter(c => c.client_id === clientId);
-    state.campaign.items = filtered.map(r => ({ value: r.campaign_id, label: r.name }));
-  }
-
-  async function login() {
-    $("loginStatus").textContent = "Signing in…";
-    const { error } = await sb.auth.signInWithPassword({
-      email: $("email").value.trim(),
-      password: $("password").value
-    });
-    if (error) {
-      $("loginStatus").textContent = error.message;
-      return;
-    }
-    $("loginStatus").textContent = "";
-    showApp();
-  }
-
-  async function showApp() {
-    $("loginCard").style.display = "none";
-    $("appCard").style.display = "block";
-    $("logoutBtn").style.display = "inline-flex";
-    $("status").textContent = "Loading dropdowns…";
-
-    try {
-      await loadItems();
-
-      state.client.label = "Select client…";
-      state.client.value = "";
-      state.campaign.label = "Select campaign…";
-      state.campaign.value = "";
-      state.source.label = "Select source…";
-      state.source.value = "";
-
-      state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
-      state.source.items = (cache.sources || []).map(r => ({ value: r.source_id, label: r.source_name }));
-      state.campaign.items = [];
-
-      renderDropdown("ddClient", "client", "Select client…");
-      renderDropdown("ddCampaign", "campaign", "Select campaign…");
-      renderDropdown("ddSource", "source", "Select source…");
-
-      // Show admin link only for admins
-      const admin = await isAdmin();
-      if (admin) $("adminLink").style.display = "inline-flex";
-
-      $("status").textContent = "";
-    } catch (e) {
-      $("status").textContent = String(e?.message || e);
-    }
-  }
-
-  async function loadItems() {
-    const { data: clients, error: cErr } = await sb
-      .from("clients")
-      .select("client_id, name")
-      .order("name");
-    if (cErr) throw new Error(`Failed to load clients: ${cErr.message}`);
-
-    const { data: campaigns, error: caErr } = await sb
-      .from("campaigns")
-      .select("campaign_id, client_id, name, type, status")
-      .order("name");
-    if (caErr) throw new Error(`Failed to load campaigns: ${caErr.message}`);
-
-    const { data: sources, error: sErr } = await sb
-      .from("sources")
-      .select("source_id, source_name, source_system, source_channel")
-      .order("source_name");
-    if (sErr) throw new Error(`Failed to load sources: ${sErr.message}`);
-
-    cache.clients = clients || [];
-    cache.campaigns = campaigns || [];
-    cache.sources = sources || [];
-  }
-
-  async function uploadCsv() {
-    const file = $("file").files[0];
-    if (!file) return $("status").textContent = "Select a CSV first.";
-
-    if (!state.client.value || !state.campaign.value || !state.source.value) {
-      $("status").textContent = "Select Client, Campaign, and Source first.";
-      return;
+      filterMenu(containerId, key, "");
     }
 
-    $("status").textContent = "Checking session…";
-    const { data:{user}, error:userErr } = await sb.auth.getUser();
-    if (userErr || !user) return $("status").textContent = "Not logged in.";
+    function filterMenu(containerId, key, query) {
+      const container = $(containerId);
+      const list = container.querySelector(".dd-list");
+      if (!list) return;
 
-    $("status").textContent = "Creating ingest job…";
-    const { data: job, error: jobErr } = await sb
-      .from("ingest_jobs")
-      .insert({
-        client_id: state.client.value,
-        campaign_id: state.campaign.value,
-        source_id: state.source.value,
-        status: "uploaded",
-        storage_bucket: "ingest-uploads",
-        created_by: user.id
-      })
-      .select("id")
-      .single();
+      const q = (query || "").toLowerCase().trim();
+      list.innerHTML = "";
 
-    if (jobErr) return $("status").textContent = `Failed to create ingest job: ${jobErr.message}`;
+      const items = (state[key].items || []).filter(it =>
+        !q || (it.label || "").toLowerCase().includes(q)
+      );
 
-    const path = `client_${state.client.value}/campaign_${state.campaign.value}/ingest_${job.id}.csv`;
-
-    $("status").textContent = "Uploading file…";
-    const { error: upErr } = await sb.storage
-      .from("ingest-uploads")
-      .upload(path, file, { upsert:true, contentType:"text/csv" });
-
-    if (upErr) return $("status").textContent = `Upload failed: ${upErr.message}\nJob created: ${job.id}`;
-
-    $("status").textContent = "Updating job record…";
-    const { error: updErr } = await sb
-      .from("ingest_jobs")
-      .update({ storage_path: path })
-      .eq("id", job.id);
-
-    if (updErr) return $("status").textContent = `Upload ok but update failed: ${updErr.message}`;
-
-    // ============================
-    // AUTO-RUN INGESTION
-    // ============================
-    $("status").textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}`;
-    $("status").textContent += "\n🚀 Starting ingestion…";
-
-    try {
-      const resp = await fetch(`${SUPABASE_URL}/functions/v1/process-ingest-job`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ingest_job_id: job.id })
-      });
-
-      $("status").textContent += `\n✅ Ingestion triggered (${resp.status})`;
-
-      const text = await resp.text();
-
-      if (!resp.ok) {
-        $("status").textContent += `\n❌ Ingestion failed\n${text}`;
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "dd-meta";
+        empty.style.padding = "10px";
+        empty.textContent = "No matches.";
+        list.appendChild(empty);
         return;
       }
 
-      $("status").textContent += `\n✅ Ingestion completed\n${text}`;
-    } catch (e) {
-      $("status").textContent += `\n❌ Ingestion call failed\n${String(e?.message || e)}`;
+      for (const it of items) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "dd-item";
+        b.textContent = it.label;
+
+        b.addEventListener("click", () => {
+          state[key].value = it.value;
+          state[key].label = it.label;
+          container.classList.remove("open");
+
+          if (key === "client") {
+            applyCampaignFilterForSelectedClient();
+            renderDropdown("ddCampaign", "campaign", "Select campaign…");
+          }
+
+          renderDropdown(containerId, key, "");
+        });
+
+        list.appendChild(b);
+      }
     }
-  }
 
-  // Auto-show app if already logged in
-  sb.auth.getSession()
-    .then(r => { if (r.data.session) showApp(); })
-    .catch(()=>{});
-</script>
+    function applyCampaignFilterForSelectedClient() {
+      const clientId = state.client.value;
 
+      state.campaign.label = "Select campaign…";
+      state.campaign.value = "";
+
+      if (!clientId) {
+        state.campaign.items = [];
+        return;
+      }
+
+      const filtered = (cache.campaigns || []).filter(c => c.client_id === clientId);
+      state.campaign.items = filtered.map(r => ({ value: r.campaign_id, label: r.name }));
+    }
+
+    async function login() {
+      $("loginStatus").textContent = "Signing in…";
+      const { error } = await sb.auth.signInWithPassword({
+        email: $("email").value.trim(),
+        password: $("password").value
+      });
+      if (error) {
+        $("loginStatus").textContent = error.message;
+        return;
+      }
+      $("loginStatus").textContent = "";
+      showApp();
+    }
+
+    async function showApp() {
+      const loginCard = $("loginCard");
+      const appCard = $("appCard");
+      const status = $("status");
+
+      if (loginCard) loginCard.style.display = "none";
+      if (appCard) appCard.style.display = "block";
+      if (status) status.textContent = "Loading dropdowns…";
+
+      try {
+        await loadItems();
+
+        state.client.label = "Select client…";
+        state.client.value = "";
+        state.campaign.label = "Select campaign…";
+        state.campaign.value = "";
+        state.source.label = "Select source…";
+        state.source.value = "";
+
+        state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
+        state.source.items = (cache.sources || []).map(r => ({ value: r.source_id, label: r.source_name }));
+        state.campaign.items = [];
+
+        renderDropdown("ddClient", "client", "Select client…");
+        renderDropdown("ddCampaign", "campaign", "Select campaign…");
+        renderDropdown("ddSource", "source", "Select source…");
+
+        if (status) status.textContent = "";
+      } catch (e) {
+        if (status) status.textContent = String(e?.message || e);
+      }
+    }
+
+    async function loadItems() {
+      const { data: clients, error: cErr } = await sb
+        .from("clients")
+        .select("client_id, name")
+        .order("name");
+      if (cErr) throw new Error(`Failed to load clients: ${cErr.message}`);
+
+      const { data: campaigns, error: caErr } = await sb
+        .from("campaigns")
+        .select("campaign_id, client_id, name, type, status")
+        .order("name");
+      if (caErr) throw new Error(`Failed to load campaigns: ${caErr.message}`);
+
+      const { data: sources, error: sErr } = await sb
+        .from("sources")
+        .select("source_id, source_name, source_system, source_channel")
+        .order("source_name");
+      if (sErr) throw new Error(`Failed to load sources: ${sErr.message}`);
+
+      cache.clients = clients || [];
+      cache.campaigns = campaigns || [];
+      cache.sources = sources || [];
+    }
+
+    async function uploadCsv() {
+      const file = $("file")?.files?.[0];
+      const status = $("status");
+      if (!file) { if (status) status.textContent = "Select a CSV first."; return; }
+
+      if (!state.client.value || !state.campaign.value || !state.source.value) {
+        if (status) status.textContent = "Select Client, Campaign, and Source first.";
+        return;
+      }
+
+      if (status) status.textContent = "Checking session…";
+      const { data:{user}, error:userErr } = await sb.auth.getUser();
+      if (userErr || !user) { if (status) status.textContent = "Not logged in."; return; }
+
+      if (status) status.textContent = "Creating ingest job…";
+      const { data: job, error: jobErr } = await sb
+        .from("ingest_jobs")
+        .insert({
+          client_id: state.client.value,
+          campaign_id: state.campaign.value,
+          source_id: state.source.value,
+          status: "uploaded",
+          storage_bucket: "ingest-uploads",
+          created_by: user.id
+        })
+        .select("id")
+        .single();
+
+      if (jobErr) { if (status) status.textContent = `Failed to create ingest job: ${jobErr.message}`; return; }
+
+      const path = `client_${state.client.value}/campaign_${state.campaign.value}/ingest_${job.id}.csv`;
+
+      if (status) status.textContent = "Uploading file…";
+      const { error: upErr } = await sb.storage
+        .from("ingest-uploads")
+        .upload(path, file, { upsert:true, contentType:"text/csv" });
+
+      if (upErr) { if (status) status.textContent = `Upload failed: ${upErr.message}\nJob created: ${job.id}`; return; }
+
+      if (status) status.textContent = "Updating job record…";
+      const { error: updErr } = await sb
+        .from("ingest_jobs")
+        .update({ storage_path: path })
+        .eq("id", job.id);
+
+      if (updErr) { if (status) status.textContent = `Upload ok but update failed: ${updErr.message}`; return; }
+
+      if (status) status.textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}\n🚀 Starting ingestion…`;
+
+      // Trigger process-ingest-job Edge Function with JWT + apikey
+      try {
+        const { data: sess } = await sb.auth.getSession();
+        const jwt = sess?.session?.access_token;
+
+        const resp = await fetch(`${SUPABASE_URL}/functions/v1/process-ingest-job`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "apikey": window.ABM_SUPABASE_ANON_KEY,
+            ...(jwt ? { "Authorization": "Bearer " + jwt } : {})
+          },
+          body: JSON.stringify({ ingest_job_id: job.id })
+        });
+
+        const text = await resp.text();
+
+        if (!resp.ok) {
+          if (status) status.textContent += `\n❌ Ingestion failed (${resp.status})\n${text}`;
+          return;
+        }
+
+        if (status) status.textContent += `\n✅ Ingestion completed\n${text}`;
+      } catch (e) {
+        if (status) status.textContent += `\n❌ Ingestion call failed\n${String(e?.message || e)}`;
+      }
+    }
+
+    // Auto-show app if already logged in
+    sb.auth.getSession()
+      .then(r => { if (r?.data?.session) showApp(); })
+      .catch(()=>{});
+  </script>
 </body>
 </html>
-
