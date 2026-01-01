@@ -1,15 +1,30 @@
-// admin-export.js
+// admin-export.js (full rewrite)
 (() => {
   const $ = (id) => document.getElementById(id);
 
+  const UI = {
+    box: () => $("adminDeliveryExport"),
+    deliveryId: () => $("deliveryIdInput"),
+    btnGenerate: () => $("btnGenerateDeliveryCsv"),
+    status: () => $("deliveryExportStatus"),
+    resultWrap: () => $("deliveryExportResult"),
+    signedLink: () => $("deliverySignedUrl"),
+    btnCopy: () => $("btnCopySignedUrl"),
+  };
+
   function setStatus(msg) {
-    const el = $("deliveryExportStatus");
+    const el = UI.status();
     if (el) el.textContent = msg || "";
   }
 
+  function hideResult() {
+    const wrap = UI.resultWrap();
+    if (wrap) wrap.style.display = "none";
+  }
+
   function showResult(url) {
-    const wrap = $("deliveryExportResult");
-    const a = $("deliverySignedUrl");
+    const wrap = UI.resultWrap();
+    const a = UI.signedLink();
     if (!wrap || !a) return;
 
     a.href = url;
@@ -17,114 +32,131 @@
     wrap.style.display = "block";
   }
 
-  function hideResult() {
-    const wrap = $("deliveryExportResult");
-    if (wrap) wrap.style.display = "none";
+  function setBusy(isBusy) {
+    const btn = UI.btnGenerate();
+    if (!btn) return;
+
+    btn.disabled = !!isBusy;
+    btn.style.opacity = isBusy ? "0.7" : "1";
+    btn.style.cursor = isBusy ? "not-allowed" : "pointer";
+  }
+
+  async function waitForRole(maxMs = 3000) {
+    const start = Date.now();
+    while (Date.now() - start < maxMs) {
+      if (window.ABM?.currentRole) return window.ABM.currentRole;
+      await new Promise((r) => setTimeout(r, 100));
+    }
+    return window.ABM?.currentRole || null;
   }
 
   async function initAdminBox() {
-    const box = $("adminDeliveryExport");
+    const box = UI.box();
     if (!box) return;
 
-    // Wait briefly for role to load
-    for (let i = 0; i < 30; i++) {
-      if (window.ABM?.currentRole) break;
-      await new Promise((r) => setTimeout(r, 100));
+    const role = await waitForRole(3000);
+    box.style.display = role === "admin" ? "block" : "none";
+  }
+
+  async function getFreshAccessToken() {
+    if (!window.ABM?.sb) throw new Error("Supabase client not initialised (window.ABM.sb).");
+
+    // Force refresh so we don’t get “Invalid JWT” from stale sessions.
+    // If refresh fails, we'll fall back to current session check.
+    try {
+      await window.ABM.sb.auth.refreshSession();
+    } catch {
+      // ignore: we’ll still try getSession()
     }
 
-    // Only show to admin
-    box.style.display = window.ABM?.currentRole === "admin" ? "block" : "none";
+    const { data, error } = await window.ABM.sb.auth.getSession();
+    if (error) throw new Error("Could not read session: " + error.message);
+
+    const token = data?.session?.access_token;
+    if (!token) throw new Error("No active session token. Log out and log back in.");
+
+    return token;
+  }
+
+  async function callGenerateDeliveryCsv(deliveryId, accessToken) {
+    const url = `${window.ABM.SUPABASE_URL}/functions/v1/generate-delivery-csv`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        apikey: window.ABM.SUPABASE_ANON_KEY,
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({ delivery_id: deliveryId }),
+    });
+
+    const text = await res.text();
+
+    let json = null;
+    try { json = JSON.parse(text); } catch { /* ignore */ }
+
+    if (!res.ok) {
+      const msg = json ? JSON.stringify(json, null, 2) : text;
+      throw new Error(`HTTP ${res.status}\n${msg}`);
+    }
+
+    if (!json?.ok || !json?.signed_url) {
+      throw new Error("Unexpected response:\n" + (json ? JSON.stringify(json, null, 2) : text));
+    }
+
+    return json.signed_url;
   }
 
   async function generateDeliveryCsv() {
     hideResult();
     setStatus("");
 
-    if (!window.ABM?.sb) {
-      setStatus("ERROR: Supabase client not initialised (window.ABM.sb).");
-      return;
-    }
+    const input = UI.deliveryId();
+    const deliveryId = (input?.value || "").trim();
 
-    const deliveryId = ($("deliveryIdInput")?.value || "").trim();
     if (!deliveryId) {
       setStatus("ERROR: Please paste a delivery_id first.");
       return;
     }
 
-    // Get a REAL user JWT (access token)
-    const { data, error: sessionError } = await window.ABM.sb.auth.getSession();
-    if (sessionError) {
-      setStatus("ERROR: Could not read session.\n" + sessionError.message);
-      return;
-    }
-
-    const session = data?.session;
-    const accessToken = session?.access_token;
-
-    if (!accessToken) {
-      setStatus("ERROR: No active session token.\nFix: log out and log back in.");
-      return;
-    }
-
-    const EDGE_URL = `${window.ABM.SUPABASE_URL}/functions/v1/generate-delivery-csv`;
-    setStatus("Calling Edge Function...\n" + EDGE_URL);
+    setBusy(true);
+    setStatus("Preparing session...");
 
     try {
-      const res = await fetch(EDGE_URL, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          apikey: window.ABM.SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${accessToken}`,
-        },
-        body: JSON.stringify({ delivery_id: deliveryId }),
-      });
+      const accessToken = await getFreshAccessToken();
 
-      const text = await res.text();
-      let json = null;
-      try {
-        json = JSON.parse(text);
-      } catch {
-        // non-json response
-      }
+      const edgeUrl = `${window.ABM.SUPABASE_URL}/functions/v1/generate-delivery-csv`;
+      setStatus("Calling Edge Function...\n" + edgeUrl);
 
-      if (!res.ok) {
-        setStatus(
-          `HTTP ${res.status}\n` + (json ? JSON.stringify(json, null, 2) : text)
-        );
-        return;
-      }
-
-      if (!json?.ok || !json?.signed_url) {
-        setStatus(
-          "Unexpected response:\n" + (json ? JSON.stringify(json, null, 2) : text)
-        );
-        return;
-      }
+      const signedUrl = await callGenerateDeliveryCsv(deliveryId, accessToken);
 
       setStatus("SUCCESS");
-      showResult(json.signed_url);
+      showResult(signedUrl);
     } catch (e) {
-      setStatus("ERROR (network/runtime):\n" + (e?.message || String(e)));
+      setStatus("ERROR:\n" + (e?.message || String(e)));
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  async function copySignedUrl() {
+    const a = UI.signedLink();
+    const url = a?.href || "";
+    if (!url || url === "#") return;
+
+    try {
+      await navigator.clipboard.writeText(url);
+      setStatus("Copied signed URL to clipboard.");
+    } catch {
+      setStatus("Could not copy automatically. Manually copy this URL:\n" + url);
     }
   }
 
   document.addEventListener("DOMContentLoaded", async () => {
     await initAdminBox();
 
-    $("btnGenerateDeliveryCsv")?.addEventListener("click", generateDeliveryCsv);
-
-    $("btnCopySignedUrl")?.addEventListener("click", async () => {
-      const a = $("deliverySignedUrl");
-      const url = a?.href || "";
-      if (!url || url === "#") return;
-
-      try {
-        await navigator.clipboard.writeText(url);
-        setStatus("Copied signed_url to clipboard.");
-      } catch {
-        setStatus("Could not copy automatically. Manually copy this URL:\n" + url);
-      }
-    });
+    UI.btnGenerate()?.addEventListener("click", generateDeliveryCsv);
+    UI.btnCopy()?.addEventListener("click", copySignedUrl);
   });
 })();
