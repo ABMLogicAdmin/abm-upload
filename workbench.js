@@ -11,14 +11,10 @@
     alert("Supabase SDK failed to load. Check CDN/network.");
     throw new Error("Supabase SDK not loaded");
   }
-  if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY.includes("PASTE_")) {
-    // Don't throw—show a clear UI error for beginners
-    console.warn("Missing SUPABASE_ANON_KEY in workbench.js");
-  }
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-  // Expose shared config/state for other scripts (admin-export.js)
+  // Shared globals for admin-export.js
   window.ABM = {
     SUPABASE_URL,
     SUPABASE_ANON_KEY,
@@ -29,15 +25,16 @@
 
   const $ = (id) => document.getElementById(id);
 
-  // UI state
+  // State
   let queueRows = [];
   let currentLead = null;
   let selectedKey = null;
 
-  // Wire up
+  // Wire UI
   $("loginBtn").addEventListener("click", login);
   $("logoutBtn").addEventListener("click", logout);
-  $("refreshBtn").addEventListener("click", () => loadQueue(true));
+
+  $("refreshBtn").addEventListener("click", () => loadQueue());
   $("viewSelect").addEventListener("change", () => loadQueue());
   $("searchInput").addEventListener("input", renderQueue);
   $("clearBtn").addEventListener("click", () => { $("searchInput").value = ""; renderQueue(); });
@@ -49,7 +46,6 @@
 
   $("saveOutcomeBtn").addEventListener("click", saveOutcome);
 
-  // ---- Init ----
   init();
 
   async function init() {
@@ -109,10 +105,9 @@
       setLoginStatus("Login succeeded but user fetch failed.");
       return;
     }
-
     window.ABM.me = userRes.user;
 
-    // Role lookup (server-side admin enforcement still happens in Edge Functions)
+    // Role lookup (UI only; server enforcement still via RLS/RPC/Edge)
     try {
       const { data: roleRow, error: roleErr } = await sb
         .from("app_users")
@@ -120,14 +115,9 @@
         .eq("user_id", window.ABM.me.id)
         .maybeSingle();
 
-      if (roleErr) {
-        console.warn("Role lookup error:", roleErr.message);
-        window.ABM.currentRole = null;
-      } else {
-        window.ABM.currentRole = roleRow?.role || null;
-      }
-    } catch (e) {
-      console.warn("Role lookup failed:", e);
+      if (roleErr) window.ABM.currentRole = null;
+      else window.ABM.currentRole = roleRow?.role || null;
+    } catch {
       window.ABM.currentRole = null;
     }
 
@@ -137,7 +127,7 @@
     $("topNav").style.display = "flex";
     $("appGrid").style.display = "grid";
 
-    await loadQueue(true);
+    await loadQueue();
   }
 
   async function logout() {
@@ -145,39 +135,47 @@
     location.reload();
   }
 
-  // ---- Queue ----
+  // ---------- Queue ----------
+
   function leadKey(r) {
     return `${r.ingest_job_id}:${r.row_number}`;
   }
 
+  function pill(text) {
+    return `<span class="detailPill">${text || "-"}</span>`;
+  }
+
   function ownerLabel(r) {
+    // v_enrichment_queue_all should provide enriched_by (uuid) or enriched_by_email, etc.
     if (!r?.enriched_by) return "-";
     if (window.ABM.me && r.enriched_by === window.ABM.me.id) return "me";
     return "•";
   }
 
-  function pill(status) {
-    return `<span class="detailPill">${status || "-"}</span>`;
+  function mapViewToStatuses(view) {
+    if (view === "pending_in_progress") return ["pending", "in_progress"];
+    if (view === "pending") return ["pending"];
+    if (view === "in_progress") return ["in_progress"];
+    if (view === "done") return ["done"];
+    if (view === "rejected") return ["rejected"];
+    return ["pending", "in_progress"];
   }
 
-  async function loadQueue(showStatus) {
-    if (showStatus) setDetailStatus("Loading queue…");
+  async function loadQueue() {
+    setDetailStatus("");
 
     const view = $("viewSelect").value;
+    const statuses = mapViewToStatuses(view);
 
-    let q = sb.from("stg_leads").select("*");
+    // IMPORTANT: use the VIEW and enrichment_status
+    const { data, error } = await sb
+      .from("v_enrichment_queue_all")
+      .select("*")
+      .in("enrichment_status", statuses)
+      .order("enrichment_status", { ascending: true })
+      .order("ingest_job_id", { ascending: false })
+      .order("row_number", { ascending: true });
 
-    // You may need to adjust the status values if your DB uses different strings
-    if (view === "pending_in_progress") q = q.in("status", ["pending", "in_progress"]);
-    if (view === "pending") q = q.eq("status", "pending");
-    if (view === "in_progress") q = q.eq("status", "in_progress");
-    if (view === "done") q = q.eq("status", "done");
-    if (view === "rejected") q = q.eq("status", "rejected");
-
-    // sort newest first if you have created_at; otherwise by row_number
-    q = q.order("ingest_job_id", { ascending: false }).order("row_number", { ascending: true });
-
-    const { data, error } = await q;
     if (error) {
       setDetailStatus("ERROR loading queue:\n" + error.message);
       queueRows = [];
@@ -187,8 +185,6 @@
 
     queueRows = data || [];
     renderQueue();
-
-    if (showStatus) setDetailStatus("");
   }
 
   function renderQueue() {
@@ -198,7 +194,8 @@
     const rows = queueRows.filter(r => {
       if (!search) return true;
       const hay = [
-        r.first_name, r.last_name, r.email, r.company, r.title, r.status
+        r.first_name, r.last_name, r.email, r.company, r.title,
+        r.enrichment_status
       ].filter(Boolean).join(" ").toLowerCase();
       return hay.includes(search);
     });
@@ -210,13 +207,13 @@
       const selected = selectedKey === key ? "selected-row" : "";
       return `
         <tr class="${selected}" data-key="${key}">
-          <td>${pill(r.status)}</td>
+          <td>${pill(r.enrichment_status)}</td>
           <td>${r.first_name || ""}</td>
           <td>${r.last_name || ""}</td>
           <td><strong>${r.email || ""}</strong></td>
           <td>
             <div style="font-weight:900; color:#22233D;">${r.company || ""}</div>
-            <div class="muted">${r.ingest_job_id?.slice(0,8) || ""}… • row ${r.row_number}</div>
+            <div class="muted">${(r.ingest_job_id || "").slice(0,8)}… • row ${r.row_number}</div>
           </td>
           <td>${r.title || ""}</td>
           <td>${ownerLabel(r)}</td>
@@ -230,7 +227,6 @@
       `;
     }).join("");
 
-    // wire row buttons
     body.querySelectorAll("tr").forEach(tr => {
       tr.addEventListener("click", async (e) => {
         const btn = e.target?.closest("button");
@@ -248,13 +244,13 @@
           return;
         }
 
-        // clicking row opens
         await openLead(ingest_job_id, row_number);
       });
     });
   }
 
   async function fetchLead(ingest_job_id, row_number) {
+    // Pull full row from stg_leads (not the view)
     const { data, error } = await sb
       .from("stg_leads")
       .select("*")
@@ -273,31 +269,32 @@
       currentLead = lead;
       selectedKey = leadKey(lead);
 
-      $("detailStatusPill").textContent = lead.status || "unknown";
+      // Your system uses enrichment_status (not status)
+      $("detailStatusPill").textContent = lead.enrichment_status || "unknown";
 
       $("leadContext").style.display = "block";
       $("ctxName").textContent = `${lead.first_name || ""} ${lead.last_name || ""}`.trim();
       $("ctxEmail").textContent = lead.email || "";
       $("ctxCompany").textContent = lead.company || "";
       $("ctxTitle").textContent = lead.title || "";
-      $("ctxOwner").textContent = ownerLabel(lead);
+      $("ctxOwner").textContent = (lead.enriched_by === window.ABM.me?.id) ? "me" : (lead.enriched_by ? "•" : "-");
 
       $("ingestJobId").value = lead.ingest_job_id;
       $("rowNumber").value = lead.row_number;
 
-      $("phoneCountry").value = lead.phone_country || "";       // adjust if your column name differs
-      $("phoneDirect").value = lead.phone_direct || "";         // adjust if your column name differs
-      $("phoneMobile").value = lead.phone_mobile || "";         // adjust if your column name differs
+      // These field names must match your stg_leads columns
+      $("phoneCountry").value = lead.phone_country_iso2 || "";   // common in your older build
+      $("phoneDirect").value = lead.direct_phone || "";
+      $("phoneMobile").value = lead.mobile_phone || "";
       $("enrichmentNotes").value = lead.enrichment_notes || "";
 
       $("verifiedFields").value = stringifyMaybe(lead.verified_fields);
       $("enrichedPayload").value = stringifyMaybe(lead.enriched_payload);
       $("rawPayload").value = stringifyMaybe(lead.raw_payload);
 
-      const isRejected = lead.status === "rejected";
+      const isRejected = lead.enrichment_status === "rejected";
       $("rejectedBanner").style.display = isRejected ? "block" : "none";
 
-      // Load outcome (optional)
       await loadOutcome(lead);
 
       renderQueue();
@@ -313,20 +310,16 @@
     try { return JSON.stringify(v, null, 2); } catch { return String(v); }
   }
 
+  // ---------- RPC Actions (the “correct” model) ----------
+
   async function claimLead(ingest_job_id, row_number) {
     setDetailStatus("Claiming lead…");
 
     try {
-      // This assumes you have RLS allowing ops/admin to claim + set enriched_by
-      const { error } = await sb
-        .from("stg_leads")
-        .update({
-          status: "in_progress",
-          enriched_by: window.ABM.me.id
-        })
-        .eq("ingest_job_id", ingest_job_id)
-        .eq("row_number", row_number);
-
+      const { error } = await sb.rpc("claim_lead", {
+        p_ingest_job_id: ingest_job_id,
+        p_row_number: row_number
+      });
       if (error) throw error;
 
       await loadQueue();
@@ -337,7 +330,6 @@
     }
   }
 
-  // ---- Actions ----
   function requireCurrentLead() {
     if (!currentLead) {
       setDetailStatus("Select a lead first.");
@@ -353,20 +345,18 @@
     const ingest_job_id = $("ingestJobId").value;
     const row_number = parseInt($("rowNumber").value, 10);
 
+    // Match your schema: update via RPC to keep logic + RLS consistent
     const payload = {
-      phone_country: $("phoneCountry").value || null,     // adjust if needed
-      phone_direct: $("phoneDirect").value.trim() || null,
-      phone_mobile: $("phoneMobile").value.trim() || null,
-      enrichment_notes: $("enrichmentNotes").value.trim() || null
+      p_ingest_job_id: ingest_job_id,
+      p_row_number: row_number,
+      p_phone_country_iso2: $("phoneCountry").value || null,
+      p_direct_phone: $("phoneDirect").value.trim() || null,
+      p_mobile_phone: $("phoneMobile").value.trim() || null,
+      p_enrichment_notes: $("enrichmentNotes").value.trim() || null
     };
 
     try {
-      const { error } = await sb
-        .from("stg_leads")
-        .update(payload)
-        .eq("ingest_job_id", ingest_job_id)
-        .eq("row_number", row_number);
-
+      const { error } = await sb.rpc("update_enrichment", payload);
       if (error) throw error;
 
       await loadQueue();
@@ -385,21 +375,16 @@
     const row_number = parseInt($("rowNumber").value, 10);
 
     try {
-      const { error } = await sb
-        .from("stg_leads")
-        .update({
-          status: "pending",
-          enriched_by: null
-        })
-        .eq("ingest_job_id", ingest_job_id)
-        .eq("row_number", row_number);
-
+      const { error } = await sb.rpc("release_lead", {
+        p_ingest_job_id: ingest_job_id,
+        p_row_number: row_number
+      });
       if (error) throw error;
 
       currentLead = null;
       selectedKey = null;
 
-      await loadQueue(true);
+      await loadQueue();
       clearDetail();
       setDetailStatus("Released.");
     } catch (e) {
@@ -415,12 +400,10 @@
     const row_number = parseInt($("rowNumber").value, 10);
 
     try {
-      const { error } = await sb
-        .from("stg_leads")
-        .update({ status: "done" })
-        .eq("ingest_job_id", ingest_job_id)
-        .eq("row_number", row_number);
-
+      const { error } = await sb.rpc("mark_lead_done", {
+        p_ingest_job_id: ingest_job_id,
+        p_row_number: row_number
+      });
       if (error) throw error;
 
       await loadQueue();
@@ -441,15 +424,11 @@
     const row_number = parseInt($("rowNumber").value, 10);
 
     try {
-      const { error } = await sb
-        .from("stg_leads")
-        .update({
-          status: "rejected",
-          enrichment_notes: (reason ? `[REJECTED] ${reason}\n\n` : "[REJECTED]\n\n") + ($("enrichmentNotes").value || "")
-        })
-        .eq("ingest_job_id", ingest_job_id)
-        .eq("row_number", row_number);
-
+      const { error } = await sb.rpc("reject_lead", {
+        p_ingest_job_id: ingest_job_id,
+        p_row_number: row_number,
+        p_reason: reason
+      });
       if (error) throw error;
 
       await loadQueue();
@@ -479,10 +458,8 @@
     setOutcomeStatus("");
   }
 
-  // ---- Outcomes ----
+  // ---------- Outcomes ----------
   async function loadOutcome(lead) {
-    // NOTE: This assumes a lead_outcomes table keyed by ingest_job_id + row_number
-    // If yours uses lead_id instead, tell me and we’ll adjust.
     try {
       const { data, error } = await sb
         .from("lead_outcomes")
@@ -546,4 +523,5 @@
     }
   }
 })();
+
 
