@@ -67,7 +67,7 @@
 
     const logo = document.createElement("img");
     logo.className = "nav-logo";
-    logo.src = "/abm-upload/abm-logic-email-logo.png";
+    logo.src = "/abm-upload/abm-logic-logo.png";
     logo.alt = "ABM Logic";
     brand.appendChild(logo);
 
