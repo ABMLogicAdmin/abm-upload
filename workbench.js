@@ -111,6 +111,7 @@
   // Wire buttons
   // =========================
   $("loginBtn")?.addEventListener("click", login);
+  $("logoutBtn")?.addEventListener("click", logout);
   $("refreshBtn")?.addEventListener("click", () => loadQueue());
   $("viewSelect")?.addEventListener("change", () => loadQueue());
   $("searchInput")?.addEventListener("input", renderQueue);
@@ -198,7 +199,8 @@
     }
 
     window.ABM.me = userRes.user;
-
+    window.ABM_USER_EMAIL = window.ABM.me.email;
+   
     // Role lookup (UI-only; server enforcement still via RLS/Edge)
     try {
       const { data: roleRow } = await sb
@@ -208,6 +210,8 @@
         .maybeSingle();
 
       window.ABM.currentRole = roleRow?.role || null;
+      window.ABM_ROLE = window.ABM.currentRole || "user";
+
     } catch {
       window.ABM.currentRole = null;
     }
