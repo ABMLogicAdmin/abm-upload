@@ -283,3 +283,62 @@ textarea{
   .navSpacer{ display:none; }
   .navBottom{ gap: 8px; }
 }
+/* =========================
+   NAV FIX (supports nav.js output: <div class="nav"> … )
+========================= */
+
+.nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+
+  border-bottom: 3px solid rgba(255, 255, 255, 0.9);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+
+/* Brand/logo link in nav (NOT a pill/button) */
+.nav-brand {
+  display: inline-flex;
+  align-items: center;
+  padding: 0;
+  border-radius: 0;
+  background: transparent;
+  border: 0;
+  text-decoration: none;
+  flex: 0 0 auto;
+}
+
+/* Logo image sizing */
+.nav .nav-logo {
+  height: 36px !important;
+  width: auto !important;
+  max-width: 220px !important;
+  max-height: 36px !important;
+  object-fit: contain !important;
+  display: block !important;
+}
+
+/* Nav links as pills */
+.nav a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: #fff;
+  color: var(--brand-navy);
+  text-decoration: none;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+/* Current page highlight */
+.nav a[aria-current="page"] {
+  background: rgba(48, 173, 247, 0.18);
+  border-color: rgba(48, 173, 247, 0.55);
+}
+
