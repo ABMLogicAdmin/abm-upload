@@ -161,4 +161,6 @@
   }
 
   document.addEventListener("DOMContentLoaded", buildNav);
+window.addEventListener("abm:nav:refresh", buildNav);
+
 })();
