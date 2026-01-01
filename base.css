@@ -1,0 +1,40 @@
+/* base.css — shared styles used across all pages */
+
+/* Shared nav container */
+.nav {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  align-items: center;
+
+  /* the white divider line */
+  border-bottom: 1px solid rgba(255, 255, 255, 0.9);
+  padding-bottom: 12px;
+  margin-bottom: 18px;
+}
+
+.nav a,
+.nav button {
+  width: auto;
+  padding: 9px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(34, 35, 61, 0.15);
+  background: #fff;
+  color: #22233D;
+  font-weight: 700;
+  font-size: 13px;
+  cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.nav a:hover,
+.nav button:hover {
+  filter: brightness(0.98);
+}
+
+.nav .spacer {
+  flex: 1;
+}
