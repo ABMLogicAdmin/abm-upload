@@ -27,10 +27,10 @@
 
 /* Logo image sizing (robust against other CSS) */
 .nav .nav-logo {
-  height: 28px !important;
+  height: 36px !important;
   width: auto !important;
-  max-width: 180px !important;
-  max-height: 28px !important;
+  max-width: 220px !important;
+  max-height: 36px !important;
   object-fit: contain !important;
   display: block !important;
 }
