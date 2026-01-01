@@ -657,7 +657,7 @@
 <script>
   // ===== CONFIG =====
   // Must match your other pages
-  window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
+  window.ABM_SUPABASE_ANON_KEY = window.ABM_SUPABASE_ANON_KEY || "";
   const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
   // ==================
 
@@ -1501,16 +1501,25 @@ function setDetailInputsDisabled(){
 
   <div id="deliveryExportStatus" style="margin-top:12px; font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace; white-space:pre-wrap;"></div>
 
-  <div id="deliveryExportResult" style="display:none; margin-top:12px;">
+   <div id="deliveryExportResult" style="display:none; margin-top:12px;">
     <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener"
-       style="display:inline-block; margin-right:12px;">Open signed download link</a>
-
+       style="display:inline-block; margin-right:12px;">
+       Open signed download link
+    </a>
+  
+    <!-- ✅ NEW: Download button -->
+    <button id="btnDownloadCsv"
+      style="padding:8px 10px; border:1px solid #d1d5db; border-radius:10px; background:#f9fafb; cursor:pointer; margin-right:8px;">
+      Download CSV
+    </button>
+  
     <button id="btnCopySignedUrl"
       style="padding:8px 10px; border:1px solid #d1d5db; border-radius:10px; background:#fff; cursor:pointer;">
       Copy link
     </button>
   </div>
 </div>
+
 
 <script>
 /**
@@ -1536,8 +1545,13 @@ function setDetailInputsDisabled(){
     const a = document.getElementById("deliverySignedUrl");
     a.href = url;
     a.textContent = url;
+  
+    document.getElementById("btnDownloadCsv").onclick = () =>
+      window.open(url, "_blank", "noopener,noreferrer");
+  
     wrap.style.display = "block";
   }
+
 
   function hideResult() {
     document.getElementById("deliveryExportResult").style.display = "none";
@@ -1613,12 +1627,16 @@ async function initAdminBox() {
       return;
     }
 
-    const jwt = getAccessTokenFromLocalStorage();
-    console.log("JWT starts:", (jwt || "").slice(0, 12), "len:", (jwt || "").length);
-    if (!jwt) {
-      setStatus("ERROR: No Supabase user session found in localStorage.\n\nFix: log out and log back in to Workbench, then try again.");
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    
+    if (sessionError || !session) {
+      setStatus("ERROR: No active Supabase session.\n\nFix: log out and log back in to Workbench, then try again.");
       return;
     }
+    
+    const jwt = session.access_token;
+    console.log("JWT starts:", (jwt || "").slice(0, 12), "len:", (jwt || "").length);
+
 
     setStatus("Calling Edge Function...\n" + EDGE_URL);
 
