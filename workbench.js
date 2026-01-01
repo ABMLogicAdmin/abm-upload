@@ -127,6 +127,12 @@
   // =========================
   // Helpers
   // =========================
+  function showEmptyState(show) {
+  const el = document.getElementById("emptyState");
+  if (!el) return;
+  el.style.display = show ? "block" : "none";
+  }
+
   function setLoginStatus(t) { if ($("loginStatus")) $("loginStatus").textContent = t || ""; }
   function setDetailStatus(t) { if ($("detailStatus")) $("detailStatus").textContent = t || ""; }
   function setOutcomeStatus(t) { if ($("outcomeStatus")) $("outcomeStatus").textContent = t || ""; }
@@ -217,6 +223,8 @@
       
       const appGrid = $("appGrid");
       if (appGrid) appGrid.style.display = "grid";
+      showEmptyState(true);
+
 
 
     await loadQueue();
@@ -347,6 +355,8 @@
 
   async function openLead(ingest_job_id, row_number) {
     setDetailStatus("Opening lead…");
+    showEmptyState(false);
+
 
     try {
       const lead = await fetchLead(ingest_job_id, row_number);
@@ -490,6 +500,7 @@
       await loadQueue();
       clearDetail();
       setDetailStatus("Released.");
+      showEmptyState(true);
     } catch (e) {
       setDetailStatus("ERROR releasing:\n" + (e?.message || String(e)));
     }
