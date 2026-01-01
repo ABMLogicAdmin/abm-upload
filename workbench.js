@@ -202,19 +202,22 @@
     window.ABM_USER_EMAIL = window.ABM.me.email;
    
     // Role lookup (UI-only; server enforcement still via RLS/Edge)
+    
     try {
-      const { data: roleRow } = await sb
-        .from("app_users")
-        .select("role")
-        .eq("user_id", window.ABM.me.id)
-        .maybeSingle();
+  const { data: roleRow } = await sb
+    .from("app_users")
+    .select("role")
+    .eq("user_id", window.ABM.me.id)
+    .maybeSingle();
 
-      window.ABM.currentRole = roleRow?.role || null;
-      window.ABM_ROLE = window.ABM.currentRole || "user";
+  window.ABM.currentRole = roleRow?.role || null;
+  window.ABM_ROLE = window.ABM.currentRole || "user";
+} catch {
+  window.ABM.currentRole = null;
+  window.ABM_ROLE = "user";
+}
 
-    } catch {
-      window.ABM.currentRole = null;
-    }
+// ALWAYS refresh navbar after email + role are set
 
     if ($("whoAmI")) {
       const md = window.ABM.me.user_metadata || {};
@@ -231,9 +234,13 @@
       if (appGrid) appGrid.style.display = "grid";
       showEmptyState(true);
 
+   await loadQueue();
 
+// FINAL step: refresh navbar after login + role + UI are ready
+setTimeout(() => {
+  window.dispatchEvent(new Event("abm:nav:refresh"));
+}, 0);
 
-    await loadQueue();
   }
 
   async function logout() {
