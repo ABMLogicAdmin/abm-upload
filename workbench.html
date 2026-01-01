@@ -12,9 +12,8 @@
   <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- Your CSS -->
-  <link rel="stylesheet" href="./workbench.css?v=5">
-
+  <!-- Your CSS (bump v= when you change CSS) -->
+  <link rel="stylesheet" href="./workbench.css?v=6">
 </head>
 
 <body>
@@ -150,16 +149,11 @@
 
           <div>
             <label>Phone country</label>
+            <!-- IMPORTANT:
+                 This dropdown is populated by workbench.js with a full country list.
+                 Do not hardcode options here. -->
             <select id="phoneCountry">
               <option value="" selected>Select country…</option>
-              <option value="GB">United Kingdom (+44)</option>
-              <option value="US">United States (+1)</option>
-              <option value="IE">Ireland (+353)</option>
-              <option value="DE">Germany (+49)</option>
-              <option value="FR">France (+33)</option>
-              <option value="NL">Netherlands (+31)</option>
-              <option value="BE">Belgium (+32)</option>
-              <option value="IN">India (+91)</option>
             </select>
           </div>
 
@@ -246,15 +240,13 @@
 
       <div id="deliveryExportResult" style="display:none; margin-top:12px;">
         <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener">Open signed download link</a>
-
         <button id="btnCopySignedUrl" class="btn-ghost" style="width:auto; margin-left:10px;">Copy link</button>
       </div>
     </div>
-
   </div>
 
   <!-- Load your logic -->
-  <script src="./workbench.js"></script>
-  <script src="./admin-export.js"></script>
+  <script src="./workbench.js?v=2"></script>
+  <script src="./admin-export.js?v=2"></script>
 </body>
 </html>
