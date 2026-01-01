@@ -37,7 +37,10 @@
   $("refreshBtn").addEventListener("click", () => loadQueue());
   $("viewSelect").addEventListener("change", () => loadQueue());
   $("searchInput").addEventListener("input", renderQueue);
-  $("clearBtn").addEventListener("click", () => { $("searchInput").value = ""; renderQueue(); });
+  $("clearBtn").addEventListener("click", () => {
+    $("searchInput").value = "";
+    renderQueue();
+  });
 
   $("saveBtn").addEventListener("click", saveLead);
   $("releaseBtn").addEventListener("click", releaseLead);
@@ -48,6 +51,9 @@
 
   init();
 
+  // -------------------------
+  // INIT / AUTH
+  // -------------------------
   async function init() {
     const { data } = await sb.auth.getSession();
     if (data?.session?.user) {
@@ -107,7 +113,7 @@
     }
     window.ABM.me = userRes.user;
 
-    // Role lookup (UI only; server enforcement still via RLS/RPC/Edge)
+    // Role lookup (UI only; server enforcement still via RLS/Edge/RPC)
     try {
       const { data: roleRow, error: roleErr } = await sb
         .from("app_users")
@@ -135,8 +141,9 @@
     location.reload();
   }
 
-  // ---------- Queue ----------
-
+  // -------------------------
+  // QUEUE
+  // -------------------------
   function leadKey(r) {
     return `${r.ingest_job_id}:${r.row_number}`;
   }
@@ -146,7 +153,6 @@
   }
 
   function ownerLabel(r) {
-    // v_enrichment_queue_all should provide enriched_by (uuid) or enriched_by_email, etc.
     if (!r?.enriched_by) return "-";
     if (window.ABM.me && r.enriched_by === window.ABM.me.id) return "me";
     return "•";
@@ -167,10 +173,20 @@
     const view = $("viewSelect").value;
     const statuses = mapViewToStatuses(view);
 
-    // IMPORTANT: use the VIEW and enrichment_status
+    // Query stg_leads directly (matches your schema)
     const { data, error } = await sb
-      .from("v_enrichment_queue_all")
-      .select("*")
+      .from("stg_leads")
+      .select(`
+        ingest_job_id,
+        row_number,
+        first_name,
+        last_name,
+        email,
+        company,
+        title,
+        enrichment_status,
+        enriched_by
+      `)
       .in("enrichment_status", statuses)
       .order("enrichment_status", { ascending: true })
       .order("ingest_job_id", { ascending: false })
@@ -194,8 +210,7 @@
     const rows = queueRows.filter(r => {
       if (!search) return true;
       const hay = [
-        r.first_name, r.last_name, r.email, r.company, r.title,
-        r.enrichment_status
+        r.first_name, r.last_name, r.email, r.company, r.title, r.enrichment_status
       ].filter(Boolean).join(" ").toLowerCase();
       return hay.includes(search);
     });
@@ -249,8 +264,10 @@
     });
   }
 
+  // -------------------------
+  // LEAD DETAIL
+  // -------------------------
   async function fetchLead(ingest_job_id, row_number) {
-    // Pull full row from stg_leads (not the view)
     const { data, error } = await sb
       .from("stg_leads")
       .select("*")
@@ -269,7 +286,6 @@
       currentLead = lead;
       selectedKey = leadKey(lead);
 
-      // Your system uses enrichment_status (not status)
       $("detailStatusPill").textContent = lead.enrichment_status || "unknown";
 
       $("leadContext").style.display = "block";
@@ -277,15 +293,16 @@
       $("ctxEmail").textContent = lead.email || "";
       $("ctxCompany").textContent = lead.company || "";
       $("ctxTitle").textContent = lead.title || "";
-      $("ctxOwner").textContent = (lead.enriched_by === window.ABM.me?.id) ? "me" : (lead.enriched_by ? "•" : "-");
+      $("ctxOwner").textContent =
+        (lead.enriched_by === window.ABM.me?.id) ? "me" : (lead.enriched_by ? "•" : "-");
 
       $("ingestJobId").value = lead.ingest_job_id;
       $("rowNumber").value = lead.row_number;
 
-      // These field names must match your stg_leads columns
-      $("phoneCountry").value = lead.phone_country_iso2 || "";   // common in your older build
-      $("phoneDirect").value = lead.direct_phone || "";
-      $("phoneMobile").value = lead.mobile_phone || "";
+      // Matches schema
+      $("phoneCountry").value = lead.phone_country_iso2 || "";
+      $("phoneDirect").value = lead.phone_direct || "";
+      $("phoneMobile").value = lead.phone_mobile || "";
       $("enrichmentNotes").value = lead.enrichment_notes || "";
 
       $("verifiedFields").value = stringifyMaybe(lead.verified_fields);
@@ -310,16 +327,32 @@
     try { return JSON.stringify(v, null, 2); } catch { return String(v); }
   }
 
-  // ---------- RPC Actions (the “correct” model) ----------
+  // -------------------------
+  // ACTIONS
+  // -------------------------
+  function requireCurrentLead() {
+    if (!currentLead) {
+      setDetailStatus("Select a lead first.");
+      return false;
+    }
+    return true;
+  }
 
   async function claimLead(ingest_job_id, row_number) {
     setDetailStatus("Claiming lead…");
 
     try {
-      const { error } = await sb.rpc("claim_lead", {
-        p_ingest_job_id: ingest_job_id,
-        p_row_number: row_number
-      });
+      // Minimal: update directly. RLS should enforce who can do this.
+      const { error } = await sb
+        .from("stg_leads")
+        .update({
+          enrichment_status: "in_progress",
+          enriched_by: window.ABM.me.id,
+          enriched_at: new Date().toISOString()
+        })
+        .eq("ingest_job_id", ingest_job_id)
+        .eq("row_number", row_number);
+
       if (error) throw error;
 
       await loadQueue();
@@ -330,14 +363,6 @@
     }
   }
 
-  function requireCurrentLead() {
-    if (!currentLead) {
-      setDetailStatus("Select a lead first.");
-      return false;
-    }
-    return true;
-  }
-
   async function saveLead() {
     if (!requireCurrentLead()) return;
     setDetailStatus("Saving…");
@@ -345,18 +370,21 @@
     const ingest_job_id = $("ingestJobId").value;
     const row_number = parseInt($("rowNumber").value, 10);
 
-    // Match your schema: update via RPC to keep logic + RLS consistent
     const payload = {
-      p_ingest_job_id: ingest_job_id,
-      p_row_number: row_number,
-      p_phone_country_iso2: $("phoneCountry").value || null,
-      p_direct_phone: $("phoneDirect").value.trim() || null,
-      p_mobile_phone: $("phoneMobile").value.trim() || null,
-      p_enrichment_notes: $("enrichmentNotes").value.trim() || null
+      phone_country_iso2: $("phoneCountry").value || null,
+      phone_direct: $("phoneDirect").value.trim() || null,
+      phone_mobile: $("phoneMobile").value.trim() || null,
+      enrichment_notes: $("enrichmentNotes").value.trim() || null,
+      enriched_at: new Date().toISOString()
     };
 
     try {
-      const { error } = await sb.rpc("update_enrichment", payload);
+      const { error } = await sb
+        .from("stg_leads")
+        .update(payload)
+        .eq("ingest_job_id", ingest_job_id)
+        .eq("row_number", row_number);
+
       if (error) throw error;
 
       await loadQueue();
@@ -375,10 +403,16 @@
     const row_number = parseInt($("rowNumber").value, 10);
 
     try {
-      const { error } = await sb.rpc("release_lead", {
-        p_ingest_job_id: ingest_job_id,
-        p_row_number: row_number
-      });
+      const { error } = await sb
+        .from("stg_leads")
+        .update({
+          enrichment_status: "pending",
+          enriched_by: null,
+          enriched_at: null
+        })
+        .eq("ingest_job_id", ingest_job_id)
+        .eq("row_number", row_number);
+
       if (error) throw error;
 
       currentLead = null;
@@ -400,10 +434,15 @@
     const row_number = parseInt($("rowNumber").value, 10);
 
     try {
-      const { error } = await sb.rpc("mark_lead_done", {
-        p_ingest_job_id: ingest_job_id,
-        p_row_number: row_number
-      });
+      const { error } = await sb
+        .from("stg_leads")
+        .update({
+          enrichment_status: "done",
+          enriched_at: new Date().toISOString()
+        })
+        .eq("ingest_job_id", ingest_job_id)
+        .eq("row_number", row_number);
+
       if (error) throw error;
 
       await loadQueue();
@@ -424,11 +463,19 @@
     const row_number = parseInt($("rowNumber").value, 10);
 
     try {
-      const { error } = await sb.rpc("reject_lead", {
-        p_ingest_job_id: ingest_job_id,
-        p_row_number: row_number,
-        p_reason: reason
-      });
+      const existing = $("enrichmentNotes").value || "";
+      const notes = (reason ? `[REJECTED] ${reason}\n\n` : "[REJECTED]\n\n") + existing;
+
+      const { error } = await sb
+        .from("stg_leads")
+        .update({
+          enrichment_status: "rejected",
+          enrichment_notes: notes,
+          enriched_at: new Date().toISOString()
+        })
+        .eq("ingest_job_id", ingest_job_id)
+        .eq("row_number", row_number);
+
       if (error) throw error;
 
       await loadQueue();
@@ -458,7 +505,9 @@
     setOutcomeStatus("");
   }
 
-  // ---------- Outcomes ----------
+  // -------------------------
+  // OUTCOMES (matches schema)
+  // -------------------------
   async function loadOutcome(lead) {
     try {
       const { data, error } = await sb
@@ -507,7 +556,7 @@
         row_number,
         outcome_type,
         outcome_notes,
-        updated_by: window.ABM.me.id
+        decided_by: window.ABM.me?.id || null
       };
 
       const { error } = await sb
@@ -523,5 +572,3 @@
     }
   }
 })();
-
-
