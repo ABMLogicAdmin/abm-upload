@@ -65,6 +65,7 @@ const UI = {
     return;
   }
 
+    
   const rows = data || [];
   sel.innerHTML =
     `<option value="">Select client…</option>` +
