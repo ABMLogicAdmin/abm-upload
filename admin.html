@@ -507,15 +507,16 @@
         return;
       }
 
-      const loginCard = $("loginCard");
-      const grid = $("adminGrid");
-      const appCard = $("appCard");
-      const exportCard = $("adminDeliveryExport");
-      
-      if (loginCard) loginCard.style.display = "none";
-      if (grid) grid.style.display = "grid";
-      if (appCard) appCard.style.display = "block";
-      if (exportCard) exportCard.style.display = "block";
+        const loginCard = $("loginCard");
+        const grid = $("adminGrid");
+        const appCard = $("appCard");
+        const exportCard = $("adminDeliveryExport");
+        
+        if (loginCard) loginCard.style.display = "none";
+        if (grid) grid.style.display = "grid";
+        if (appCard) appCard.style.display = "block";
+        if (exportCard) exportCard.style.display = "block";
+
 
       setAdminStatus("Loading clients…");
 
