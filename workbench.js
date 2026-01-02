@@ -122,7 +122,17 @@
   if ($("campaignSelect")) $("campaignSelect").value = "";
   await loadQueue();
 });
-  $("clientSelect")?.addEventListener("change", () => loadQueue());
+  $("clientSelect")?.addEventListener("change", async () => {
+  // reset campaign every time client changes
+  if ($("campaignSelect")) $("campaignSelect").value = "";
+
+  // re-render campaign list for this client
+  renderCampaignDropdownForClient($("clientSelect").value || "");
+
+  // reload queue with new filters
+  await loadQueue();
+});
+
   $("campaignSelect")?.addEventListener("change", () => loadQueue());
 
 
@@ -169,6 +179,7 @@
 // =========================
 // Client/Campaign options
 // =========================
+let campaignOptionsCache = [];
 async function loadClientCampaignOptions() {
   const clientSel = $("clientSelect");
   const campaignSel = $("campaignSelect");
@@ -184,6 +195,7 @@ async function loadClientCampaignOptions() {
     console.warn("ERROR loading client/campaign options:", error.message);
     return;
   }
+  campaignOptionsCache = data || [];
 
   // Build unique clients
   const clients = new Map();
@@ -198,14 +210,8 @@ async function loadClientCampaignOptions() {
       .map(([id, name]) => `<option value="${id}">${name}</option>`)
       .join("");
 
-  // Populate campaign dropdown (all campaigns for now)
-campaignSel.innerHTML =
-  `<option value="">All campaigns</option>` +
-  (data || [])
-    .filter(r => r.campaign_id && r.campaign_name)
-    .map(r =>
-      `<option value="${r.campaign_id}">${r.campaign_name}</option>`
-    )
+  renderCampaignDropdownForClient(clientSel.value || "");
+  
     .join("");
 }
 
