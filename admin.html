@@ -327,6 +327,48 @@
         <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener">Open signed download link</a>
         <button id="btnCopySignedUrl" class="btn-ghost" type="button" style="width:auto; margin-left:10px;">Copy link</button>
       </div>
+      <hr class="divider" />
+
+<!-- DELIVERY LOG (Slice 6.5) -->
+<p class="adminTitle" style="margin-top:0;">Delivery Log</p>
+<p class="adminNote">Read-only audit trail of prior deliveries (who, when, how many rows).</p>
+
+<div class="row">
+  <div>
+    <label>Client</label>
+    <div class="dd" id="ddLogClient"></div>
+  </div>
+  <div>
+    <label>Campaign</label>
+    <div class="dd" id="ddLogCampaign"></div>
+  </div>
+</div>
+
+<button id="btnRefreshDeliveryLog" class="btn-secondary" type="button">Refresh log</button>
+
+<div class="adminStatus" id="deliveryLogStatus"></div>
+
+<div style="margin-top:10px; overflow:auto;">
+  <table style="width:100%; border-collapse:collapse; font-size:13px;">
+    <thead>
+      <tr style="text-align:left; opacity:0.9;">
+        <th style="padding:10px 8px;">Client</th>
+        <th style="padding:10px 8px;">Campaign</th>
+        <th style="padding:10px 8px;">Created by</th>
+        <th style="padding:10px 8px;">Created</th>
+        <th style="padding:10px 8px;">Rows</th>
+        <th style="padding:10px 8px;">Delivery ID</th>
+      </tr>
+    </thead>
+    <tbody id="deliveryLogTbody">
+      <tr>
+        <td colspan="6" style="padding:12px 8px; opacity:0.7;">Click “Refresh log” to load results.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<!-- /DELIVERY LOG -->
+
 </div>   <!-- closes adminDeliveryExport -->
 </div>   <!-- closes adminGrid -->
 
