@@ -38,7 +38,7 @@
 
       .grid2{
         display:grid;
-        grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
         gap:18px;
         align-items:start;
       }
@@ -164,12 +164,6 @@
       font-weight:800;
       cursor:pointer;
       margin-top:10px;
-    }
-
-        /* Make Admin cards full-width (match Workbench layout) */
-    #appCard,
-    #adminDeliveryExport {
-      grid-column: 1 / -1;
     }
 
     .adminStatus{
