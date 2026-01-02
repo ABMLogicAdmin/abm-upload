@@ -211,8 +211,6 @@ async function loadClientCampaignOptions() {
       .join("");
 
   renderCampaignDropdownForClient(clientSel.value || "");
-  
-    .join("");
 }
 
   // =========================
