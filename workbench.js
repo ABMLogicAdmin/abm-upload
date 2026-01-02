@@ -113,18 +113,18 @@
   // =========================
   $("loginBtn")?.addEventListener("click", login);
   $("logoutBtn")?.addEventListener("click", logout);
+  
   $("refreshBtn")?.addEventListener("click", async () => {
   const btn = $("refreshBtn");
   const old = btn?.textContent || "Refresh";
 
-  // Visual feedback so it never feels "inactive"
   if (btn) {
     btn.textContent = "Refreshing…";
     btn.disabled = true;
   }
 
   try {
-    await loadQueue();
+    await loadQueue(true);
     setDetailStatus("Refreshed.");
     setTimeout(() => setDetailStatus(""), 800);
   } catch (e) {
@@ -367,7 +367,8 @@ setTimeout(() => {
   // =========================
   // Queue
   // =========================
-  async function loadQueue() {
+  async function loadQueue(force = false) {
+
     setDetailStatus("");
 
     const view = $("viewSelect").value;
