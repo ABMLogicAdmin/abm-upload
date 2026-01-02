@@ -239,29 +239,9 @@
       </div>
     </div>
 
-    <!-- Admin — Generate Delivery CSV -->
-    <div class="card" id="adminDeliveryExport" style="display:none; margin-top:18px;">
-      <div style="font-weight:900; color:#22233D;">Admin — Generate Delivery CSV</div>
-      <div class="muted" style="margin-top:4px;">Generates a delivery-ready CSV server-side and returns a signed download link.</div>
-
-      <label>delivery_id</label>
-      <input id="deliveryIdInput" placeholder="paste a delivery_id UUID" />
-
-      <button id="btnGenerateDeliveryCsv" class="btn-secondary" style="margin-top:10px;">Generate CSV</button>
-
-      <div class="statusText" id="deliveryExportStatus"></div>
-
-      <div id="deliveryExportResult" style="display:none; margin-top:12px;">
-        <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener">Open signed download link</a>
-        <button id="btnCopySignedUrl" class="btn-ghost" style="width:auto; margin-left:10px;">Copy link</button>
-      </div>
-    </div>
-  </div>
-
   <!-- Load your logic -->
   <script src="/abm-upload/nav.js?v=11" defer></script>
   <script src="/abm-upload/workbench.js?v=22" defer></script>
-  <script src="/abm-upload/admin-export.js?v=4" defer></script>
 <button id="logoutBtn" type="button" style="display:none;">Logout</button>
 
 </body>
