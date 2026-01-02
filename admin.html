@@ -311,19 +311,13 @@
       <p class="adminNote">Generate a delivery-ready CSV server-side and return a signed download link.</p>
 
       <label>Client</label>
-      <select id="exportClientSelect">
-        <option value="">Select client…</option>
-      </select>
+      <div class="dd" id="ddExportClient"></div>
       
       <label>Campaign</label>
-      <select id="exportCampaignSelect" disabled>
-        <option value="">Select campaign…</option>
-      </select>
+      <div class="dd" id="ddExportCampaign"></div>
       
       <label>Delivery batch</label>
-      <select id="exportDeliverySelect" disabled>
-        <option value="">Select delivery batch…</option>
-      </select>
+      <div class="dd" id="ddExportDelivery"></div>
 
       <button id="btnGenerateDeliveryCsv" class="btn-secondary" type="button">Generate CSV</button>
 
@@ -338,7 +332,7 @@
 
 <!-- Shared nav -->
 <script src="/abm-upload/nav.js?v=11" defer></script>
-  <script src="/abm-upload/admin-export.js?v=8" defer></script>
+  <script src="/abm-upload/admin-export.js?v=9" defer></script>
 
   <script>
     // ===== CONFIG =====
