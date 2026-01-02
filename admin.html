@@ -10,7 +10,6 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="/abm-upload/base.css?v=12">
-
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
@@ -36,10 +35,6 @@
       padding:32px 16px 60px;
     }
     .wrap{max-width:760px;margin:0 auto}
-    .header{display:flex;align-items:center;gap:14px;margin-bottom:14px}
-    .logo{height:34px;width:auto}
-    h1{font-size:18px;margin:0;color:var(--brand-navy);font-weight:700}
-    .sub{margin:2px 0 0;color:var(--muted);font-size:12.5px}
 
     .card{
       margin-top:18px;
@@ -47,7 +42,7 @@
       border:1px solid var(--border);
       border-radius:var(--radius);
       padding:18px;
-      box-shadow:0 8px 30px rgba(17,24,39,06);
+      box-shadow:0 8px 30px rgba(17,24,39,.06);
     }
     label{display:block;margin-top:14px;font-size:12.5px;color:var(--brand-navy);font-weight:600}
 
@@ -63,6 +58,8 @@
       color:var(--text);
     }
     .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:640px){.row{grid-template-columns:1fr}}
+
     .btn{
       border:none;
       background:var(--brand-primary);
@@ -75,20 +72,6 @@
     .btn:hover{filter:brightness(.98)}
     .btn:active{transform:translateY(1px)}
     .status{margin-top:14px;font-size:12.5px;white-space:pre-wrap}
-    .pill{
-      display:inline-block;
-      font-size:11px;
-      font-weight:700;
-      color:var(--brand-navy);
-      background:rgba(48,173,247,18);
-      border:1px solid rgba(48,173,247,28);
-      padding:4px 8px;
-      border-radius:999px;
-      margin-left:8px;
-      vertical-align:middle;
-    }
-    @media (max-width:640px){.row{grid-template-columns:1fr}}
-
     .hint{ font-size:12px;color:var(--muted);margin-top:10px; }
 
     /* Custom dropdown */
@@ -110,8 +93,8 @@
     }
     .dd-btn:focus{
       outline:none;
-      border-color:rgba(48,173,247,8);
-      box-shadow:0 0 0 4px rgba(48,173,247,18);
+      border-color:rgba(48,173,247,.8);
+      box-shadow:0 0 0 4px rgba(48,173,247,.18);
     }
     .dd-caret{ color: var(--muted); font-size: 12px; }
     .dd-menu{
@@ -122,7 +105,7 @@
       background:#fff;
       border:1px solid var(--border);
       border-radius:12px;
-      box-shadow:0 18px 45px rgba(17,24,39,12);
+      box-shadow:0 18px 45px rgba(17,24,39,.12);
       max-height:240px;
       overflow:auto;
       padding:6px;
@@ -141,7 +124,7 @@
       color:var(--text);
       font-size:14px;
     }
-    .dd-item:hover{ background:rgba(48,173,247,10); }
+    .dd-item:hover{ background:rgba(48,173,247,.10); }
     .dd-meta{ font-size:11px; color:var(--muted); margin-top:2px; }
     .dd-search{
       width:100%;
@@ -178,7 +161,6 @@
       white-space:pre-wrap;
       color:var(--brand-navy);
     }
-
     .divider{
       margin:16px 0;
       border:none;
@@ -192,9 +174,7 @@
   data-page-badge="Clients / Campaigns / Sources"
   data-page-help="Admin-only setup page. Non-admins are blocked."
 >
-
   <div class="wrap">
-    
     <div id="siteNav"></div>
     <button id="logoutBtn" type="button" style="display:none;">Logout</button>
 
@@ -210,12 +190,12 @@
           <input id="password" type="password" autocomplete="current-password" />
         </div>
       </div>
-      <button class="btn" id="loginBtn">Sign in</button>
+      <button class="btn" id="loginBtn" type="button">Sign in</button>
       <div class="status" id="loginStatus"></div>
       <div class="hint">If login works but Admin page blocks you, your app_users.role is not admin.</div>
     </div>
 
-    <!-- APP -->
+    <!-- ADMIN SETUP CARD -->
     <div class="card" id="appCard" style="display:none;">
       <p class="adminTitle">Admin setup</p>
       <p class="adminNote">Create Clients, Campaigns, and Sources. This page requires admin role.</p>
@@ -311,45 +291,30 @@
       <button id="createSourceBtn" class="btn-secondary" type="button">Create source</button>
 
       <div id="adminStatus" class="adminStatus"></div>
-      <hr class="divider" />
+    </div>
 
-<!-- Admin — Generate Delivery CSV -->
-<div class="card" id="adminDeliveryExport" style="margin-top:18px;">
-  <p class="adminTitle">Delivery Export</p>
-  <p class="adminNote">
-    Generate a delivery-ready CSV server-side and return a signed download link.
-  </p>
+    <!-- DELIVERY EXPORT CARD (separate window) -->
+    <div class="card" id="adminDeliveryExport" style="display:none;">
+      <p class="adminTitle">Delivery Export</p>
+      <p class="adminNote">Generate a delivery-ready CSV server-side and return a signed download link.</p>
 
-  <label>delivery_id</label>
-  <input id="deliveryIdInput" placeholder="paste a delivery_id UUID" />
+      <label>delivery_id</label>
+      <input id="deliveryIdInput" placeholder="paste a delivery_id UUID" />
 
-  <button id="btnGenerateDeliveryCsv" class="btn-secondary" type="button">
-    Generate CSV
-  </button>
+      <button id="btnGenerateDeliveryCsv" class="btn-secondary" type="button">Generate CSV</button>
 
-  <div id="deliveryExportStatus" class="adminStatus"></div>
+      <div class="adminStatus" id="deliveryExportStatus"></div>
 
-  <div id="deliveryExportResult" style="display:none; margin-top:12px;">
-    <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener">
-      Open signed download link
-    </a>
-    <button
-      id="btnCopySignedUrl"
-      class="btn-ghost"
-      type="button"
-      style="margin-left:10px; width:auto;"
-    >
-      Copy link
-    </button>
-  </div>
-</div>
-
+      <div id="deliveryExportResult" style="display:none; margin-top:12px;">
+        <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener">Open signed download link</a>
+        <button id="btnCopySignedUrl" class="btn-ghost" type="button" style="width:auto; margin-left:10px;">Copy link</button>
+      </div>
     </div>
   </div>
 
   <!-- Shared nav -->
   <script src="/abm-upload/nav.js?v=11" defer></script>
-  <script src="/abm-upload/admin-export.js?v=5" defer></script>
+  <script src="/abm-upload/admin-export.js?v=6" defer></script>
 
   <script>
     // ===== CONFIG =====
@@ -370,7 +335,6 @@
     window.ABM.sb = sb;
     window.ABM.SUPABASE_URL = SUPABASE_URL;
     window.ABM.SUPABASE_ANON_KEY = window.ABM_SUPABASE_ANON_KEY;
-
 
     const $ = (id) => document.getElementById(id);
 
@@ -503,27 +467,22 @@
       showApp();
     }
 
-      async function logout() {
-    try {
-      await window.ABM.sb.auth.signOut();
-    } catch (e) {
-      console.warn("Logout error:", e);
+    async function logout() {
+      try { await window.ABM.sb.auth.signOut(); } catch (e) { console.warn("Logout error:", e); }
+      location.href = "/abm-upload/admin.html";
     }
-    location.href = "/abm-upload/admin.html";
-  }
 
-async function showApp() {
-  // Get user + set navbar identity
-  const { data: userRes } = await sb.auth.getUser();
-  const user = userRes?.user;
+    async function showApp() {
+      // Get user + set navbar identity
+      const { data: userRes } = await sb.auth.getUser();
+      const user = userRes?.user;
 
-  if (user?.email) window.ABM_USER_EMAIL = user.email;
-  window.ABM_ROLE = "admin"; // this page is admin-only
-  window.dispatchEvent(new Event("abm:nav:refresh"));
+      if (user?.email) window.ABM_USER_EMAIL = user.email;
+      window.ABM_ROLE = "admin"; // this page is admin-only
+      window.dispatchEvent(new Event("abm:nav:refresh"));
 
-
-  // HARD ADMIN GATE
-  const admin = await isAdmin();
+      // HARD ADMIN GATE
+      const admin = await isAdmin();
 
       if (!admin) {
         document.body.innerHTML = `
@@ -538,8 +497,11 @@ async function showApp() {
 
       const loginCard = $("loginCard");
       const appCard = $("appCard");
+      const exportCard = $("adminDeliveryExport");
+
       if (loginCard) loginCard.style.display = "none";
       if (appCard) appCard.style.display = "block";
+      if (exportCard) exportCard.style.display = "block";
 
       setAdminStatus("Loading clients…");
 
@@ -648,19 +610,16 @@ async function showApp() {
       $("newSourceName").value = "";
       setAdminStatus("✅ Source created.");
     }
-document.addEventListener("DOMContentLoaded", () => {
-  const btn = document.getElementById("logoutBtn");
-  if (btn) btn.addEventListener("click", logout);
-});
 
-    
+    document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("logoutBtn");
+      if (btn) btn.addEventListener("click", logout);
+    });
+
     // Auto-show app if already logged in
     sb.auth.getSession()
-      .then(async (r) => {
-        if (r.data.session) showApp();
-      })
+      .then(async (r) => { if (r.data.session) showApp(); })
       .catch(()=>{});
   </script>
-  
 </body>
 </html>
