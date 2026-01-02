@@ -115,7 +115,15 @@
   $("refreshBtn")?.addEventListener("click", () => loadQueue());
   $("viewSelect")?.addEventListener("change", () => loadQueue());
   $("searchInput")?.addEventListener("input", renderQueue);
-  $("clearBtn")?.addEventListener("click", () => { $("searchInput").value = ""; renderQueue(); });
+  $("clearBtn")?.addEventListener("click", async () => {
+  $("searchInput").value = "";
+  if ($("clientSelect")) $("clientSelect").value = "";
+  if ($("campaignSelect")) $("campaignSelect").value = "";
+  await loadQueue();
+});
+  $("clientSelect")?.addEventListener("change", () => loadQueue());
+  $("campaignSelect")?.addEventListener("change", () => loadQueue());
+
 
   $("saveBtn")?.addEventListener("click", saveLead);
   $("releaseBtn")?.addEventListener("click", releaseLead);
@@ -156,6 +164,49 @@
     if (view === "rejected") return ["rejected"];
     return ["pending", "in_progress"];
   }
+  
+// =========================
+// Client/Campaign options
+// =========================
+async function loadClientCampaignOptions() {
+  const clientSel = $("clientSelect");
+  const campaignSel = $("campaignSelect");
+  if (!clientSel || !campaignSel) return;
+
+  const { data, error } = await sb
+    .from("v_workbench_campaign_options")
+    .select("client_id, client_name, campaign_id, campaign_name")
+    .order("client_name", { ascending: true })
+    .order("campaign_name", { ascending: true });
+
+  if (error) {
+    console.warn("ERROR loading client/campaign options:", error.message);
+    return;
+  }
+
+  // Build unique clients
+  const clients = new Map();
+  (data || []).forEach(r => {
+    if (r.client_id && r.client_name) clients.set(r.client_id, r.client_name);
+  });
+
+  // Populate client dropdown
+  clientSel.innerHTML =
+    `<option value="">All clients</option>` +
+    [...clients.entries()]
+      .map(([id, name]) => `<option value="${id}">${name}</option>`)
+      .join("");
+
+  // Populate campaign dropdown (all campaigns for now)
+campaignSel.innerHTML =
+  `<option value="">All campaigns</option>` +
+  (data || [])
+    .filter(r => r.campaign_id && r.campaign_name)
+    .map(r =>
+      `<option value="${r.campaign_id}">${r.campaign_name}</option>`
+    )
+    .join("");
+}
 
   // =========================
   // Init / Auth
@@ -234,7 +285,9 @@
       if (appGrid) appGrid.style.display = "grid";
       showEmptyState(true);
 
-   await loadQueue();
+   await loadClientCampaignOptions();
+  await loadQueue();
+
 
 // FINAL step: refresh navbar after login + role + UI are ready
 setTimeout(() => {
@@ -257,23 +310,36 @@ setTimeout(() => {
     const view = $("viewSelect").value;
     const statuses = mapViewToStatuses(view);
 
-    const { data, error } = await sb
-      .from("stg_leads")
-      .select(`
-        ingest_job_id,
-        row_number,
-        first_name,
-        last_name,
-        email,
-        company,
-        title,
-        enrichment_status,
-        enriched_by
-      `)
-      .in("enrichment_status", statuses)
-      .order("enrichment_status", { ascending: true })
-      .order("ingest_job_id", { ascending: false })
-      .order("row_number", { ascending: true });
+const clientId = $("clientSelect")?.value || "";
+const campaignId = $("campaignSelect")?.value || "";
+
+let q = sb
+  .from("v_workbench_queue")
+  .select(`
+    ingest_job_id,
+    row_number,
+    first_name,
+    last_name,
+    email,
+    company,
+    title,
+    enrichment_status,
+    enriched_by,
+    client_id,
+    campaign_id,
+    client_name,
+    campaign_name
+  `)
+  .in("enrichment_status", statuses);
+
+if (clientId) q = q.eq("client_id", clientId);
+if (campaignId) q = q.eq("campaign_id", campaignId);
+
+const { data, error } = await q
+  .order("enrichment_status", { ascending: true })
+  .order("ingest_job_id", { ascending: false })
+  .order("row_number", { ascending: true });
+
 
     if (error) {
       setDetailStatus("ERROR loading queue:\n" + error.message);
