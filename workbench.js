@@ -175,6 +175,13 @@
     if (view === "rejected") return ["rejected"];
     return ["pending", "in_progress"];
   }
+  function mapViewToWorkbenchView(view) {
+  if (view === "done" || view === "rejected") {
+    return "v_workbench_queue_done";
+  }
+  return "v_workbench_queue";
+}
+
   
 // =========================
 // Client/Campaign options
@@ -341,12 +348,14 @@ setTimeout(() => {
 
     const view = $("viewSelect").value;
     const statuses = mapViewToStatuses(view);
+    const viewName = mapViewToWorkbenchView(view);
+
 
 const clientId = $("clientSelect")?.value || "";
 const campaignId = $("campaignSelect")?.value || "";
 
 let q = sb
-  .from("v_workbench_queue")
+  .from(viewName)
   .select(`
     ingest_job_id,
     row_number,
@@ -361,8 +370,12 @@ let q = sb
     campaign_id,
     client_name,
     campaign_name
-  `)
-  .in("enrichment_status", statuses);
+  `);
+
+if (viewName === "v_workbench_queue") {
+  q = q.in("enrichment_status", statuses);
+}
+
 
 if (clientId) q = q.eq("client_id", clientId);
 if (campaignId) q = q.eq("campaign_id", campaignId);
