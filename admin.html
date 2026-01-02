@@ -175,6 +175,7 @@
   data-page-help="Admin-only setup page. Non-admins are blocked."
 >
   <div class="wrap">
+
     <div id="siteNav"></div>
     <button id="logoutBtn" type="button" style="display:none;">Logout</button>
 
@@ -194,7 +195,8 @@
       <div class="status" id="loginStatus"></div>
       <div class="hint">If login works but Admin page blocks you, your app_users.role is not admin.</div>
     </div>
-
+      
+<div class="grid2" id="adminGrid" style="display:none;">
     <!-- ADMIN SETUP CARD -->
     <div class="card" id="appCard" style="display:none;">
       <p class="adminTitle">Admin setup</p>
@@ -309,11 +311,11 @@
         <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener">Open signed download link</a>
         <button id="btnCopySignedUrl" class="btn-ghost" type="button" style="width:auto; margin-left:10px;">Copy link</button>
       </div>
-    </div>
-  </div>
+</div>   <!-- closes adminDeliveryExport -->
+</div>   <!-- closes adminGrid -->
 
-  <!-- Shared nav -->
-  <script src="/abm-upload/nav.js?v=11" defer></script>
+<!-- Shared nav -->
+<script src="/abm-upload/nav.js?v=11" defer></script>
   <script src="/abm-upload/admin-export.js?v=6" defer></script>
 
   <script>
