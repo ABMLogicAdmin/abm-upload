@@ -311,11 +311,45 @@
       <button id="createSourceBtn" class="btn-secondary" type="button">Create source</button>
 
       <div id="adminStatus" class="adminStatus"></div>
+      <hr class="divider" />
+
+<!-- Admin — Generate Delivery CSV -->
+<div class="card" id="adminDeliveryExport" style="margin-top:18px;">
+  <p class="adminTitle">Delivery Export</p>
+  <p class="adminNote">
+    Generate a delivery-ready CSV server-side and return a signed download link.
+  </p>
+
+  <label>delivery_id</label>
+  <input id="deliveryIdInput" placeholder="paste a delivery_id UUID" />
+
+  <button id="btnGenerateDeliveryCsv" class="btn-secondary" type="button">
+    Generate CSV
+  </button>
+
+  <div id="deliveryExportStatus" class="adminStatus"></div>
+
+  <div id="deliveryExportResult" style="display:none; margin-top:12px;">
+    <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener">
+      Open signed download link
+    </a>
+    <button
+      id="btnCopySignedUrl"
+      class="btn-ghost"
+      type="button"
+      style="margin-left:10px; width:auto;"
+    >
+      Copy link
+    </button>
+  </div>
+</div>
+
     </div>
   </div>
 
   <!-- Shared nav -->
   <script src="/abm-upload/nav.js?v=11" defer></script>
+  <script src="/abm-upload/admin-export.js?v=5" defer></script>
 
   <script>
     // ===== CONFIG =====
@@ -331,9 +365,12 @@
 
     const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
 
-    // Expose for nav.js logout
+    // Expose for nav.js + admin-export.js
     window.ABM = window.ABM || {};
     window.ABM.sb = sb;
+    window.ABM.SUPABASE_URL = SUPABASE_URL;
+    window.ABM.SUPABASE_ANON_KEY = window.ABM_SUPABASE_ANON_KEY;
+
 
     const $ = (id) => document.getElementById(id);
 
