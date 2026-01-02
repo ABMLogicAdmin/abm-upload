@@ -61,7 +61,7 @@
 
       setDeliveryBatchStatus("Creating delivery batch...");
 
-      const { data, error } = await window.ABM.sb.rpc("create_delivery_batch_v1", {
+      const { data, error } = await window.ABM.sb.rpc("create_delivery_batch_v3", {
         p_client_id: clientId,
         p_campaign_id: campaignId
       });
