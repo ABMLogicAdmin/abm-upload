@@ -50,13 +50,14 @@
     return window.ABM?.currentRole || null;
   }
 
-  async function initAdminBox() {
-    const box = UI.box();
-    if (!box) return;
+async function initAdminBox() {
+  const box = UI.box();
+  if (!box) return;
 
-    const role = await waitForRole(3000);
-    box.style.display = role === "admin" ? "block" : "none";
-  }
+  // On admin.html we already hard-gate admins in showApp().
+  // So the export UI should not hide itself here.
+  box.style.display = "block";
+}
 
   async function getFreshAccessToken() {
     if (!window.ABM?.sb) throw new Error("Supabase client not initialised (window.ABM.sb).");
