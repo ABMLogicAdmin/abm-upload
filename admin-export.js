@@ -2,15 +2,20 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  const UI = {
-    box: () => $("adminDeliveryExport"),
-    deliveryId: () => $("deliveryIdInput"),
-    btnGenerate: () => $("btnGenerateDeliveryCsv"),
-    status: () => $("deliveryExportStatus"),
-    resultWrap: () => $("deliveryExportResult"),
-    signedLink: () => $("deliverySignedUrl"),
-    btnCopy: () => $("btnCopySignedUrl"),
-  };
+const UI = {
+  box: () => $("adminDeliveryExport"),
+
+  clientSel: () => $("exportClientSelect"),
+  campaignSel: () => $("exportCampaignSelect"),
+  deliverySel: () => $("exportDeliverySelect"),
+
+  btnGenerate: () => $("btnGenerateDeliveryCsv"),
+  status: () => $("deliveryExportStatus"),
+  resultWrap: () => $("deliveryExportResult"),
+  signedLink: () => $("deliverySignedUrl"),
+  btnCopy: () => $("btnCopySignedUrl"),
+};
+
 
   function setStatus(msg) {
     const el = UI.status();
@@ -41,6 +46,33 @@
     btn.style.cursor = isBusy ? "not-allowed" : "pointer";
   }
 
+  async function loadClients() {
+  const sel = UI.clientSel();
+  if (!sel) return;
+
+  sel.innerHTML = `<option value="">Loading clients…</option>`;
+  sel.disabled = true;
+
+  const { data, error } = await window.ABM.sb
+    .from("clients")
+    .select("client_id, name")
+    .order("name", { ascending: true });
+
+  if (error) {
+    sel.innerHTML = `<option value="">Error loading clients</option>`;
+    sel.disabled = true;
+    setStatus("ERROR loading clients:\n" + error.message);
+    return;
+  }
+
+  const rows = data || [];
+  sel.innerHTML =
+    `<option value="">Select client…</option>` +
+    rows.map(r => `<option value="${r.client_id}">${r.name}</option>`).join("");
+
+  sel.disabled = false;
+}
+  
   async function waitForRole(maxMs = 3000) {
     const start = Date.now();
     while (Date.now() - start < maxMs) {
@@ -113,13 +145,12 @@ async function initAdminBox() {
     hideResult();
     setStatus("");
 
-    const input = UI.deliveryId();
-    const deliveryId = (input?.value || "").trim();
+    const deliveryId = (UI.deliverySel()?.value || "").trim();
 
-    if (!deliveryId) {
-      setStatus("ERROR: Please paste a delivery_id first.");
-      return;
-    }
+if (!deliveryId) {
+  setStatus("ERROR: Please select a delivery batch first.");
+  return;
+}
 
     setBusy(true);
     setStatus("Preparing session...");
@@ -154,10 +185,14 @@ async function initAdminBox() {
     }
   }
 
-  document.addEventListener("DOMContentLoaded", async () => {
-    await initAdminBox();
+document.addEventListener("DOMContentLoaded", async () => {
+  await initAdminBox();
 
-    UI.btnGenerate()?.addEventListener("click", generateDeliveryCsv);
-    UI.btnCopy()?.addEventListener("click", copySignedUrl);
-  });
+  await loadClients();
+
+  UI.btnGenerate()?.addEventListener("click", generateDeliveryCsv);
+  UI.btnCopy()?.addEventListener("click", copySignedUrl);
+
+});
 })();
+
