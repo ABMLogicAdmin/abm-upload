@@ -13,6 +13,7 @@
   }
 
   const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  window.sb = sb;
 
   // Expose for admin-export.js (CSV export)
   window.ABM = {
