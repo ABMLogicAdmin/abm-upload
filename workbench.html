@@ -57,28 +57,42 @@
           </div>
           <button id="refreshBtn" class="btn-ghost smallBtn" style="width:auto;">Refresh</button>
         </div>
+        
+<div class="queueControls">
+  <div>
+    <label style="margin-top:0;">View</label>
+    <select id="viewSelect">
+      <option value="pending_in_progress" selected>Pending + In progress</option>
+      <option value="pending">Pending only</option>
+      <option value="in_progress">In progress only</option>
+      <option value="done">Done (read-only)</option>
+      <option value="rejected">Rejected (read-only)</option>
+    </select>
+  </div>
 
-        <div class="queueControls">
-          <div>
-            <label style="margin-top:0;">View</label>
-            <select id="viewSelect">
-              <option value="pending_in_progress" selected>Pending + In progress</option>
-              <option value="pending">Pending only</option>
-              <option value="in_progress">In progress only</option>
-              <option value="done">Done (read-only)</option>
-              <option value="rejected">Rejected (read-only)</option>
-            </select>
-          </div>
+  <div>
+    <label style="margin-top:0;">Client</label>
+    <select id="clientSelect">
+      <option value="">All clients</option>
+    </select>
+  </div>
 
-          <div>
-            <label style="margin-top:0;">Search</label>
-            <input id="searchInput" placeholder="Search text (optional)" />
-          </div>
+  <div>
+    <label style="margin-top:0;">Campaign</label>
+    <select id="campaignSelect">
+      <option value="">All campaigns</option>
+    </select>
+  </div>
 
-          <div class="clearWrap">
-            <button id="clearBtn" class="btn-ghost smallBtn" style="width:100%;">Clear</button>
-          </div>
-        </div>
+  <div>
+    <label style="margin-top:0;">Search</label>
+    <input id="searchInput" placeholder="Search text (optional)" />
+  </div>
+
+  <div class="clearWrap">
+    <button id="clearBtn" class="btn-ghost smallBtn" style="width:100%;">Clear</button>
+  </div>
+</div>
 
         <div class="muted" id="queueCount">Showing 0 row(s).</div>
 
