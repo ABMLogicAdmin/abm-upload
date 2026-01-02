@@ -310,8 +310,20 @@
       <p class="adminTitle">Delivery Export</p>
       <p class="adminNote">Generate a delivery-ready CSV server-side and return a signed download link.</p>
 
-      <label>delivery_id</label>
-      <input id="deliveryIdInput" placeholder="paste a delivery_id UUID" />
+      <label>Client</label>
+      <select id="exportClientSelect">
+        <option value="">Select client…</option>
+      </select>
+      
+      <label>Campaign</label>
+      <select id="exportCampaignSelect" disabled>
+        <option value="">Select campaign…</option>
+      </select>
+      
+      <label>Delivery batch</label>
+      <select id="exportDeliverySelect" disabled>
+        <option value="">Select delivery batch…</option>
+      </select>
 
       <button id="btnGenerateDeliveryCsv" class="btn-secondary" type="button">Generate CSV</button>
 
