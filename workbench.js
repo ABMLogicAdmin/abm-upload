@@ -180,6 +180,29 @@
 // Client/Campaign options
 // =========================
 let campaignOptionsCache = [];
+
+function renderCampaignDropdownForClient(clientId) {
+  const clientSel = $("clientSelect");
+  const campaignSel = $("campaignSelect");
+  if (!clientSel || !campaignSel) return;
+
+  const cid = (clientId || "").toString();
+  const rows = cid
+    ? (campaignOptionsCache || []).filter(
+        r => (r.client_id || "").toString() === cid
+      )
+    : (campaignOptionsCache || []);
+
+  campaignSel.innerHTML =
+    `<option value="">All campaigns</option>` +
+    rows
+      .filter(r => r.campaign_id && r.campaign_name)
+      .map(
+        r => `<option value="${r.campaign_id}">${r.campaign_name}</option>`
+      )
+      .join("");
+}
+
 async function loadClientCampaignOptions() {
   const clientSel = $("clientSelect");
   const campaignSel = $("campaignSelect");
@@ -195,12 +218,15 @@ async function loadClientCampaignOptions() {
     console.warn("ERROR loading client/campaign options:", error.message);
     return;
   }
+
   campaignOptionsCache = data || [];
 
   // Build unique clients
   const clients = new Map();
-  (data || []).forEach(r => {
-    if (r.client_id && r.client_name) clients.set(r.client_id, r.client_name);
+  (campaignOptionsCache || []).forEach(r => {
+    if (r.client_id && r.client_name) {
+      clients.set(r.client_id, r.client_name);
+    }
   });
 
   // Populate client dropdown
@@ -210,6 +236,7 @@ async function loadClientCampaignOptions() {
       .map(([id, name]) => `<option value="${id}">${name}</option>`)
       .join("");
 
+  // Render campaigns for currently selected client
   renderCampaignDropdownForClient(clientSel.value || "");
 }
 
