@@ -2,33 +2,47 @@
 (() => {
   const $ = (id) => document.getElementById(id);
 
-  const UI = {
-    box: () => $("adminDeliveryExport"),
+const UI = {
+  box: () => $("adminDeliveryExport"),
 
-    ddClient: () => $("ddExportClient"),
-    ddCampaign: () => $("ddExportCampaign"),
-    ddDelivery: () => $("ddExportDelivery"),
+  // Delivery Log (Slice 6.5)
+  ddLogClient: () => $("ddLogClient"),
+  ddLogCampaign: () => $("ddLogCampaign"),
+  btnRefreshLog: () => $("btnRefreshDeliveryLog"),
+  logStatus: () => $("deliveryLogStatus"),
+  logTbody: () => $("deliveryLogTbody"),
 
-    btnGenerate: () => $("btnGenerateDeliveryCsv"),
-    status: () => $("deliveryExportStatus"),
-    resultWrap: () => $("deliveryExportResult"),
-    signedLink: () => $("deliverySignedUrl"),
-    btnCopy: () => $("btnCopySignedUrl"),
-  };
+  ddClient: () => $("ddExportClient"),
+  ddCampaign: () => $("ddExportCampaign"),
+  ddDelivery: () => $("ddExportDelivery"),
+
+  btnGenerate: () => $("btnGenerateDeliveryCsv"),
+  status: () => $("deliveryExportStatus"),
+  resultWrap: () => $("deliveryExportResult"),
+  signedLink: () => $("deliverySignedUrl"),
+  btnCopy: () => $("btnCopySignedUrl"),
+};
 
   // -----------------------------
   // State + caches
   // -----------------------------
   const state = {
+    // Export selectors
     clientId: "",
     campaignId: "",
     deliveryId: "",
+
+    // Delivery Log selectors (Slice 6.5) — independent of export
+    logClientId: "",
+    logCampaignId: "",
   };
 
   const cache = {
     clients: [],
-    campaigns: [],   // filtered per client load
-    deliveries: [],  // filtered per client+campaign load
+    campaigns: [],     // export campaigns (filtered per export client)
+    deliveries: [],    // export deliveries (filtered per export client+campaign)
+
+    logCampaigns: [],  // log campaigns (filtered per log client) — keep separate
   };
 
   // -----------------------------
@@ -60,12 +74,40 @@
     btn.style.opacity = isBusy ? "0.7" : "1";
     btn.style.cursor = isBusy ? "not-allowed" : "pointer";
   }
+  
+  // -----------------------------
+  // Delivery Log helpers (Slice 6.5)
+  // -----------------------------
+  function setLogStatus(msg) {
+    const el = UI.logStatus();
+    if (el) el.textContent = msg || "";
+  }
+
+  function fmtDate(ts) {
+    try { return ts ? new Date(ts).toLocaleString() : ""; } catch { return ts || ""; }
+  }
+
+  function shortId(id) {
+    const s = String(id || "");
+    if (s.length <= 16) return s;
+    return s.slice(0, 8) + "…" + s.slice(-6);
+  }
+
+  function escapeHtml(s) {
+    return String(s ?? "")
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
 
   // -----------------------------
   // Dropdown (same look/feel as Admin Setup)
   // -----------------------------
   function closeAllDropdowns(exceptEl = null) {
-    for (const id of ["ddExportClient", "ddExportCampaign", "ddExportDelivery"]) {
+    for (const id of ["ddExportClient", "ddExportCampaign", "ddExportDelivery", "ddLogClient", "ddLogCampaign"]) {
       const el = $(id);
       if (!el) continue;
       if (exceptEl && el === exceptEl) continue;
@@ -254,6 +296,18 @@
     if (error) throw new Error("ERROR loading delivery batches:\n" + error.message);
     cache.deliveries = data || [];
   }
+    // Delivery Log campaigns (kept separate from export campaigns)
+  async function loadLogCampaigns(clientId) {
+    const { data, error } = await window.ABM.sb
+      .from("campaigns")
+      .select("campaign_id, name")
+      .eq("client_id", clientId)
+      .order("name", { ascending: true });
+
+    if (error) throw new Error("ERROR loading log campaigns:\n" + error.message);
+    cache.logCampaigns = data || [];
+  }
+
 
   // -----------------------------
   // Render dropdowns
@@ -359,6 +413,7 @@
         meta,
       };
     });
+    
 
     const current = cache.deliveries.find(d => d.delivery_id === state.deliveryId);
 
@@ -372,6 +427,74 @@
         setStatus("");
         state.deliveryId = value || "";
         renderDeliveryDD(false);
+      },
+    });
+  }
+  // -----------------------------
+  // Render Delivery Log dropdowns (Slice 6.5)
+  // -----------------------------
+  function renderLogClientDD() {
+    const items = (cache.clients || []).map((r) => ({
+      value: r.client_id,
+      label: r.name,
+    }));
+
+    const itemsWithAll = [{ value: "", label: "All clients" }, ...items];
+
+    const current = (cache.clients || []).find(c => c.client_id === state.logClientId);
+
+    makeDropdown(UI.ddLogClient(), {
+      placeholder: "All clients",
+      disabled: false,
+      items: itemsWithAll,
+      currentLabel: current ? current.name : "All clients",
+      onChange: async (value) => {
+        setLogStatus("");
+
+        state.logClientId = value || "";
+        state.logCampaignId = "";
+        cache.logCampaigns = [];
+
+        renderLogClientDD();
+        renderLogCampaignDD(true);
+
+        if (!state.logClientId) {
+          renderLogCampaignDD(false);
+          return;
+        }
+
+        try {
+          setLogStatus("Loading campaigns…");
+          await loadLogCampaigns(state.logClientId);
+          setLogStatus("");
+        } catch (e) {
+          setLogStatus("ERROR:\n" + (e?.message || String(e)));
+        }
+
+        renderLogCampaignDD(false);
+      },
+    });
+  }
+
+  function renderLogCampaignDD(disabledWhileLoading = false) {
+    const items = (cache.logCampaigns || []).map((r) => ({
+      value: r.campaign_id,
+      label: r.name,
+    }));
+
+    const itemsWithAll = [{ value: "", label: "All campaigns" }, ...items];
+
+    const current = (cache.logCampaigns || []).find(c => c.campaign_id === state.logCampaignId);
+
+    makeDropdown(UI.ddLogCampaign(), {
+      placeholder: "All campaigns",
+      disabled: disabledWhileLoading || !state.logClientId,
+      items: itemsWithAll,
+      currentLabel: current ? current.name : "All campaigns",
+      onChange: (value) => {
+        setLogStatus("");
+        state.logCampaignId = value || "";
+        renderLogCampaignDD(false);
       },
     });
   }
@@ -421,6 +544,69 @@
       setStatus("Could not copy automatically. Manually copy this URL:\n" + url);
     }
   }
+  
+  // -----------------------------
+  // Delivery Log: load + render table (Slice 6.5)
+  // -----------------------------
+  async function loadDeliveryLog() {
+    const tbody = UI.logTbody();
+    if (!tbody) return;
+
+    const clientId = (state.logClientId || "").trim();
+    const campaignId = (state.logCampaignId || "").trim();
+
+    setLogStatus("Loading…");
+    tbody.innerHTML = `<tr><td colspan="6" style="padding:12px 8px; opacity:0.7;">Loading…</td></tr>`;
+
+    try {
+      let q = window.ABM.sb
+        .from("v_delivery_log_v1")
+        .select("delivery_id, client_id, client_name, campaign_id, campaign_name, created_by_email, created_at, row_count")
+        .order("created_at", { ascending: false })
+        .limit(50);
+
+      if (clientId) q = q.eq("client_id", clientId);
+      if (campaignId) q = q.eq("campaign_id", campaignId);
+
+      const { data, error } = await q;
+      if (error) throw error;
+
+      const rows = Array.isArray(data) ? data : [];
+
+      if (!rows.length) {
+        tbody.innerHTML = `<tr><td colspan="6" style="padding:12px 8px; opacity:0.7;">No deliveries found.</td></tr>`;
+        setLogStatus("Showing 0 result(s).");
+        return;
+      }
+
+      tbody.innerHTML = rows.map(r => {
+        const client = escapeHtml(r.client_name || "—");
+        const camp = escapeHtml(r.campaign_name || "—");
+        const who = escapeHtml(r.created_by_email || "—");
+        const created = escapeHtml(fmtDate(r.created_at));
+        const count = (r.row_count ?? 0);
+        const didShort = escapeHtml(shortId(r.delivery_id));
+        const didFull = escapeHtml(r.delivery_id);
+
+        return `
+          <tr style="border-top:1px solid rgba(34,35,61,.12);">
+            <td style="padding:10px 8px;">${client}</td>
+            <td style="padding:10px 8px;">${camp}</td>
+            <td style="padding:10px 8px;">${who}</td>
+            <td style="padding:10px 8px;">${created}</td>
+            <td style="padding:10px 8px; text-align:right;">${count}</td>
+            <td style="padding:10px 8px;" title="${didFull}">${didShort}</td>
+          </tr>
+        `;
+      }).join("");
+
+      setLogStatus(`Showing ${rows.length} result(s).`);
+    } catch (e) {
+      setLogStatus("ERROR:\n" + (e?.message || String(e)));
+      tbody.innerHTML = `<tr><td colspan="6" style="padding:12px 8px; color:#b00020;">Failed to load delivery log.</td></tr>`;
+    }
+  }
+
 
   // -----------------------------
   // Init
@@ -451,9 +637,18 @@
     renderCampaignDD(false);
     renderDeliveryDD(false);
 
+  // --- Delivery Log (Slice 6.5) ---
+    renderLogClientDD();
+    renderLogCampaignDD(false);
+
+    UI.btnRefreshLog()?.addEventListener("click", loadDeliveryLog);
+
+    // Auto-load latest results on page open (professional default)
+    await loadDeliveryLog();
+
     UI.btnGenerate()?.addEventListener("click", generateDeliveryCsv);
     UI.btnCopy()?.addEventListener("click", copySignedUrl);
   }
-
+   
   document.addEventListener("DOMContentLoaded", init);
 })();
