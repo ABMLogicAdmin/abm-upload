@@ -394,6 +394,14 @@ const { data, error } = await q
     }
 
     queueRows = data || [];
+// If we are using the done/rejected view, filter to match the dropdown exactly
+if (viewName === "v_workbench_queue_done") {
+  if (view === "done") {
+    queueRows = queueRows.filter(r => (r.enrichment_status || "").toLowerCase() === "done");
+  } else if (view === "rejected") {
+    queueRows = queueRows.filter(r => (r.enrichment_status || "").toLowerCase() === "rejected");
+  }
+}
     renderQueue();
   }
 
