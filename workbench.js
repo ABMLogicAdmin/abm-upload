@@ -113,7 +113,31 @@
   // =========================
   $("loginBtn")?.addEventListener("click", login);
   $("logoutBtn")?.addEventListener("click", logout);
-  $("refreshBtn")?.addEventListener("click", () => loadQueue());
+  $("refreshBtn")?.addEventListener("click", async () => {
+  const btn = $("refreshBtn");
+  const old = btn?.textContent || "Refresh";
+
+  // Visual feedback so it never feels "inactive"
+  if (btn) {
+    btn.textContent = "Refreshing…";
+    btn.disabled = true;
+  }
+
+  try {
+    await loadQueue();
+    setDetailStatus("Refreshed.");
+    setTimeout(() => setDetailStatus(""), 800);
+  } catch (e) {
+    console.warn("Refresh failed:", e?.message || e);
+    setDetailStatus("ERROR refreshing:\n" + (e?.message || String(e)));
+  } finally {
+    if (btn) {
+      btn.textContent = old;
+      btn.disabled = false;
+    }
+  }
+});
+
   $("viewSelect")?.addEventListener("change", () => loadQueue());
   $("searchInput")?.addEventListener("input", renderQueue);
   $("clearBtn")?.addEventListener("click", async () => {
