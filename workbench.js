@@ -24,7 +24,59 @@
     currentRole: null,
   };
 
-  const $ = (id) => document.getElementById(id);
+   const $ = (id) => document.getElementById(id);
+
+  function setDeliveryBatchStatus(msg) {
+    const el = document.getElementById("deliveryBatchStatus");
+    if (el) el.textContent = msg || "";
+  }
+
+  async function createDeliveryBatch() {
+    try {
+      setDeliveryBatchStatus("");
+
+      // Force correct workflow discipline
+      const view = (document.getElementById("viewSelect")?.value || "").trim();
+      if (view !== "done") {
+        setDeliveryBatchStatus("ERROR: Switch View to 'Done (read-only)' before creating a delivery batch.");
+        return;
+      }
+
+      const clientId = (document.getElementById("clientSelect")?.value || "").trim();
+      const campaignId = (document.getElementById("campaignSelect")?.value || "").trim();
+
+      if (!clientId) {
+        setDeliveryBatchStatus("ERROR: Please select a Client.");
+        return;
+      }
+      if (!campaignId) {
+        setDeliveryBatchStatus("ERROR: Please select a Campaign.");
+        return;
+      }
+
+      if (!window.ABM?.sb) {
+        setDeliveryBatchStatus("ERROR: Supabase client not initialised.");
+        return;
+      }
+
+      setDeliveryBatchStatus("Creating delivery batch...");
+
+      const { data, error } = await window.ABM.sb.rpc("create_delivery_batch_v1", {
+        p_client_id: clientId,
+        p_campaign_id: campaignId
+      });
+
+      if (error) throw error;
+
+      const row = Array.isArray(data) ? data[0] : data;
+      setDeliveryBatchStatus(
+        `SUCCESS: Delivery created (${row.lead_count} lead(s)). Delivery ID: ${row.delivery_id}`
+      );
+    } catch (e) {
+      setDeliveryBatchStatus("ERROR: " + (e?.message || String(e)));
+    }
+  }
+
 
   // =========================
   // Phone country → dial code
@@ -165,6 +217,8 @@
   $("doneBtn")?.addEventListener("click", markDone);
   $("rejectBtn")?.addEventListener("click", markRejected);
   $("saveOutcomeBtn")?.addEventListener("click", saveOutcome);
+  $("btnCreateDeliveryBatch")?.addEventListener("click", createDeliveryBatch);
+
 
   init();
 
