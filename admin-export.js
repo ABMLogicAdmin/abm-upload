@@ -56,6 +56,11 @@ const UI = {
     if (el) el.textContent = msg || "";
   }
 
+  function setCreateBatchStatus(msg) {
+  const el = UI.createBatchStatus();
+  if (el) el.textContent = msg || "";
+}
+
   function hideResult() {
     const wrap = UI.resultWrap();
     if (wrap) wrap.style.display = "none";
