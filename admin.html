@@ -684,7 +684,7 @@
 
 function currentTouchModel() {
   const campaignId = state.campaign.value;
-  const c = (cache.campaigns || []).find(x => x.id === campaignId);
+  const c = (cache.campaigns || []).find(x => x.campaign_id === campaignId);
   return c?.touch_model || "single";
 }
 
@@ -895,11 +895,11 @@ async function copyFieldToClipboard(textareaId, statusId) {
       cache.campaigns = campaigns || [];
     
       state.campaign.items = cache.campaigns.map(c => ({
-        value: c.id,
+        value: c.campaign_id,
         label: c.name,
         touch_model: c.touch_model || "single",
       }));
-    
+
       state.campaign.value = "";
       state.campaign.label = "Select campaign…";
       renderDropdown("ddCampaign", "campaign", "Select campaign…");
