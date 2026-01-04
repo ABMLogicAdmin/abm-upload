@@ -218,6 +218,60 @@
       <div class="dd" id="ddClient"></div>
       <label>Selected Campaign</label>
       <div class="dd" id="ddCampaign"></div>
+      <hr class="divider" />
+
+      <p class="adminTitle">Landing Page Snippets (Single / Double Touch)</p>
+      <p class="adminNote">
+        Select a Client + Campaign. This will generate 1 snippet for single-touch campaigns,
+        or 2 snippets (Touch 1 + Touch 2) for double-touch campaigns.
+      </p>
+      
+      <div class="row">
+        <div>
+          <label>Client ID</label>
+          <input id="snClientId" readonly />
+        </div>
+        <div>
+          <label>Campaign ID</label>
+          <input id="snCampaignId" readonly />
+        </div>
+      </div>
+      
+      <div class="row">
+        <div>
+          <label>Touch model</label>
+          <input id="snTouchModel" readonly />
+        </div>
+        <div>
+          <label>Source site (for tracking)</label>
+          <input id="snSourceSite" placeholder="e.g. martechlogic.com" />
+        </div>
+      </div>
+      
+      <div class="row">
+        <div>
+          <label>Base name</label>
+          <input id="snBaseName" value="download" />
+          <div class="hint">Used to name form_id automatically.</div>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button id="btnGenSnippets" class="btn-secondary" type="button">Generate snippet(s)</button>
+        </div>
+      </div>
+      
+      <label>Touch 1 HTML (paste into Landing Page 1)</label>
+      <textarea id="snTouch1" rows="12" readonly style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;"></textarea>
+      <button id="btnCopySn1" class="btn-secondary" type="button">Copy Touch 1 HTML</button>
+      <div class="adminStatus" id="snStatus1"></div>
+      
+      <div id="snTouch2Wrap" style="display:none;margin-top:14px;">
+        <label>Touch 2 HTML (paste into Landing Page 2)</label>
+        <textarea id="snTouch2" rows="12" readonly style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;"></textarea>
+        <button id="btnCopySn2" class="btn-secondary" type="button">Copy Touch 2 HTML</button>
+        <div class="adminStatus" id="snStatus2"></div>
+      </div>
+
 
 
       <hr class="divider" />
@@ -253,18 +307,33 @@
       </div>
 
       <div class="row">
-        <div>
-          <label>Campaign status</label>
-          <select id="newCampaignStatus">
-            <option value="active" selected>active</option>
-            <option value="inactive">inactive</option>
-          </select>
-        </div>
-        <div>
-          <label>Client ID override (optional)</label>
-          <input id="newCampaignClientId" placeholder="Leave blank to use Selected Client above" />
-        </div>
-      </div>
+  <div>
+    <label>Campaign status</label>
+    <select id="newCampaignStatus">
+      <option value="active" selected>active</option>
+      <option value="inactive">inactive</option>
+    </select>
+  </div>
+  <div>
+    <label>Touch model</label>
+    <select id="newCampaignTouchModel">
+      <option value="single" selected>single touch</option>
+      <option value="double">double touch</option>
+    </select>
+  </div>
+</div>
+
+<div class="row">
+  <div>
+    <label>Client ID override (optional)</label>
+    <input id="newCampaignClientId" placeholder="Leave blank to use Selected Client above" />
+  </div>
+  <div>
+    <label>&nbsp;</label>
+    <input disabled value="Tip: double touch generates 2 landing page snippets" />
+  </div>
+</div>
+
 
       <button id="createCampaignBtn" class="btn-secondary" type="button">Create campaign</button>
 
@@ -408,8 +477,12 @@
     const $ = (id) => document.getElementById(id);
 
     const state = {
-      client: { value: "", label: "Select client…", items: [] }
-    };
+    client:   { value: "", label: "Select client…", items: [] },
+    campaign: { value: "", label: "Select campaign…", items: [] }
+  };
+
+const cache = { clients: [], campaigns: [] };
+
 
     const cache = { clients: [] };
 
@@ -504,12 +577,31 @@
         b.className = "dd-item";
         b.textContent = it.label;
 
-        b.addEventListener("click", () => {
-          state[key].value = it.value;
-          state[key].label = it.label;
-          container.classList.remove("open");
-          renderDropdown(containerId, key, placeholder);
-        });
+        b.addEventListener("click", async () => {
+        state[key].value = it.value;
+        state[key].label = it.label;
+        container.classList.remove("open");
+        renderDropdown(containerId, key, placeholder);
+      
+        // If a client is selected, load campaigns for that client
+        if (key === "client") {
+          setAdminStatus("Loading campaigns…");
+          try {
+            await loadCampaignsForClient(it.value);
+            setAdminStatus("");
+            // Also refresh snippets panel (we’ll add it in Step 3)
+            syncSnippetPanel();
+          } catch (e) {
+            setAdminStatus(String(e?.message || e));
+          }
+        }
+      
+        // If a campaign is selected, refresh snippet panel
+        if (key === "campaign") {
+          syncSnippetPanel();
+        }
+      });
+
 
         list.appendChild(b);
       }
@@ -584,6 +676,7 @@
         state.client.value = "";
         state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
         renderDropdown("ddClient", "client", "Select client…");
+        renderDropdown("ddCampaign", "campaign", "Select campaign…");
 
         setAdminStatus("");
 
@@ -617,8 +710,40 @@
         state.client.label = "Select client…";
       }
       renderDropdown("ddClient", "client", "Select client…");
+      
     }
-
+    
+    async function loadCampaignsForClient(clientId) {
+      if (!clientId) {
+        cache.campaigns = [];
+        state.campaign.items = [];
+        state.campaign.value = "";
+        state.campaign.label = "Select campaign…";
+        renderDropdown("ddCampaign", "campaign", "Select campaign…");
+        return;
+      }
+    
+      const { data: campaigns, error } = await sb
+        .from("campaigns")
+        .select("id, name, touch_model")
+        .eq("client_id", clientId)
+        .order("name");
+    
+      if (error) throw new Error(`Failed to load campaigns: ${error.message}`);
+    
+      cache.campaigns = campaigns || [];
+    
+      state.campaign.items = cache.campaigns.map(c => ({
+        value: c.id,
+        label: c.name,
+        touch_model: c.touch_model || "single",
+      }));
+    
+      state.campaign.value = "";
+      state.campaign.label = "Select campaign…";
+      renderDropdown("ddCampaign", "campaign", "Select campaign…");
+    }
+    
     async function createClient() {
       setAdminStatus("Creating client…");
 
