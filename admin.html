@@ -814,7 +814,7 @@ async function copyFieldToClipboard(textareaId, statusId) {
             campaignId,
             sourceSite,
             formId: formId1,
-            touchStage: 1
+            touchStage: "touch1"
           });
           $("snStatus1").textContent = "Touch 1 snippet generated.";
         
@@ -826,7 +826,7 @@ async function copyFieldToClipboard(textareaId, statusId) {
               campaignId,
               sourceSite,
               formId: formId2,
-              touchStage: 2
+              touchStage: "touch2"
             });
             $("snStatus2").textContent = "Touch 2 snippet generated.";
             $("snTouch2Wrap").style.display = "block";
