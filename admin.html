@@ -483,9 +483,6 @@
 
 const cache = { clients: [], campaigns: [] };
 
-
-    const cache = { clients: [] };
-
     $("loginBtn").onclick = login;
 
     // Close dropdown when clicking outside
@@ -605,6 +602,11 @@ const cache = { clients: [], campaigns: [] };
 
         list.appendChild(b);
       }
+    }
+    
+    function syncSnippetPanel() {
+      // Placeholder for Step 3b
+      // Keeps the page stable until snippet generator logic is added.
     }
 
     function setAdminStatus(msg) {
@@ -774,8 +776,11 @@ const cache = { clients: [], campaigns: [] };
       if (!client_id) return setAdminStatus("Select a Client above OR paste a Client ID in the override field.");
       if (!name) return setAdminStatus("Campaign name is required.");
 
-      const payload = { client_id, name, status };
-      if (type) payload.type = type;
+     const touch_model = $("newCampaignTouchModel").value || "single";
+
+     const payload = { client_id, name, status, touch_model };
+     if (type) payload.type = type;
+
 
       const { error } = await sb.from("campaigns").insert(payload);
       if (error) return setAdminStatus(`❌ Campaign create failed: ${error.message}`);
