@@ -487,9 +487,13 @@ const cache = { clients: [], campaigns: [] };
 
     // Close dropdown when clicking outside
     document.addEventListener("click", (e) => {
-      const el = $("ddClient");
-      if (el && !el.contains(e.target)) el.classList.remove("open");
+      const c1 = $("ddClient");
+      if (c1 && !c1.contains(e.target)) c1.classList.remove("open");
+    
+      const c2 = $("ddCampaign");
+      if (c2 && !c2.contains(e.target)) c2.classList.remove("open");
     });
+
 
     async function isAdmin() {
       const { data: userRes, error: userErr } = await sb.auth.getUser();
@@ -586,7 +590,7 @@ const cache = { clients: [], campaigns: [] };
           try {
             await loadCampaignsForClient(it.value);
             setAdminStatus("");
-            // Also refresh snippets panel (we’ll add it in Step 3)
+           
             syncSnippetPanel();
           } catch (e) {
             setAdminStatus(String(e?.message || e));
@@ -604,10 +608,109 @@ const cache = { clients: [], campaigns: [] };
       }
     }
     
-    function syncSnippetPanel() {
-      // Placeholder for Step 3b
-      // Keeps the page stable until snippet generator logic is added.
+  function snippetTemplate({ clientId, campaignId, sourceSite, formId, touchStage }) {
+  const endpoint = "https://mwfnbmkjetriunsddupr.supabase.co/functions/v1/first-party-form";
+
+  return `<form class="abm-lead-form" style="max-width:420px;">
+  <label>Email<br />
+    <input name="email" type="email" required style="width:100%;padding:10px;margin:6px 0;" />
+  </label>
+  <label>First name<br />
+    <input name="first_name" type="text" required style="width:100%;padding:10px;margin:6px 0;" />
+  </label>
+  <label>Last name<br />
+    <input name="last_name" type="text" required style="width:100%;padding:10px;margin:6px 0;" />
+  </label>
+  <label>Company<br />
+    <input name="company" type="text" required style="width:100%;padding:10px;margin:6px 0;" />
+  </label>
+  <label>Title (optional)<br />
+    <input name="title" type="text" style="width:100%;padding:10px;margin:6px 0;" />
+  </label>
+
+  <input type="hidden" name="client_id" value="${clientId}" />
+  <input type="hidden" name="campaign_id" value="${campaignId}" />
+  <input type="hidden" name="source_site" value="${sourceSite}" />
+  <input type="hidden" name="form_id" value="${formId}" />
+  <input type="hidden" name="touch_stage" value="${touchStage}" />
+
+  <div style="display:none;">
+    <label>Website <input name="website" type="text" /></label>
+  </div>
+
+  <button type="submit" style="padding:10px 14px;margin-top:10px;">Submit</button>
+  <p class="abm-form-msg" style="margin-top:10px;"></p>
+</form>
+
+<script>
+(function(){
+  const ENDPOINT = "${endpoint}";
+  function setMsg(form, text, ok){
+    const el = form.querySelector(".abm-form-msg");
+    if (!el) return;
+    el.textContent = text || "";
+    el.style.color = ok ? "green" : "crimson";
+  }
+  document.addEventListener("submit", async function(e){
+    const form = e.target;
+    if (!form.classList.contains("abm-lead-form")) return;
+    e.preventDefault();
+    setMsg(form, "Submitting...", true);
+    const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(data)
+      });
+      const out = await res.json().catch(() => ({}));
+      if (res.ok && out.ok) {
+        setMsg(form, "Thanks — we’ve received your details.", true);
+        form.reset();
+      } else {
+        setMsg(form, "Submission failed. Please try again.", false);
+        console.error("Form error:", out);
+      }
+    } catch (err) {
+      setMsg(form, "Network error. Please try again.", false);
+      console.error(err);
     }
+  });
+})();
+</script>`;
+}
+
+function currentTouchModel() {
+  const campaignId = state.campaign.value;
+  const c = (cache.campaigns || []).find(x => x.id === campaignId);
+  return c?.touch_model || "single";
+}
+
+function syncSnippetPanel() {
+  const clientId = state.client.value || "";
+  const campaignId = state.campaign.value || "";
+  const touchModel = currentTouchModel();
+
+  const snClient = $("snClientId");
+  const snCamp = $("snCampaignId");
+  const snTM = $("snTouchModel");
+
+  if (snClient) snClient.value = clientId;
+  if (snCamp) snCamp.value = campaignId;
+  if (snTM) snTM.value = touchModel;
+
+  const wrap2 = $("snTouch2Wrap");
+  if (wrap2) wrap2.style.display = (touchModel === "double") ? "block" : "none";
+}
+
+async function copyFieldToClipboard(textareaId, statusId) {
+  const el = $(textareaId);
+  if (!el || !el.value) return;
+  await navigator.clipboard.writeText(el.value);
+  const st = $(statusId);
+  if (st) st.textContent = "Copied to clipboard.";
+}
+
 
     function setAdminStatus(msg) {
       $("adminStatus").textContent = msg || "";
@@ -686,6 +789,60 @@ const cache = { clients: [], campaigns: [] };
         $("createClientBtn").onclick = createClient;
         $("createCampaignBtn").onclick = createCampaign;
         $("createSourceBtn").onclick = createSource;
+    // =========================
+    // Landing Page Snippet Generator
+    // =========================
+        $("btnGenSnippets").onclick = () => {
+          const clientId = state.client.value;
+          const campaignId = state.campaign.value;
+        
+          if (!clientId) return setAdminStatus("Select a Client first.");
+          if (!campaignId) return setAdminStatus("Select a Campaign first.");
+        
+          const touchModel = currentTouchModel();
+          const sourceSite = $("snSourceSite")?.value?.trim();
+          const base = $("snBaseName")?.value?.trim() || "download";
+        
+          if (!sourceSite) return setAdminStatus("Enter Source site (e.g. martechlogic.com).");
+        
+          // Touch 1 snippet
+          const formId1 = (touchModel === "double") ? `touch1_${base}` : `main_${base}`;
+          $("snTouch1").value = snippetTemplate({
+            clientId,
+            campaignId,
+            sourceSite,
+            formId: formId1,
+            touchStage: 1
+          });
+          $("snStatus1").textContent = "Touch 1 snippet generated.";
+        
+          // Touch 2 snippet (only if double)
+          if (touchModel === "double") {
+            const formId2 = `touch2_${base}`;
+            $("snTouch2").value = snippetTemplate({
+              clientId,
+              campaignId,
+              sourceSite,
+              formId: formId2,
+              touchStage: 2
+            });
+            $("snStatus2").textContent = "Touch 2 snippet generated.";
+            $("snTouch2Wrap").style.display = "block";
+          } else {
+            $("snTouch2").value = "";
+            $("snStatus2").textContent = "";
+            $("snTouch2Wrap").style.display = "none";
+          }
+        
+          setAdminStatus("✅ Snippet(s) generated. Copy and paste into WordPress Custom HTML blocks.");
+        };
+        
+        $("btnCopySn1").onclick = () => copyFieldToClipboard("snTouch1", "snStatus1");
+        $("btnCopySn2").onclick = () => copyFieldToClipboard("snTouch2", "snStatus2");
+        
+        // Keep the panel in sync on first load
+        syncSnippetPanel();
+
 
       } catch (e) {
         setAdminStatus(String(e?.message || e));
@@ -788,8 +945,11 @@ const cache = { clients: [], campaigns: [] };
       $("newCampaignName").value = "";
       $("newCampaignType").value = "";
       $("newCampaignClientId").value = "";
+    
+      await loadCampaignsForClient(client_id);
+      syncSnippetPanel();
 
-      setAdminStatus("✅ Campaign created.");
+      setAdminStatus("✅ Campaign created. Campaign list refreshed.");
     }
 
     async function createSource() {
