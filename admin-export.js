@@ -57,9 +57,9 @@ const UI = {
   }
 
   function setCreateBatchStatus(msg) {
-  const el = UI.createBatchStatus();
-  if (el) el.textContent = msg || "";
-}
+    const el = UI.createBatchStatus();
+    if (el) el.textContent = msg || "";
+  }
 
   function hideResult() {
     const wrap = UI.resultWrap();
@@ -75,13 +75,22 @@ const UI = {
     wrap.style.display = "block";
   }
 
-  function setBusy(isBusy) {
-    const btn = UI.btnGenerate();
-    if (!btn) return;
-    btn.disabled = !!isBusy;
-    btn.style.opacity = isBusy ? "0.7" : "1";
-    btn.style.cursor = isBusy ? "not-allowed" : "pointer";
+function setBusy(isBusy) {
+  const genBtn = UI.btnGenerate();
+  const createBtn = UI.btnCreateBatch();
+
+  if (genBtn) {
+    genBtn.disabled = !!isBusy;
+    genBtn.style.opacity = isBusy ? "0.7" : "1";
+    genBtn.style.cursor = isBusy ? "not-allowed" : "pointer";
   }
+
+  if (createBtn) {
+    createBtn.disabled = !!isBusy;
+    createBtn.style.opacity = isBusy ? "0.7" : "1";
+    createBtn.style.cursor = isBusy ? "not-allowed" : "pointer";
+  }
+}
   
   // -----------------------------
   // Delivery Log helpers (Slice 6.5)
@@ -335,6 +344,7 @@ const UI = {
       onChange: async (value) => {
         hideResult();
         setStatus("");
+        setCreateBatchStatus("");
 
         state.clientId = value || "";
         state.campaignId = "";
@@ -511,33 +521,33 @@ const UI = {
   // Actions
   // -----------------------------
   async function createDeliveryBatch() {
-  setCreateBatchStatus("");
-
-  const clientId = (state.clientId || "").trim();
-  const campaignId = (state.campaignId || "").trim();
-
-  if (!clientId) {
-    setCreateBatchStatus("ERROR: Please select a client.");
-    return;
-  }
-
-  if (!campaignId) {
-    setCreateBatchStatus("ERROR: Please select a campaign.");
-    return;
-  }
-
-  setBusy(true);
-  setCreateBatchStatus("Creating delivery batch…");
-
-  try {
-    const { data, error } = await window.ABM.sb.rpc(
-      "create_delivery_batch_v2",
-      {
-        p_client_id: clientId,
-        p_campaign_id: campaignId,
-        p_export_type: "initial",
-      }
-    );
+      setCreateBatchStatus("");
+  
+      const clientId = (state.clientId || "").trim();
+      const campaignId = (state.campaignId || "").trim();
+  
+    if (!clientId) {
+      setCreateBatchStatus("ERROR: Please select a client.");
+      return;
+    }
+  
+    if (!campaignId) {
+      setCreateBatchStatus("ERROR: Please select a campaign.");
+      return;
+    }
+  
+    setBusy(true);
+    setCreateBatchStatus("Creating delivery batch…");
+  
+    try {
+      const { data, error } = await window.ABM.sb.rpc(
+        "create_delivery_batch_v2",
+        {
+          p_client_id: clientId,
+          p_campaign_id: campaignId,
+          p_export_type: "initial",
+        }
+      );
 
     if (error) throw error;
 
@@ -702,6 +712,7 @@ const UI = {
     renderLogCampaignDD(false);
 
     UI.btnRefreshLog()?.addEventListener("click", loadDeliveryLog);
+    UI.btnCreateBatch()?.addEventListener("click", createDeliveryBatch);
 
     // Auto-load latest results on page open (professional default)
     await loadDeliveryLog();
