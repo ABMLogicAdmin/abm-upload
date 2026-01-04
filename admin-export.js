@@ -15,6 +15,9 @@ const UI = {
   ddClient: () => $("ddExportClient"),
   ddCampaign: () => $("ddExportCampaign"),
   ddDelivery: () => $("ddExportDelivery"),
+  btnCreateBatch: () => $("btnCreateDeliveryBatch"),
+  createBatchStatus: () => $("createBatchStatus"),
+
 
   btnGenerate: () => $("btnGenerateDeliveryCsv"),
   status: () => $("deliveryExportStatus"),
