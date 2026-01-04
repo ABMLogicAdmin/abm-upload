@@ -510,6 +510,58 @@ const UI = {
   // -----------------------------
   // Actions
   // -----------------------------
+  async function createDeliveryBatch() {
+  setCreateBatchStatus("");
+
+  const clientId = (state.clientId || "").trim();
+  const campaignId = (state.campaignId || "").trim();
+
+  if (!clientId) {
+    setCreateBatchStatus("ERROR: Please select a client.");
+    return;
+  }
+
+  if (!campaignId) {
+    setCreateBatchStatus("ERROR: Please select a campaign.");
+    return;
+  }
+
+  setBusy(true);
+  setCreateBatchStatus("Creating delivery batch…");
+
+  try {
+    const { data, error } = await window.ABM.sb.rpc(
+      "create_delivery_batch_v2",
+      {
+        p_client_id: clientId,
+        p_campaign_id: campaignId,
+        p_export_type: "initial",
+      }
+    );
+
+    if (error) throw error;
+
+    const row = Array.isArray(data) ? data[0] : data;
+
+    if (!row || !row.delivery_id) {
+      setCreateBatchStatus("No eligible leads to deliver for this campaign.");
+      return;
+    }
+
+    setCreateBatchStatus(
+      `SUCCESS: Delivery created (${row.lead_count} lead(s)).`
+    );
+
+    await loadDeliveries(clientId, campaignId);
+    state.deliveryId = row.delivery_id;
+    renderDeliveryDD(false);
+  } catch (e) {
+    setCreateBatchStatus("ERROR: " + (e?.message || String(e)));
+  } finally {
+    setBusy(false);
+  }
+}
+  
   async function generateDeliveryCsv() {
     hideResult();
     setStatus("");
