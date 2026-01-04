@@ -746,6 +746,9 @@ function setBusy(isBusy) {
 
     UI.btnGenerate()?.addEventListener("click", generateDeliveryCsv);
     UI.btnCopy()?.addEventListener("click", copySignedUrl);
+
+    // --- Landing Page Snippet Generator (Slice 7) ---
+
   }
    
   document.addEventListener("DOMContentLoaded", init);
