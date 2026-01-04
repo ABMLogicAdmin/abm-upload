@@ -477,8 +477,14 @@
     const $ = (id) => document.getElementById(id);
 
     const state = {
-    client:   { value: "", label: "Select client…", items: [] },
-    campaign: { value: "", label: "Select campaign…", items: [] }
+      client: { value: "", label: "Select client...", items: [] },
+      campaign: { value: "", label: "Select campaign...", items: [] }
+    };
+    window.state = state;   // 👈 ADD THIS LINE
+    
+    const cache = { clients: [], campaigns: [] };
+    window.cache = cache;   // 👈 ADD THIS LINE
+
   };
 
 const cache = { clients: [], campaigns: [] };
