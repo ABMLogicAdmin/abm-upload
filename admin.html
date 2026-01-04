@@ -886,7 +886,7 @@ async function copyFieldToClipboard(textareaId, statusId) {
     
       const { data: campaigns, error } = await sb
         .from("campaigns")
-        .select("id, name, touch_model")
+        .select("id,name,touch_model")
         .eq("client_id", clientId)
         .order("name");
     
