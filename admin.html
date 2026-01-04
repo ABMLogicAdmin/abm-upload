@@ -884,11 +884,11 @@ async function copyFieldToClipboard(textareaId, statusId) {
         return;
       }
     
-      const { data: campaigns, error } = await sb
-        .from("campaigns")
-        .select("id,name,touch_model")
-        .eq("client_id", clientId)
-        .order("name");
+    const { data: campaigns, error } = await sb
+      .from("campaigns")
+      .select("campaign_id,name,touch_model")
+      .eq("client_id", clientId)
+      .order("name");
     
       if (error) throw new Error(`Failed to load campaigns: ${error.message}`);
     
