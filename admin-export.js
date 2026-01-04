@@ -277,6 +277,19 @@ function setBusy(isBusy) {
     return json.signed_url;
   }
 
+    // Counts how many leads have already been delivered for a given export_type
+  async function countAlreadyDelivered(clientId, campaignId, exportType) {
+    const { count, error } = await window.ABM.sb
+      .from("delivery_items")
+      .select("lead_id", { count: "exact", head: true })
+      .eq("client_id", clientId)
+      .eq("campaign_id", campaignId)
+      .eq("export_type", exportType);
+
+    if (error) throw error;
+    return count || 0;
+  }
+  
   // -----------------------------
   // Data loads
   // -----------------------------
@@ -553,8 +566,22 @@ function setBusy(isBusy) {
 
     const row = Array.isArray(data) ? data[0] : data;
 
-    if (!row || !row.delivery_id) {
-      setCreateBatchStatus("No eligible leads to deliver for this campaign.");
+     if (!row || !row.delivery_id) {
+      // Distinguish "nothing done" vs "already delivered"
+      try {
+        const already = await countAlreadyDelivered(clientId, campaignId, "initial");
+
+        if (already > 0) {
+          setCreateBatchStatus(
+            `Nothing new to deliver. ${already} lead(s) were already delivered for export type "initial".`
+          );
+        } else {
+          setCreateBatchStatus("No eligible leads to deliver for this campaign.");
+        }
+      } catch (e) {
+        // Fallback (don’t block the user if the count lookup fails)
+        setCreateBatchStatus("No eligible leads to deliver for this campaign.");
+      }
       return;
     }
 
