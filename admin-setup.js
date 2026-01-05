@@ -11,7 +11,6 @@
 
     const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
 
-    // Expose for nav.js + admin-export.js
     window.ABM = window.ABM || {};
     window.ABM.sb = sb;
     window.ABM.SUPABASE_URL = SUPABASE_URL;
@@ -27,8 +26,6 @@
   
   const cache = { clients: [], campaigns: [] };
   window.cache = cache;
-
-    $("loginBtn").onclick = login;
 
     // Close dropdown when clicking outside
     document.addEventListener("click", (e) => {
@@ -255,7 +252,6 @@ async function copyFieldToClipboard(textareaId, statusId) {
   const st = $(statusId);
   if (st) st.textContent = "Copied to clipboard.";
 }
-
 
     function setAdminStatus(msg) {
       $("adminStatus").textContent = msg || "";
@@ -518,6 +514,9 @@ async function copyFieldToClipboard(textareaId, statusId) {
     document.addEventListener("DOMContentLoaded", () => {
       const btn = document.getElementById("logoutBtn");
       if (btn) btn.addEventListener("click", logout);
+
+     const loginBtn = $("loginBtn");
+     if (loginBtn) loginBtn.onclick = login;
     });
 
     // Auto-show app if already logged in
