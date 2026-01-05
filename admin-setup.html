@@ -392,6 +392,35 @@ hr.divider {
   width: 100%;
 }
 
+/* CSV inline row */
+.csvRow{
+  display:grid;
+  grid-template-columns: 1fr auto;
+  gap: 10px;
+  align-items:center;
+  margin-top: 8px;
+}
+
+.csvActions{
+  display:flex;
+  gap: 10px;
+  justify-content:flex-end;
+}
+
+/* Smaller buttons */
+.btn-sm{
+  padding: 8px 12px !important;
+  font-size: 13px !important;
+  border-radius: 10px !important;
+  min-height: 36px;
+}
+
+.helpText{
+  font-size: 12px;
+  color: var(--muted);
+  margin-top: 6px;
+}
+
   </style>
 </head>
 
@@ -510,6 +539,7 @@ hr.divider {
 
     <div class="row">
       <div>
+        
         <label>Client ID override (optional)</label>
         <input id="newCampaignClientId" placeholder="Leave blank to use Selected Client above" />
       </div>
@@ -629,20 +659,30 @@ hr.divider {
     <textarea id="brief_target_accounts" rows="6" placeholder="company.com"></textarea>
 
     <div style="margin-top:8px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-      <input id="brief_accounts_csv" type="file" accept=".csv,text/csv" />
-      <button id="btnImportAccountsCsv" class="btn-secondary" type="button">Import CSV</button>
-      <button id="btnValidateAccounts" class="btn-secondary" type="button">Validate Accounts</button>
-    </div>
+ <div class="csvRow">
+  <input type="file" id="brief_accounts_csv" accept=".csv" />
 
-    <div class="hint" style="margin-top:6px;">
-      CSV can contain full URLs or domains. We extract domains, normalize, and dedupe.
-    </div>
-
-    <div id="accountsValidationBox" style="margin-top:10px; padding:12px; border:1px solid var(--border); border-radius:12px; background:#fff; display:none;">
-      <div style="font-weight:600; margin-bottom:6px;">Account Validation Results</div>
-      <pre id="accountsValidationOut" style="margin:0; white-space:pre-wrap;"></pre>
-    </div>
+  <div class="csvActions">
+    <button id="btnImportAccountsCsv" type="button" class="btn btn-sm">Import</button>
+    <button id="btnValidateAccounts" type="button" class="btn-secondary btn-sm">Validate</button>
   </div>
+</div>
+
+<p class="helpText">
+  CSV can contain full URLs or domains. We extract domains, normalize, and dedupe.
+</p>
+
+</div>
+
+<div class="hint" style="margin-top:6px;">
+  CSV can contain full URLs or domains. We extract domains, normalize, and dedupe.
+</div>
+
+<div id="accountsValidationBox" style="margin-top:10px; padding:12px; border:1px solid var(--border); border-radius:12px; background:#fff; display:none;">
+  <div style="font-weight:600; margin-bottom:6px;">Account Validation Results</div>
+  <pre id="accountsValidationOut" style="margin:0; white-space:pre-wrap;"></pre>
+</div>
+</div>
 
   <!-- RIGHT COLUMN -->
   <div>
@@ -652,23 +692,24 @@ hr.divider {
 </div>
 </div>
     
-    <div class="row">
-      <div>
-        <label>Industries (one per line)</label>
-        <textarea id="brief_industries" rows="5"></textarea>
-      </div>
-      <div>
-        <label>Notes</label>
-        <textarea id="brief_notes" rows="5"></textarea>
-      </div>
-    </div>
+<div class="row twoCol">
+  <div>
+    <label>Industries (one per line)</label>
+    <textarea id="brief_industries" rows="4"></textarea>
+  </div>
+
+  <div>
+    <label>Notes</label>
+    <textarea id="brief_notes" rows="4"></textarea>
+  </div>
+</div>
 
     <hr class="divider" />
 
-    <div class="row actionsRow">
-      <button id="btnSaveBrief" class="btn-secondary" type="button">Save Draft</button>
-      <button id="btnActivateBrief" class="btn" type="button">Activate Brief</button>
-    </div>
+<div class="row actionsRow">
+  <button id="btnSaveBrief" class="btn-secondary" type="button">Save Draft</button>
+  <button id="btnActivateBrief" class="btn" type="button">Activate Brief</button>
+</div>
 
     <div class="adminStatus" id="briefStatus"></div>
   </div>
@@ -742,7 +783,7 @@ hr.divider {
     </div> <!-- end .wrap -->
   
   <script src="/abm-upload/nav.js?v=2" defer></script>
-  <script src="/abm-upload/admin-setup.js?v=16" defer></script>
+  <script src="/abm-upload/admin-setup.js?v=17" defer></script>
 
 </body>
 </html>
