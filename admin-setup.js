@@ -1,5 +1,4 @@
-<script>
-    // ===== CONFIG =====
+ // ===== CONFIG =====
     // Keep anon public key here (safe to be public). Security comes from RLS + auth.
     window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
     const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
@@ -525,4 +524,3 @@ async function copyFieldToClipboard(textareaId, statusId) {
     sb.auth.getSession()
       .then(async (r) => { if (r.data.session) showApp(); })
       .catch(()=>{});
-</script>
