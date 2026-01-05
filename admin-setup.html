@@ -193,6 +193,28 @@
   box-shadow: 0 8px 30px rgba(17,24,39,.06);
 }
 
+/* 3-col inline form row */
+  .row.threeCol {
+  display: grid;
+  grid-template-columns: 1fr 180px 160px;
+  gap: 12px;
+  align-items: end;
+}
+
+/* Make action buttons smaller for inline rows */
+.btn-inline {
+  padding: 10px 12px !important;
+  min-height: 40px;
+  border-radius: 10px !important;
+  font-size: 13px !important;
+}
+
+/* Keep selects/inputs from being too tall vs button */
+.row.threeCol input,
+.row.threeCol select {
+min-height: 40px;
+}
+
 .contextRow{
   display:grid;
   grid-template-columns: 1fr 1fr;
@@ -504,21 +526,27 @@ hr.divider {
     <p class="panelTitle">Setup</p>
     <p class="panelNote">Create Clients, Campaigns, and Sources.</p>
 
-    <!-- Create client -->
-    <div class="row">
-      <div>
-        <label>New client name</label>
-        <input id="newClientName" placeholder="e.g. Deloitte" />
-      </div>
-      <div>
-        <label>Client status</label>
-        <select id="newClientStatus">
-          <option value="active" selected>active</option>
-          <option value="inactive">inactive</option>
-        </select>
-      </div>
-    </div>
-    <button id="createClientBtn" class="btn-secondary" type="button">Create client</button>
+<!-- Create client -->
+<div class="row threeCol">
+  <div>
+    <label>New client name</label>
+    <input id="newClientName" placeholder="e.g. Deloitte" />
+  </div>
+
+  <div>
+    <label>Client status</label>
+    <select id="newClientStatus">
+      <option value="active">active</option>
+      <option value="paused">paused</option>
+      <option value="archived">archived</option>
+    </select>
+  </div>
+
+  <div>
+    <label>&nbsp;</label>
+    <button id="createClientBtn" class="btn btn-inline" type="button">Create</button>
+  </div>
+</div>
 
     <hr class="divider" />
 
