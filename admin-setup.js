@@ -345,11 +345,11 @@ async function saveBrief(status = "draft"){
         seniorities: lines("brief_secondary_seniorities")
       }
     },
-    targeting: {
-      accounts: lines("brief_target_accounts"),
-      countries: document.getElementById("ms_countries")?.getValues() || []
-      industries: lines("brief_industries")
-    },
+  targeting: {
+  accounts: lines("brief_target_accounts"),
+  countries: document.getElementById("ms_countries")?.getValues() || [],
+  industries: lines("brief_industries")
+},
     notes: document.getElementById("brief_notes")?.value || ""
   };
 
