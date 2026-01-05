@@ -588,6 +588,11 @@ if (viewName === "v_workbench_queue_done") {
       if ($("location")) {
         $("location").value = (currentFacts?.person_location || "");
       }
+      if ($("seniority")) $("seniority").value = (currentFacts?.seniority || "");
+      if ($("department")) $("department").value = (currentFacts?.department || "");
+      if ($("companyIndustry")) $("companyIndustry").value = (currentFacts?.company_industry || "");
+      if ($("linkedinCompanyUrl")) $("linkedinCompanyUrl").value = (currentFacts?.linkedin_company_url || "");
+
 
 
       // If a country is selected, ensure dial code is present (but don't overwrite real numbers)
