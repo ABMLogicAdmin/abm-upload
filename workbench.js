@@ -686,18 +686,30 @@ if (viewName === "v_workbench_queue_done") {
         throw new Error("Cannot save lead_facts: lead_id not found yet.");
       }
       
-      const linkedin_profile_url = ($("linkedinUrl")?.value || "").trim() || null;
-      const person_location = ($("location")?.value || "").trim() || null;
-      
-      const { error: factsErr } = await sb
-        .from("lead_facts")
-        .upsert(
-          { lead_id: currentLeadId, linkedin_profile_url, person_location },
-          { onConflict: "lead_id" }
-        );
-
-if (factsErr) throw factsErr;
-
+    const linkedin_profile_url = ($("linkedinUrl")?.value || "").trim() || null;
+    const person_location = ($("location")?.value || "").trim() || null;
+    
+    const seniority = ($("seniority")?.value || "").trim() || null;
+    const department = ($("department")?.value || "").trim() || null;
+    const company_industry = ($("companyIndustry")?.value || "").trim() || null;
+    const linkedin_company_url = ($("linkedinCompanyUrl")?.value || "").trim() || null;
+    
+    const { error: factsErr } = await sb
+      .from("lead_facts")
+      .upsert(
+        {
+          lead_id: currentLeadId,
+          linkedin_profile_url,
+          person_location,
+          seniority,
+          department,
+          company_industry,
+          linkedin_company_url
+        },
+        { onConflict: "lead_id" }
+      );
+    
+    if (factsErr) throw factsErr;
 
       await loadQueue();
       await openLead(ingest_job_id, row_number);
@@ -818,6 +830,10 @@ if (factsErr) throw factsErr;
     $("enrichmentNotes").value = "";
     if ($("linkedinUrl")) $("linkedinUrl").value = "";
     if ($("location")) $("location").value = "";
+    if ($("seniority")) $("seniority").value = "";
+    if ($("department")) $("department").value = "";
+    if ($("companyIndustry")) $("companyIndustry").value = "";
+    if ($("linkedinCompanyUrl")) $("linkedinCompanyUrl").value = "";
 
     $("verifiedFields").value = "";
     $("enrichedPayload").value = "";
