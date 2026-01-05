@@ -293,6 +293,101 @@
   border-color: #1f2937;
 }
 
+    /* =========================
+   Multi-select dropdown (msdd)
+   ========================= */
+.msdd { position: relative; margin-top: 7px; }
+
+.msdd-btn{
+  width:100%;
+  padding:11px 12px;
+  font-size:14px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--text);
+  text-align:left;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  cursor:pointer;
+}
+
+.msdd-btn:focus{
+  outline:none;
+  border-color:rgba(48,173,247,.8);
+  box-shadow:0 0 0 4px rgba(48,173,247,.18);
+}
+
+.msdd-value{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  align-items:center;
+  min-height: 18px;
+}
+
+.msdd-placeholder{ color: var(--muted); }
+
+.msdd-chip{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  padding:4px 8px;
+  border-radius:999px;
+  background:#f3f4f6;
+  border:1px solid var(--border);
+  font-size:12.5px;
+}
+
+.msdd-chip button{
+  border:none;
+  background:transparent;
+  cursor:pointer;
+  font-weight:800;
+  line-height:1;
+}
+
+.msdd-menu{
+  position:absolute;
+  top:calc(100% + 6px);
+  left:0;
+  right:0;
+  background:#fff;
+  border:1px solid var(--border);
+  border-radius:12px;
+  box-shadow:0 18px 45px rgba(17,24,39,.12);
+  max-height:280px;
+  overflow:auto;
+  padding:8px;
+  z-index:9999;
+  display:none;
+}
+
+.msdd.open .msdd-menu{ display:block; }
+
+.msdd-search{
+  width:100%;
+  padding:10px 10px;
+  margin:0 0 8px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  font-size:13px;
+}
+
+.msdd-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:10px;
+  border-radius:10px;
+  cursor:pointer;
+}
+
+.msdd-item:hover{ background:rgba(48,173,247,.10); }
+
+.msdd-item input{ width:auto; }
     
   </style>
 </head>
@@ -486,14 +581,14 @@
   <!-- RIGHT COLUMN -->
   <div>
     <label>Primary Departments</label>
-    <div class="ms" id="ms_primary_departments"></div>
+    <div class="msdd" id="ms_primary_departments"></div>
   </div>
 </div>
 
 <div class="row">
   <div>
     <label>Primary Seniorities</label>
-    <div class="ms" id="ms_primary_seniorities"></div>
+    <div class="msdd" id="ms_primary_seniorities"></div>
   </div>
 </div>
 
@@ -547,7 +642,7 @@
   <div>
     <div>
   <label>Countries</label>
-  <div class="ms" id="ms_countries"></div>
+  <div class="msdd" id="ms_countries"></div>
 </div>
 </div>
     
