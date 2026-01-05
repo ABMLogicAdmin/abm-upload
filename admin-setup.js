@@ -139,10 +139,12 @@ document.addEventListener("click", (e) => {
         }
       
         // If a campaign is selected, refresh snippet panel
-        if (key === "campaign") {
-          syncSnippetPanel();
-          loadBrief();
-        }
+       if (key === "campaign") {
+         syncSnippetPanel();
+         loadBrief();
+         setActiveTab("brief"); // makes the result visible immediately
+       }
+
       });
 
         list.appendChild(b);
@@ -286,7 +288,11 @@ function fill(id, arr){
 function setBriefStatus(msg){
   const el = document.getElementById("briefStatus");
   if (el) el.textContent = msg || "";
+
+  // ALSO show it in the global status (so you see it on any tab)
+  setAdminStatus(msg || "");
 }
+
 async function saveBrief(status = "draft"){
   const campaignId = state.campaign.value;
   if (!campaignId) {
