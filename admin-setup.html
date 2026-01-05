@@ -377,6 +377,10 @@
 
       <div id="adminStatus" class="adminStatus"></div>
     </div>
+    </div> <!-- end #adminGrid -->
+    </div> <!-- end .wrap -->
+  
+  <script src="/abm-upload/nav.js?v=1" defer></script>
 
   <script>
     // ===== CONFIG =====
@@ -905,11 +909,7 @@ async function copyFieldToClipboard(textareaId, statusId) {
     sb.auth.getSession()
       .then(async (r) => { if (r.data.session) showApp(); })
       .catch(()=>{});
-
-       </div> <!-- end #adminGrid -->
-  </div> <!-- end .wrap -->
-    
-  </script>
-  <script src="/abm-upload/nav.js?v=1" defer></script>
+</script>
 </body>
 </html>
+
