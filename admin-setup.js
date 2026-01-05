@@ -489,6 +489,7 @@ async function loadBrief(){
 
      $("loginStatus").textContent = "";
      await showApp();
+     
 
     }
 
