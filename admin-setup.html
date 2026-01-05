@@ -301,63 +301,13 @@
   </div>
 </div>
 
-    <p class="adminTitle">Landing Page Snippets (Single / Double Touch)</p>
-   <p class="adminNote">
-    Select a Client + Campaign. This will generate 1 snippet for single-touch campaigns,
-        or 2 snippets (Touch 1 + Touch 2) for double-touch campaigns.
-      </p>
-      
-      <div class="row">
-        <div>
-          <label>Client ID</label>
-          <input id="snClientId" readonly />
-        </div>
-        <div>
-          <label>Campaign ID</label>
-          <input id="snCampaignId" readonly />
-        </div>
-      </div>
-      
-      <div class="row">
-        <div>
-          <label>Touch model</label>
-          <input id="snTouchModel" readonly />
-        </div>
-        <div>
-          <label>Source site (for tracking)</label>
-          <input id="snSourceSite" placeholder="e.g. martechlogic.com" />
-        </div>
-      </div>
-      
-      <div class="row">
-        <div>
-          <label>Base name</label>
-          <input id="snBaseName" value="download" />
-          <div class="hint">Used to name form_id automatically.</div>
-        </div>
-        <div>
-          <label>&nbsp;</label>
-          <button id="btnGenSnippets" class="btn-secondary" type="button">Generate snippet(s)</button>
-        </div>
-      </div>
-      
-      <label>Touch 1 HTML (paste into Landing Page 1)</label>
-      <textarea id="snTouch1" rows="12" readonly style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;"></textarea>
-      <button id="btnCopySn1" class="btn-secondary" type="button">Copy Touch 1 HTML</button>
-      <div class="adminStatus" id="snStatus1"></div>
-      
-      <div id="snTouch2Wrap" style="display:none;margin-top:14px;">
-        <label>Touch 2 HTML (paste into Landing Page 2)</label>
-        <textarea id="snTouch2" rows="12" readonly style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;"></textarea>
-        <button id="btnCopySn2" class="btn-secondary" type="button">Copy Touch 2 HTML</button>
-        <div class="adminStatus" id="snStatus2"></div>
-      </div>
+ <!-- TAB PANELS START -->
 
+<div class="tabPanel active" data-panel="setup" id="panelSetup">
+  <p class="panelTitle">Setup</p>
+  <p class="panelNote">Create Clients, Campaigns, and Sources.</p>
 
-
-      <hr class="divider" />
-
-      <!-- Create client -->
+        <!-- Create client -->
       <div class="row">
         <div>
           <label>New client name</label>
@@ -455,6 +405,70 @@
       </div>
 
       <button id="createSourceBtn" class="btn-secondary" type="button">Create source</button>
+  
+</div>
+
+<div class="tabPanel" data-panel="brief" id="panelBrief">
+  <p class="panelTitle">Campaign Brief</p>
+  <p class="panelNote">We’ll build the brief form here next.</p>
+</div>
+
+<div class="tabPanel" data-panel="activation" id="panelActivation">
+  <p class="panelTitle">Activation</p>
+  <p class="panelNote">Generate landing page snippets tied to the selected Client + Campaign.</p>
+
+  <p class="adminTitle">Landing Page Snippets (Single / Double Touch)</p>
+   <p class="adminNote">
+    Select a Client + Campaign. This will generate 1 snippet for single-touch campaigns,
+        or 2 snippets (Touch 1 + Touch 2) for double-touch campaigns.
+      </p>
+      
+      <div class="row">
+        <div>
+          <label>Client ID</label>
+          <input id="snClientId" readonly />
+        </div>
+        <div>
+          <label>Campaign ID</label>
+          <input id="snCampaignId" readonly />
+        </div>
+      </div>
+      
+      <div class="row">
+        <div>
+          <label>Touch model</label>
+          <input id="snTouchModel" readonly />
+        </div>
+        <div>
+          <label>Source site (for tracking)</label>
+          <input id="snSourceSite" placeholder="e.g. martechlogic.com" />
+        </div>
+      </div>
+      
+      <div class="row">
+        <div>
+          <label>Base name</label>
+          <input id="snBaseName" value="download" />
+          <div class="hint">Used to name form_id automatically.</div>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button id="btnGenSnippets" class="btn-secondary" type="button">Generate snippet(s)</button>
+        </div>
+      </div>
+      
+      <label>Touch 1 HTML (paste into Landing Page 1)</label>
+      <textarea id="snTouch1" rows="12" readonly style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;"></textarea>
+      <button id="btnCopySn1" class="btn-secondary" type="button">Copy Touch 1 HTML</button>
+      <div class="adminStatus" id="snStatus1"></div>
+      
+      <div id="snTouch2Wrap" style="display:none;margin-top:14px;">
+        <label>Touch 2 HTML (paste into Landing Page 2)</label>
+        <textarea id="snTouch2" rows="12" readonly style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;"></textarea>
+        <button id="btnCopySn2" class="btn-secondary" type="button">Copy Touch 2 HTML</button>
+        <div class="adminStatus" id="snStatus2"></div>
+      </div>
+</div>
 
       <div id="adminStatus" class="adminStatus"></div>
     </div>
