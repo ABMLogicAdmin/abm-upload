@@ -552,10 +552,16 @@ if (viewName === "v_workbench_queue_done") {
     const lead = await fetchLead(ingest_job_id, row_number);
     currentLead = lead;
     selectedKey = leadKey(lead);
-  
+
     // NEW: resolve lead_id + load facts
     currentLeadId = await resolveLeadId(ingest_job_id, row_number);
-    currentFacts = currentLeadId ? await fetchLeadFacts(currentLeadId) : null;
+    
+    if (!currentLeadId) {
+    console.warn("No lead_id found in public.leads for", ingest_job_id, row_number);
+    setDetailStatus("Note: lead_id not found in leads table yet (facts unavailable).");
+    setTimeout(() => setDetailStatus(""), 1500);
+  }
+  currentFacts = currentLeadId ? await fetchLeadFacts(currentLeadId) : null;
 
       $("detailStatusPill").textContent = lead.enrichment_status || "unknown";
 
@@ -588,6 +594,14 @@ if (viewName === "v_workbench_queue_done") {
       $("enrichedPayload").value = stringifyMaybe(lead.enriched_payload);
       $("rawPayload").value = stringifyMaybe(lead.raw_payload);
 
+    // TEMP: show lead_facts so we can verify it loaded
+    if (currentFacts) {
+      const factsStr = stringifyMaybe(currentFacts);
+      $("verifiedFields").value =
+        `LEAD_FACTS\n${factsStr}\n\n` + ($("verifiedFields").value || "");
+    }
+
+    
       const isRejected = lead.enrichment_status === "rejected";
       $("rejectedBanner").style.display = isRejected ? "block" : "none";
 
@@ -689,6 +703,9 @@ if (viewName === "v_workbench_queue_done") {
 
       currentLead = null;
       selectedKey = null;
+      currentLeadId = null;
+      currentFacts = null;
+
 
       await loadQueue();
       clearDetail();
@@ -762,6 +779,8 @@ if (viewName === "v_workbench_queue_done") {
 
   function clearDetail() {
     showEmptyState(true);
+    currentLeadId = null;
+    currentFacts = null;
     $("detailStatusPill").textContent = "No lead selected";
     
     $("ingestJobId").value = "";
