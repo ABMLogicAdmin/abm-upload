@@ -790,6 +790,7 @@ if (viewName === "v_workbench_queue_done") {
     $("phoneDirect").value = "";
     $("phoneMobile").value = "";
     $("enrichmentNotes").value = "";
+    if ($("linkedinUrl")) $("linkedinUrl").value = "";
 
     $("verifiedFields").value = "";
     $("enrichedPayload").value = "";
