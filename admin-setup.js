@@ -66,6 +66,46 @@ const BRIEF_OPTIONS = {
   ]
 };
 
+// =========================
+// Multi-select (pill buttons)
+// =========================
+function renderMultiSelect(containerId, options = [], initialValues = []) {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  let selected = new Set(initialValues || []);
+
+  // Methods used by saveBrief/loadBrief
+  el.getValues = () => Array.from(selected);
+  el.setValues = (vals) => {
+    selected = new Set(vals || []);
+    paint();
+  };
+
+  function paint() {
+    el.innerHTML = "";
+
+    for (const opt of options) {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.textContent = opt;
+
+      if (selected.has(opt)) btn.classList.add("active");
+
+      btn.addEventListener("click", () => {
+        if (selected.has(opt)) selected.delete(opt);
+        else selected.add(opt);
+        paint();
+      });
+
+      el.appendChild(btn);
+    }
+  }
+
+  paint();
+}
+
+
     async function isAdmin() {
       const { data: userRes, error: userErr } = await sb.auth.getUser();
       if (userErr || !userRes?.user) return false;
