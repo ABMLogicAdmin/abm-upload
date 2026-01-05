@@ -177,6 +177,65 @@
     .grid1 .card {
       width: 100%;
     }
+
+/* =========================
+   Admin layout: sticky context + tabs
+   ========================= */
+.contextBar{
+  position: sticky;
+  top: 12px;
+  z-index: 50;
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: 0 8px 30px rgba(17,24,39,.06);
+}
+
+.contextRow{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+@media (max-width:640px){ .contextRow{ grid-template-columns:1fr; } }
+
+.tabs{
+  display:flex;
+  gap:10px;
+  margin-top:10px;
+  flex-wrap:wrap;
+}
+.tabBtn{
+  width:auto;
+  padding:10px 12px;
+  border-radius: 999px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--brand-navy);
+  font-weight:800;
+  cursor:pointer;
+}
+.tabBtn.active{
+  background: var(--brand-primary);
+  color:#fff;
+  border-color: transparent;
+}
+
+.tabPanel{ display:none; margin-top:14px; }
+.tabPanel.active{ display:block; }
+
+.panelTitle{
+  margin:0 0 6px;
+  font-size:13px;
+  font-weight:800;
+  color:var(--brand-navy);
+}
+.panelNote{
+  font-size:12px;
+  color:var(--muted);
+  margin:0 0 10px;
+}
     
   </style>
 </head>
@@ -214,12 +273,33 @@
       <p class="adminTitle">Admin setup</p>
       <p class="adminNote">Create Clients, Campaigns, and Sources. This page requires admin role.</p>
 
-   <!-- Client picker -->
-     <label>Selected Client (used as default for new Campaign)</label>
-     <div class="dd" id="ddClient"></div>
-     <label>Selected Campaign</label>
-     <div class="dd" id="ddCampaign"></div>
-     <hr class="divider" />
+<!-- Sticky context (Client + Campaign) -->
+<div class="contextBar">
+  <div class="contextRow">
+    <div>
+      <label>Selected Client (used as default for new Campaign)</label>
+      <div class="dd" id="ddClient"></div>
+    </div>
+
+    <div>
+      <label>Selected Campaign</label>
+      <div class="dd" id="ddCampaign"></div>
+    </div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tabBtn active" type="button" data-tab="setup">
+      Setup
+    </button>
+    <button class="tabBtn" type="button" data-tab="brief">
+      Campaign Brief
+    </button>
+    <button class="tabBtn" type="button" data-tab="activation">
+      Activation
+    </button>
+  </div>
+</div>
 
     <p class="adminTitle">Landing Page Snippets (Single / Double Touch)</p>
    <p class="adminNote">
