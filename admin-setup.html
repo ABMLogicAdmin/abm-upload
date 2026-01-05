@@ -570,23 +570,29 @@
 
     <hr class="divider" />
 
-    <p class="adminTitle">Secondary Personas</p>
-    <div class="row">
-      <div>
-        <label>Titles (one per line)</label>
-        <textarea id="brief_secondary_titles" rows="6"></textarea>
-      </div>
-      <div>
-        <label>Departments (one per line)</label>
-        <textarea id="brief_secondary_departments" rows="6"></textarea>
-      </div>
+<p class="adminTitle">Secondary Personas</p>
+
+<div class="row twoCol">
+  <!-- LEFT COLUMN -->
+  <div>
+    <label>Titles (one per line)</label>
+    <textarea id="brief_secondary_titles" rows="6" placeholder="Head of IT&#10;VP Security"></textarea>
+  </div>
+
+  <!-- RIGHT COLUMN (stacked) -->
+  <div class="stack">
+    <div>
+      <label>Secondary Departments</label>
+      <div class="msdd" id="ms_secondary_departments"></div>
     </div>
-    <div class="row">
-      <div>
-        <label>Seniorities (one per line)</label>
-        <textarea id="brief_secondary_seniorities" rows="4"></textarea>
-      </div>
+
+    <div>
+      <label>Secondary Seniorities</label>
+      <div class="msdd" id="ms_secondary_seniorities"></div>
     </div>
+  </div>
+</div>
+
 
     <hr class="divider" />
 
