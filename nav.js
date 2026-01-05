@@ -5,6 +5,7 @@
     if (p.endsWith("/workbench.html")) return "Workbench";
     if (p.endsWith("/admin-setup.html")) return "Admin Setup";
     if (p.endsWith("/admin-export.html")) return "Admin Export";
+    if (p.endsWith("/admin-export.html")) return "Delivery";
     if (p.endsWith("/index.html") || p.endsWith("/")) return "CSV Upload";
     return "ABM Logic";
   }
@@ -132,7 +133,8 @@
     const tabs = [
       { label: "Upload", href: "/abm-upload/index.html", match: "/index.html" },
       { label: "Workbench", href: "/abm-upload/workbench.html", match: "/workbench.html" },
-      { label: "Admin", href: "/abm-upload/admin-setup.html", match: "/admin-setup.html" },
+      { label: "Admin Setup", href: "/abm-upload/admin-setup.html", match: "/admin-setup.html" },
+      { label: "Delivery", href: "/abm-upload/admin-export.html", match: "/admin-export.html" }
     ];
 
     const path = (location.pathname || "").toLowerCase();
