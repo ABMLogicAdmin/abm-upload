@@ -374,3 +374,12 @@ tr.selected-row td:last-child{
   color:var(--brand-navy);
   font-size:12.5px;
 }
+
+/* Raise Workbench content */
+body{
+  padding-top: 12px;   /* was effectively 28px via base.css */
+}
+
+.grid{
+  margin-top: 6px;     /* was 16px */
+}
