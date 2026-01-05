@@ -335,8 +335,9 @@ async function saveBrief(status = "draft"){
     personas: {
       primary: {
         titles: lines("brief_primary_titles"),
-        departments: lines("brief_primary_departments"),
-        seniorities: lines("brief_primary_seniorities")
+        departments: document.getElementById("ms_primary_departments")?.getValues() || [],
+        seniorities: document.getElementById("ms_primary_seniorities")?.getValues() || []
+
       },
       secondary: {
         titles: lines("brief_secondary_titles"),
@@ -346,7 +347,7 @@ async function saveBrief(status = "draft"){
     },
     targeting: {
       accounts: lines("brief_target_accounts"),
-      regions: lines("brief_regions"),
+      countries: document.getElementById("ms_countries")?.getValues() || []
       industries: lines("brief_industries")
     },
     notes: document.getElementById("brief_notes")?.value || ""
@@ -407,15 +408,25 @@ async function loadBrief(){
   const b = data.qc_brief || {};
 
   fill("brief_primary_titles", b?.personas?.primary?.titles);
-  fill("brief_primary_departments", b?.personas?.primary?.departments);
-  fill("brief_primary_seniorities", b?.personas?.primary?.seniorities);
+  
+ document.getElementById("ms_primary_departments")?.setValues(
+  b?.personas?.primary?.departments || []
+);
+ 
+  document.getElementById("ms_primary_seniorities")?.setValues(
+   b?.personas?.primary?.seniorities || []
+ );
 
   fill("brief_secondary_titles", b?.personas?.secondary?.titles);
   fill("brief_secondary_departments", b?.personas?.secondary?.departments);
   fill("brief_secondary_seniorities", b?.personas?.secondary?.seniorities);
 
   fill("brief_target_accounts", b?.targeting?.accounts);
-  fill("brief_regions", b?.targeting?.regions);
+
+ document.getElementById("ms_countries")?.setValues(
+  b?.targeting?.countries || []
+);
+ 
   fill("brief_industries", b?.targeting?.industries);
 
   document.getElementById("brief_notes").value = b?.notes || "";
@@ -659,6 +670,24 @@ function validateAccountsFromTextarea() {
      
         wireTabs();
         setActiveTab("setup");
+       // Init Campaign Brief multi-selects
+       renderMultiSelect(
+         "ms_primary_departments",
+         BRIEF_OPTIONS.primary_departments,
+         []
+       );
+       
+       renderMultiSelect(
+         "ms_primary_seniorities",
+         BRIEF_OPTIONS.primary_seniorities,
+         []
+       );
+       
+       renderMultiSelect(
+         "ms_countries",
+         BRIEF_OPTIONS.countries,
+         []
+       );
 
 
       setAdminStatus("Loading clients…");
