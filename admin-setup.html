@@ -421,6 +421,20 @@ hr.divider {
   margin-top: 6px;
 }
 
+.row.oneCol {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 14px;
+}
+
+    /* Make all buttons consistent height */
+.btn, .btn-secondary, .btn-sm {
+  min-height: 40px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
   </style>
 </head>
 
@@ -652,30 +666,35 @@ hr.divider {
 
     <p class="adminTitle">Targeting</p>
 
-<div class="row">
+<div class="row twoCol">
   <!-- LEFT COLUMN -->
   <div>
     <label>Target accounts (domains, optional)</label>
     <textarea id="brief_target_accounts" rows="6" placeholder="company.com"></textarea>
-
-    <div style="margin-top:8px; display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
- <div class="csvRow">
-  <input type="file" id="brief_accounts_csv" accept=".csv" />
-
-  <div class="csvActions">
-    <button id="btnImportAccountsCsv" type="button" class="btn btn-sm">Import</button>
-    <button id="btnValidateAccounts" type="button" class="btn-secondary btn-sm">Validate</button>
   </div>
-</div>
 
-<p class="helpText">
-  CSV can contain full URLs or domains. We extract domains, normalize, and dedupe.
-</p>
+  <!-- RIGHT COLUMN -->
+  <div class="stack">
+    <div>
+      <label>Countries</label>
+      <div class="msdd" id="ms_countries"></div>
+    </div>
 
-</div>
+    <div>
+      <label>Accounts CSV</label>
+      <div class="csvRow">
+        <input type="file" id="brief_accounts_csv" accept=".csv" />
+        <div class="csvActions">
+          <button id="btnImportAccountsCsv" type="button" class="btn btn-sm">Import</button>
+          <button id="btnValidateAccounts" type="button" class="btn-secondary btn-sm">Validate</button>
+        </div>
+      </div>
 
-<div class="hint" style="margin-top:6px;">
-  CSV can contain full URLs or domains. We extract domains, normalize, and dedupe.
+      <p class="helpText">
+        CSV can contain full URLs or domains. We extract domains, normalize, and dedupe.
+      </p>
+    </div>
+  </div>
 </div>
 
 <div id="accountsValidationBox" style="margin-top:10px; padding:12px; border:1px solid var(--border); border-radius:12px; background:#fff; display:none;">
@@ -692,19 +711,14 @@ hr.divider {
 </div>
 </div>
     
-<div class="row twoCol">
+<div class="row oneCol">
   <div>
     <label>Industries (one per line)</label>
     <textarea id="brief_industries" rows="4"></textarea>
   </div>
-
-  <div>
-    <label>Notes</label>
-    <textarea id="brief_notes" rows="4"></textarea>
-  </div>
 </div>
 
-    <hr class="divider" />
+<hr class="divider" />
 
 <div class="row actionsRow">
   <button id="btnSaveBrief" class="btn-secondary" type="button">Save Draft</button>
