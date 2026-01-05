@@ -29,7 +29,7 @@
 
 // Close dropdown when clicking outside
 document.addEventListener("click", (e) => {
-  const ids = ["ddClient", "ddCampaign", "ms_primary_departments", "ms_primary_seniorities", "ms_countries"];
+  const ids = ["ddClient", "ddCampaign", "ms_primary_departments", "ms_primary_seniorities","ms_secondary_departments","ms_secondary_seniorities","ms_countries"];
   for (const id of ids) {
     const el = $(id);
     if (el && !el.contains(e.target)) el.classList.remove("open");
@@ -377,13 +377,15 @@ async function saveBrief(status = "draft"){
         titles: lines("brief_primary_titles"),
         departments: document.getElementById("ms_primary_departments")?.getValues() || [],
         seniorities: document.getElementById("ms_primary_seniorities")?.getValues() || []
-
       },
-      secondary: {
-        titles: lines("brief_secondary_titles"),
-        departments: lines("brief_secondary_departments"),
-        seniorities: lines("brief_secondary_seniorities")
-      }
+     
+secondary: {
+  titles: lines("brief_secondary_titles"),
+  departments: document.getElementById("ms_secondary_departments")?.getValues() || [],
+  seniorities: document.getElementById("ms_secondary_seniorities")?.getValues() || []
+}
+
+     
     },
   targeting: {
   accounts: lines("brief_target_accounts"),
@@ -457,9 +459,15 @@ async function loadBrief(){
    b?.personas?.primary?.seniorities || []
  );
 
-  fill("brief_secondary_titles", b?.personas?.secondary?.titles);
-  fill("brief_secondary_departments", b?.personas?.secondary?.departments);
-  fill("brief_secondary_seniorities", b?.personas?.secondary?.seniorities);
+fill("brief_secondary_titles", b?.personas?.secondary?.titles);
+
+document.getElementById("ms_secondary_departments")?.setValues(
+  b?.personas?.secondary?.departments || []
+);
+
+document.getElementById("ms_secondary_seniorities")?.setValues(
+  b?.personas?.secondary?.seniorities || []
+);
 
   fill("brief_target_accounts", b?.targeting?.accounts);
 
@@ -873,8 +881,22 @@ renderMultiSelectDropdown(
   [],
   "Select countries…"
 );
+     
+renderMultiSelectDropdown(
+  "ms_secondary_departments",
+  BRIEF_OPTIONS.primary_departments,
+  [],
+  "Select departments…"
+);
 
-      setAdminStatus("Loading clients…");
+renderMultiSelectDropdown(
+  "ms_secondary_seniorities",
+  BRIEF_OPTIONS.primary_seniorities,
+  [],
+  "Select seniorities…"
+);
+
+setAdminStatus("Loading clients…");
 
       try {
         await loadClients();
