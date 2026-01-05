@@ -36,6 +36,36 @@ document.addEventListener("click", (e) => {
   }
 });
 
+const BRIEF_OPTIONS = {
+  primary_departments: [
+    "Marketing","Sales","RevOps","IT","Security","Finance","HR","Operations","Product"
+  ],
+  primary_seniorities: [
+    "C-Level","VP","Director","Head","Manager","Individual Contributor","Senior Manager"
+  ],
+  countries: [
+    "United States","Canada","Mexico",
+    "United Kingdom","Ireland","France","Germany","Netherlands","Belgium","Luxembourg",
+    "Switzerland","Austria","Italy","Spain","Portugal",
+    "Sweden","Norway","Denmark","Finland","Iceland",
+    "Poland","Czech Republic","Slovakia","Hungary",
+    "Romania","Bulgaria","Greece","Croatia","Slovenia",
+    "Estonia","Latvia","Lithuania",
+    "Ukraine",
+    "Israel","United Arab Emirates","Saudi Arabia","Qatar","Kuwait","Bahrain","Oman",
+    "Turkey",
+    "South Africa","Nigeria","Kenya","Egypt","Morocco",
+    "India","Pakistan","Bangladesh","Sri Lanka",
+    "China","Hong Kong","Taiwan",
+    "Japan","South Korea",
+    "Singapore","Malaysia","Thailand","Vietnam","Indonesia","Philippines",
+    "Australia","New Zealand",
+    "Brazil","Argentina","Chile","Colombia","Peru","Ecuador",
+    "Uruguay","Paraguay",
+    "Panama","Costa Rica","Guatemala"
+  ]
+};
+
     async function isAdmin() {
       const { data: userRes, error: userErr } = await sb.auth.getUser();
       if (userErr || !userRes?.user) return false;
