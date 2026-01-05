@@ -268,6 +268,31 @@
 .stageCard{
   margin-top: 14px;
 }
+
+    .ms {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  min-height: 44px;
+  background: #fff;
+}
+
+.ms button {
+  display: inline-block;
+  margin: 4px;
+  padding: 6px 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: #f3f4f6;
+  cursor: pointer;
+}
+
+.ms button.active {
+  background: #1f2937;
+  color: #fff;
+  border-color: #1f2937;
+}
+
     
   </style>
 </head>
@@ -454,15 +479,15 @@
       </div>
       <div>
         <label>Departments (one per line)</label>
-        <textarea id="brief_primary_departments" rows="6"
-          placeholder="Marketing&#10;Growth"></textarea>
+          <label>Primary Departments</label>
+        <div class="ms" id="ms_primary_departments"></div>
       </div>
     </div>
     <div class="row">
       <div>
         <label>Seniorities (one per line)</label>
-        <textarea id="brief_primary_seniorities" rows="4"
-          placeholder="C-Level&#10;VP&#10;Director"></textarea>
+          <label>Primary Departments</label>
+        <div class="ms" id="ms_primary_departments"></div>
       </div>
     </div>
 
@@ -515,7 +540,8 @@
   <!-- RIGHT COLUMN -->
   <div>
     <label>Regions (one per line)</label>
-    <textarea id="brief_regions" rows="6" placeholder="UK&#10;Belgium"></textarea>
+      <label>Regions</label>
+    <div class="ms" id="ms_regions"></div>
   </div>
 </div>
     
