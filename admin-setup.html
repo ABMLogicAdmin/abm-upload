@@ -364,7 +364,34 @@
 .msdd-item:hover{ background:rgba(48,173,247,.10); }
 
 .msdd-item input{ width:auto; }
-    
+
+.row.twoCol {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  align-items: start;
+}
+
+.stack {
+  display: grid;
+  gap: 12px;
+}
+
+hr.divider {
+  width: 100%;
+  display: block;
+}
+
+.row.actionsRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.row.actionsRow button {
+  width: 100%;
+}
+
   </style>
 </head>
 
@@ -543,7 +570,7 @@
 
  <p class="adminTitle">Primary Personas</p>
 
-<div class="row">
+<div class="row twoCol">
   <!-- LEFT COLUMN -->
   <div>
     <label>Titles (one per line)</label>
@@ -554,20 +581,19 @@
     </textarea>
   </div>
 
-  <!-- RIGHT COLUMN -->
-  <div>
-    <label>Primary Departments</label>
-    <div class="msdd" id="ms_primary_departments"></div>
+  <!-- RIGHT COLUMN (stacked) -->
+  <div class="stack">
+    <div>
+      <label>Primary Departments</label>
+      <div class="msdd" id="ms_primary_departments"></div>
+    </div>
+
+    <div>
+      <label>Primary Seniorities</label>
+      <div class="msdd" id="ms_primary_seniorities"></div>
+    </div>
   </div>
 </div>
-
-<div class="row">
-  <div>
-    <label>Primary Seniorities</label>
-    <div class="msdd" id="ms_primary_seniorities"></div>
-  </div>
-</div>
-
     <hr class="divider" />
 
 <p class="adminTitle">Secondary Personas</p>
@@ -592,8 +618,6 @@
     </div>
   </div>
 </div>
-
-
     <hr class="divider" />
 
     <p class="adminTitle">Targeting</p>
