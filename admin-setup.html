@@ -314,114 +314,114 @@
 
 <div class="tabPanel active" data-panel="setup" id="panelSetup">
   <div class="card stageCard">
-  <p class="panelTitle">Setup</p>
-  <p class="panelNote">Create Clients, Campaigns, and Sources.</p>
+    <p class="panelTitle">Setup</p>
+    <p class="panelNote">Create Clients, Campaigns, and Sources.</p>
 
-        <!-- Create client -->
-      <div class="row">
-        <div>
-          <label>New client name</label>
-          <input id="newClientName" placeholder="e.g. Deloitte" />
-        </div>
-        <div>
-          <label>Client status</label>
-          <select id="newClientStatus">
-            <option value="active" selected>active</option>
-            <option value="inactive">inactive</option>
-          </select>
-        </div>
+    <!-- Create client -->
+    <div class="row">
+      <div>
+        <label>New client name</label>
+        <input id="newClientName" placeholder="e.g. Deloitte" />
       </div>
-      <button id="createClientBtn" class="btn-secondary" type="button">Create client</button>
-
-      <hr class="divider" />
-
-      <!-- Create campaign -->
-      <div class="row">
-        <div>
-          <label>New campaign name</label>
-          <input id="newCampaignName" placeholder="e.g. Q1 SME Syndication" />
-        </div>
-        <div>
-          <label>Campaign type (optional)</label>
-          <input id="newCampaignType" placeholder="e.g. demand_gen / syndication" />
-        </div>
+      <div>
+        <label>Client status</label>
+        <select id="newClientStatus">
+          <option value="active" selected>active</option>
+          <option value="inactive">inactive</option>
+        </select>
       </div>
+    </div>
+    <button id="createClientBtn" class="btn-secondary" type="button">Create client</button>
 
-      <div class="row">
-  <div>
-    <label>Campaign status</label>
-    <select id="newCampaignStatus">
-      <option value="active" selected>active</option>
-      <option value="inactive">inactive</option>
-    </select>
-  </div>
-  <div>
-    <label>Touch model</label>
-    <select id="newCampaignTouchModel">
-      <option value="single" selected>single touch</option>
-      <option value="double">double touch</option>
-    </select>
-  </div>
-</div>
+    <hr class="divider" />
 
-<div class="row">
-  <div>
-    <label>Client ID override (optional)</label>
-    <input id="newCampaignClientId" placeholder="Leave blank to use Selected Client above" />
-  </div>
-  <div>
-    <label>&nbsp;</label>
-    <input disabled value="Tip: double touch generates 2 landing page snippets" />
-  </div>
-</div>
-
-
-      <button id="createCampaignBtn" class="btn-secondary" type="button">Create campaign</button>
-
-      <hr class="divider" />
-
-      <!-- Create source -->
-      <div class="row">
-        <div>
-          <label>New source name</label>
-          <input id="newSourceName" placeholder="e.g. Manual Upload / Partner / Platform" />
-        </div>
-        <div>
-          <label>Source system</label>
-          <select id="newSourceSystem">
-            <option value="manual" selected>manual</option>
-            <option value="internal">internal</option>
-            <option value="partner">partner</option>
-            <option value="platform">platform</option>
-          </select>
-        </div>
+    <!-- Create campaign -->
+    <div class="row">
+      <div>
+        <label>New campaign name</label>
+        <input id="newCampaignName" placeholder="e.g. Q1 SME Syndication" />
       </div>
-
-      <div class="row">
-        <div>
-          <label>Source channel</label>
-          <select id="newSourceChannel">
-            <option value="csv" selected>csv</option>
-            <option value="email">email</option>
-            <option value="web">web</option>
-            <option value="ads">ads</option>
-            <option value="other">other</option>
-          </select>
-        </div>
-        <div>
-          <label>&nbsp;</label>
-          <input disabled value="External refs auto-empty (OK for MVP)" />
-        </div>
+      <div>
+        <label>Campaign type (optional)</label>
+        <input id="newCampaignType" placeholder="e.g. demand_gen / syndication" />
       </div>
+    </div>
 
-      <button id="createSourceBtn" class="btn-secondary" type="button">Create source</button>
-  
+    <div class="row">
+      <div>
+        <label>Campaign status</label>
+        <select id="newCampaignStatus">
+          <option value="active" selected>active</option>
+          <option value="inactive">inactive</option>
+        </select>
+      </div>
+      <div>
+        <label>Touch model</label>
+        <select id="newCampaignTouchModel">
+          <option value="single" selected>single touch</option>
+          <option value="double">double touch</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Client ID override (optional)</label>
+        <input id="newCampaignClientId" placeholder="Leave blank to use Selected Client above" />
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <input disabled value="Tip: double touch generates 2 landing page snippets" />
+      </div>
+    </div>
+
+    <button id="createCampaignBtn" class="btn-secondary" type="button">Create campaign</button>
+
+    <hr class="divider" />
+
+    <!-- Create source -->
+    <div class="row">
+      <div>
+        <label>New source name</label>
+        <input id="newSourceName" placeholder="e.g. Manual Upload / Partner / Platform" />
+      </div>
+      <div>
+        <label>Source system</label>
+        <select id="newSourceSystem">
+          <option value="manual" selected>manual</option>
+          <option value="internal">internal</option>
+          <option value="partner">partner</option>
+          <option value="platform">platform</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Source channel</label>
+        <select id="newSourceChannel">
+          <option value="csv" selected>csv</option>
+          <option value="email">email</option>
+          <option value="web">web</option>
+          <option value="ads">ads</option>
+          <option value="other">other</option>
+        </select>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <input disabled value="External refs auto-empty (OK for MVP)" />
+      </div>
+    </div>
+
+    <button id="createSourceBtn" class="btn-secondary" type="button">Create source</button>
+  </div>
 </div>
 
 <div class="tabPanel" data-panel="brief" id="panelBrief">
   <div class="card stageCard">
     <p class="panelTitle">Campaign Brief</p>
     <p class="panelNote">We’ll build the brief form here next.</p>
+  </div>
 </div>
 
 <div class="tabPanel" data-panel="activation" id="panelActivation">
@@ -429,61 +429,64 @@
     <p class="panelTitle">Activation</p>
     <p class="panelNote">Generate landing page snippets tied to the selected Client + Campaign.</p>
 
-  <p class="adminTitle">Landing Page Snippets (Single / Double Touch)</p>
-    <div class="card stageCard">
-   <p class="adminNote">
-    Select a Client + Campaign. This will generate 1 snippet for single-touch campaigns,
-        or 2 snippets (Touch 1 + Touch 2) for double-touch campaigns.
-      </p>
-      
-      <div class="row">
-        <div>
-          <label>Client ID</label>
-          <input id="snClientId" readonly />
-        </div>
-        <div>
-          <label>Campaign ID</label>
-          <input id="snCampaignId" readonly />
-        </div>
+    <p class="adminTitle">Landing Page Snippets (Single / Double Touch)</p>
+    <p class="adminNote">
+      Select a Client + Campaign. This will generate 1 snippet for single-touch campaigns,
+      or 2 snippets (Touch 1 + Touch 2) for double-touch campaigns.
+    </p>
+
+    <div class="row">
+      <div>
+        <label>Client ID</label>
+        <input id="snClientId" readonly />
       </div>
-      
-      <div class="row">
-        <div>
-          <label>Touch model</label>
-          <input id="snTouchModel" readonly />
-        </div>
-        <div>
-          <label>Source site (for tracking)</label>
-          <input id="snSourceSite" placeholder="e.g. martechlogic.com" />
-        </div>
+      <div>
+        <label>Campaign ID</label>
+        <input id="snCampaignId" readonly />
       </div>
-      
-      <div class="row">
-        <div>
-          <label>Base name</label>
-          <input id="snBaseName" value="download" />
-          <div class="hint">Used to name form_id automatically.</div>
-        </div>
-        <div>
-          <label>&nbsp;</label>
-          <button id="btnGenSnippets" class="btn-secondary" type="button">Generate snippet(s)</button>
-        </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Touch model</label>
+        <input id="snTouchModel" readonly />
       </div>
-      
-      <label>Touch 1 HTML (paste into Landing Page 1)</label>
-      <textarea id="snTouch1" rows="12" readonly style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;"></textarea>
-      <button id="btnCopySn1" class="btn-secondary" type="button">Copy Touch 1 HTML</button>
-      <div class="adminStatus" id="snStatus1"></div>
-      
-      <div id="snTouch2Wrap" style="display:none;margin-top:14px;">
-        <label>Touch 2 HTML (paste into Landing Page 2)</label>
-        <textarea id="snTouch2" rows="12" readonly style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;"></textarea>
-        <button id="btnCopySn2" class="btn-secondary" type="button">Copy Touch 2 HTML</button>
-        <div class="adminStatus" id="snStatus2"></div>
+      <div>
+        <label>Source site (for tracking)</label>
+        <input id="snSourceSite" placeholder="e.g. martechlogic.com" />
       </div>
+    </div>
+
+    <div class="row">
+      <div>
+        <label>Base name</label>
+        <input id="snBaseName" value="download" />
+        <div class="hint">Used to name form_id automatically.</div>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button id="btnGenSnippets" class="btn-secondary" type="button">Generate snippet(s)</button>
+      </div>
+    </div>
+
+    <label>Touch 1 HTML (paste into Landing Page 1)</label>
+    <textarea id="snTouch1" rows="12" readonly style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;"></textarea>
+    <button id="btnCopySn1" class="btn-secondary" type="button">Copy Touch 1 HTML</button>
+    <div class="adminStatus" id="snStatus1"></div>
+
+    <div id="snTouch2Wrap" style="display:none;margin-top:14px;">
+      <label>Touch 2 HTML (paste into Landing Page 2)</label>
+      <textarea id="snTouch2" rows="12" readonly style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;"></textarea>
+      <button id="btnCopySn2" class="btn-secondary" type="button">Copy Touch 2 HTML</button>
+      <div class="adminStatus" id="snStatus2"></div>
+    </div>
+  </div>
 </div>
 
-      <div id="adminStatus" class="adminStatus"></div>
+<!-- TAB PANELS END -->
+
+<div id="adminStatus" class="adminStatus"></div>
+
     </div>
     </div> <!-- end #adminGrid -->
     </div> <!-- end .wrap -->
