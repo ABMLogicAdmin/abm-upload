@@ -29,7 +29,7 @@
 
 // Close dropdown when clicking outside
 document.addEventListener("click", (e) => {
-  const ids = ["ddClient", "ddCampaign"]; // add more IDs later
+  const ids = ["ddClient", "ddCampaign", "ms_primary_departments", "ms_primary_seniorities", "ms_countries"];
   for (const id of ids) {
     const el = $(id);
     if (el && !el.contains(e.target)) el.classList.remove("open");
@@ -676,6 +676,146 @@ function validateAccountsFromTextarea() {
   setBriefStatus("✅ Accounts validated (textarea normalized).");
 }
 
+// =========================
+// Multi-select dropdown (search + checkboxes + chips)
+// =========================
+function renderMultiSelectDropdown(containerId, options = [], initialValues = [], placeholder = "Select…") {
+  const el = document.getElementById(containerId);
+  if (!el) return;
+
+  let selected = new Set(initialValues || []);
+  let query = "";
+
+  // expose same API as before so saveBrief/loadBrief still work
+  el.getValues = () => Array.from(selected);
+  el.setValues = (vals) => {
+    selected = new Set(vals || []);
+    draw();
+  };
+
+  function draw() {
+    el.innerHTML = "";
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "msdd-btn";
+
+    const valueWrap = document.createElement("div");
+    valueWrap.className = "msdd-value";
+
+    if (selected.size === 0) {
+      const ph = document.createElement("span");
+      ph.className = "msdd-placeholder";
+      ph.textContent = placeholder;
+      valueWrap.appendChild(ph);
+    } else {
+      for (const v of Array.from(selected).sort()) {
+        const chip = document.createElement("span");
+        chip.className = "msdd-chip";
+        chip.innerHTML = `<span>${v}</span>`;
+
+        const x = document.createElement("button");
+        x.type = "button";
+        x.textContent = "×";
+        x.addEventListener("click", (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          selected.delete(v);
+          draw();
+        });
+
+        chip.appendChild(x);
+        valueWrap.appendChild(chip);
+      }
+    }
+
+    const caret = document.createElement("span");
+    caret.className = "dd-caret";
+    caret.textContent = "▾";
+
+    btn.appendChild(valueWrap);
+    btn.appendChild(caret);
+
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      el.classList.toggle("open");
+      const s = el.querySelector(".msdd-search");
+      if (s) s.focus();
+    });
+
+    const menu = document.createElement("div");
+    menu.className = "msdd-menu";
+
+    const search = document.createElement("input");
+    search.className = "msdd-search";
+    search.placeholder = "Type to filter…";
+    search.value = query;
+    search.addEventListener("input", () => {
+      query = search.value || "";
+      renderList(list);
+    });
+    menu.appendChild(search);
+
+    const list = document.createElement("div");
+    menu.appendChild(list);
+
+    function renderList(listEl) {
+      listEl.innerHTML = "";
+      const q = (query || "").toLowerCase().trim();
+
+      const filtered = (options || []).filter(opt => !q || String(opt).toLowerCase().includes(q));
+
+      if (!filtered.length) {
+        const none = document.createElement("div");
+        none.className = "dd-meta";
+        none.style.padding = "10px";
+        none.textContent = "No matches.";
+        listEl.appendChild(none);
+        return;
+      }
+
+      for (const opt of filtered) {
+        const row = document.createElement("div");
+        row.className = "msdd-item";
+
+        const cb = document.createElement("input");
+        cb.type = "checkbox";
+        cb.checked = selected.has(opt);
+
+        const label = document.createElement("div");
+        label.textContent = opt;
+
+        row.appendChild(cb);
+        row.appendChild(label);
+
+        row.addEventListener("click", (e) => {
+          // allow clicking the whole row
+          if (selected.has(opt)) selected.delete(opt);
+          else selected.add(opt);
+
+          draw();
+          el.classList.add("open"); // keep menu open for multi-select
+        });
+
+        listEl.appendChild(row);
+      }
+    }
+
+    renderList(list);
+
+    el.appendChild(btn);
+    el.appendChild(menu);
+
+    // keep menu open state
+    if (el.classList.contains("open")) {
+      // re-open after re-render
+      setTimeout(() => el.classList.add("open"), 0);
+    }
+  }
+
+  draw();
+}
 
     async function showApp() {
       // Get user + set navbar identity
@@ -710,25 +850,28 @@ function validateAccountsFromTextarea() {
      
         wireTabs();
         setActiveTab("setup");
-       // Init Campaign Brief multi-selects
-       renderMultiSelect(
-         "ms_primary_departments",
-         BRIEF_OPTIONS.primary_departments,
-         []
-       );
-       
-       renderMultiSelect(
-         "ms_primary_seniorities",
-         BRIEF_OPTIONS.primary_seniorities,
-         []
-       );
-       
-       renderMultiSelect(
-         "ms_countries",
-         BRIEF_OPTIONS.countries,
-         []
-       );
+     
+// Init Campaign Brief dropdown multi-selects
+renderMultiSelectDropdown(
+  "ms_primary_departments",
+  BRIEF_OPTIONS.primary_departments,
+  [],
+  "Select departments…"
+);
 
+renderMultiSelectDropdown(
+  "ms_primary_seniorities",
+  BRIEF_OPTIONS.primary_seniorities,
+  [],
+  "Select seniorities…"
+);
+
+renderMultiSelectDropdown(
+  "ms_countries",
+  BRIEF_OPTIONS.countries,
+  [],
+  "Select countries…"
+);
 
       setAdminStatus("Loading clients…");
 
