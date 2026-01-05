@@ -183,7 +183,7 @@
    ========================= */
 .contextBar{
   position: sticky;
-  top: 12px;
+  top: 92px;
   z-index: 50;
   background: rgba(255,255,255,.92);
   backdrop-filter: blur(8px);
@@ -236,6 +236,17 @@
   color:var(--muted);
   margin:0 0 10px;
 }
+
+    /* Flatten the big outer container so it doesn't feel like a "rear window" */
+#appCard{
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+.stageCard{
+  margin-top: 14px;
+}
     
   </style>
 </head>
@@ -270,8 +281,6 @@
 <div class="grid1" id="adminGrid" style="display:none;">
     <!-- ADMIN SETUP CARD -->
     <div class="card" id="appCard" style="display:none;">
-      <p class="adminTitle">Admin setup</p>
-      <p class="adminNote">Create Clients, Campaigns, and Sources. This page requires admin role.</p>
 
 <!-- Sticky context (Client + Campaign) -->
 <div class="contextBar">
@@ -304,6 +313,7 @@
  <!-- TAB PANELS START -->
 
 <div class="tabPanel active" data-panel="setup" id="panelSetup">
+  <div class="card stageCard">
   <p class="panelTitle">Setup</p>
   <p class="panelNote">Create Clients, Campaigns, and Sources.</p>
 
@@ -409,15 +419,18 @@
 </div>
 
 <div class="tabPanel" data-panel="brief" id="panelBrief">
-  <p class="panelTitle">Campaign Brief</p>
-  <p class="panelNote">We’ll build the brief form here next.</p>
+  <div class="card stageCard">
+    <p class="panelTitle">Campaign Brief</p>
+    <p class="panelNote">We’ll build the brief form here next.</p>
 </div>
 
 <div class="tabPanel" data-panel="activation" id="panelActivation">
-  <p class="panelTitle">Activation</p>
-  <p class="panelNote">Generate landing page snippets tied to the selected Client + Campaign.</p>
+  <div class="card stageCard">
+    <p class="panelTitle">Activation</p>
+    <p class="panelNote">Generate landing page snippets tied to the selected Client + Campaign.</p>
 
   <p class="adminTitle">Landing Page Snippets (Single / Double Touch)</p>
+    <div class="card stageCard">
    <p class="adminNote">
     Select a Client + Campaign. This will generate 1 snippet for single-touch campaigns,
         or 2 snippets (Touch 1 + Touch 2) for double-touch campaigns.
