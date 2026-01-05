@@ -581,6 +581,14 @@ if (viewName === "v_workbench_queue_done") {
       $("phoneDirect").value = lead.phone_direct || "";
       $("phoneMobile").value = lead.phone_mobile || "";
       $("enrichmentNotes").value = lead.enrichment_notes || "";
+    // lead_facts → LinkedIn + Location (if fields exist in HTML)
+      if ($("linkedinUrl")) {
+        $("linkedinUrl").value = (currentFacts?.linkedin_profile_url || "");
+      }
+      if ($("location")) {
+        $("location").value = (currentFacts?.person_location || "");
+      }
+
 
       // If a country is selected, ensure dial code is present (but don't overwrite real numbers)
       const iso2 = lead.phone_country_iso2 || "";
@@ -672,6 +680,24 @@ if (viewName === "v_workbench_queue_done") {
         .eq("row_number", row_number);
 
       if (error) throw error;
+    
+      // Also save lead_facts (LinkedIn + Location)
+      if (!currentLeadId) {
+        throw new Error("Cannot save lead_facts: lead_id not found yet.");
+      }
+      
+      const linkedin_profile_url = ($("linkedinUrl")?.value || "").trim() || null;
+      const person_location = ($("location")?.value || "").trim() || null;
+      
+      const { error: factsErr } = await sb
+        .from("lead_facts")
+        .upsert(
+          { lead_id: currentLeadId, linkedin_profile_url, person_location },
+          { onConflict: "lead_id" }
+        );
+
+if (factsErr) throw factsErr;
+
 
       await loadQueue();
       await openLead(ingest_job_id, row_number);
@@ -791,6 +817,7 @@ if (viewName === "v_workbench_queue_done") {
     $("phoneMobile").value = "";
     $("enrichmentNotes").value = "";
     if ($("linkedinUrl")) $("linkedinUrl").value = "";
+    if ($("location")) $("location").value = "";
 
     $("verifiedFields").value = "";
     $("enrichedPayload").value = "";
