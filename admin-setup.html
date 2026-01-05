@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ABM Logic — Admin Setup</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/abm-upload/base.css?v=12">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    :root{
+      --brand-primary:#30ADF7;
+      --brand-navy:#22233D;
+      --brand-bg:#E6F6FF;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --card:#ffffff;
+      --radius:14px;
+    }
+    html, body { color-scheme: light; }
+    select, option { background-color:#ffffff !important; color:#111827 !important; }
+
+    *{box-sizing:border-box}
+    body{
+      font-family:Poppins,Arial,sans-serif;
+      background:linear-gradient(180deg,var(--brand-bg),#ffffff 55%);
+      color:var(--text);
+      margin:0;
+      padding:32px 16px 60px;
+    }
+    .wrap{ max-width:1600px; margin:0 auto; padding:0 12px; }
+
+      .grid2{
+        display:grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+        gap:18px;
+        align-items:start;
+      }
+      @media (max-width: 980px){
+        .grid2{ grid-template-columns: 1fr; }
+      }
+    
+    .card{
+      margin-top:18px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:0 8px 30px rgba(17,24,39,.06);
+    }
+    label{display:block;margin-top:14px;font-size:12.5px;color:var(--brand-navy);font-weight:600}
+
+    input,button,select{
+      width:100%;
+      padding:11px 12px;
+      margin-top:7px;
+      font-size:14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      font-family:inherit;
+      background:#fff;
+      color:var(--text);
+    }
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:640px){.row{grid-template-columns:1fr}}
+
+    .btn{
+      border:none;
+      background:var(--brand-primary);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+      margin-top:18px;
+      text-align:center;
+    }
+    .btn:hover{filter:brightness(.98)}
+    .btn:active{transform:translateY(1px)}
+    .status{margin-top:14px;font-size:12.5px;white-space:pre-wrap}
+    .hint{ font-size:12px;color:var(--muted);margin-top:10px; }
+
+    /* Custom dropdown */
+    .dd { position: relative; margin-top: 7px; }
+    .dd-btn{
+      width:100%;
+      padding:11px 12px;
+      font-size:14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      text-align:left;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      cursor:pointer;
+    }
+    .dd-btn:focus{
+      outline:none;
+      border-color:rgba(48,173,247,.8);
+      box-shadow:0 0 0 4px rgba(48,173,247,.18);
+    }
+    .dd-caret{ color: var(--muted); font-size: 12px; }
+    .dd-menu{
+      position:absolute;
+      top:calc(100% + 6px);
+      left:0;
+      right:0;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:12px;
+      box-shadow:0 18px 45px rgba(17,24,39,.12);
+      max-height:240px;
+      overflow:auto;
+      padding:6px;
+      z-index:9999;
+      display:none;
+    }
+    .dd.open .dd-menu{ display:block; }
+    .dd-item{
+      width:100%;
+      border:none;
+      background:transparent;
+      padding:10px 10px;
+      border-radius:10px;
+      text-align:left;
+      cursor:pointer;
+      color:var(--text);
+      font-size:14px;
+    }
+    .dd-item:hover{ background:rgba(48,173,247,.10); }
+    .dd-meta{ font-size:11px; color:var(--muted); margin-top:2px; }
+    .dd-search{
+      width:100%;
+      padding:10px 10px;
+      margin:6px 0 8px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      font-size:13px;
+    }
+
+    /* Admin panel */
+    .adminTitle{
+      margin:0 0 6px;
+      font-size:13px;
+      font-weight:800;
+      color:var(--brand-navy);
+    }
+    .adminNote{
+      font-size:12px;
+      color:var(--muted);
+      margin:0 0 10px;
+    }
+    .btn-secondary{
+      border:none;
+      background:var(--brand-navy);
+      color:#fff;
+      font-weight:800;
+      cursor:pointer;
+      margin-top:10px;
+    }
+
+    .adminStatus{
+      margin-top:10px;
+      font-size:12.5px;
+      white-space:pre-wrap;
+      color:var(--brand-navy);
+    }
+    .divider{
+      margin:16px 0;
+      border:none;
+      border-top:1px solid rgba(34,35,61,.12);
+    }
+  </style>
+</head>
+
+<body
+  data-page-title="Admin Setup"
+  data-page-badge="Clients / Campaigns / Sources"
+  data-page-help="Admin-only setup page. Non-admins are blocked."
+>
+  <div class="wrap">
+
+    <div id="siteNav"></div>
+    <button id="logoutBtn" type="button" style="display:none;">Logout</button>
+
+    <!-- LOGIN -->
+    <div class="card" id="loginCard">
+      <div class="row">
+        <div>
+          <label>Email</label>
+          <input id="email" type="email" autocomplete="username" />
+        </div>
+        <div>
+          <label>Password</label>
+          <input id="password" type="password" autocomplete="current-password" />
+        </div>
+      </div>
+      <button class="btn" id="loginBtn" type="button">Sign in</button>
+      <div class="status" id="loginStatus"></div>
+      <div class="hint">If login works but Admin page blocks you, your app_users.role is not admin.</div>
+    </div>
+      
+<div class="grid2" id="adminGrid" style="display:none;">
+    <!-- ADMIN SETUP CARD -->
+    <div class="card" id="appCard" style="display:none;">
+      <p class="adminTitle">Admin setup</p>
+      <p class="adminNote">Create Clients, Campaigns, and Sources. This page requires admin role.</p>
+
+      <!-- Client picker -->
+      <label>Selected Client (used as default for new Campaign)</label>
+      <div class="dd" id="ddClient"></div>
+      <label>Selected Campaign</label>
+      <div class="dd" id="ddCampaign"></div>
+      <hr class="divider" />
+
+      <p class="adminTitle">Landing Page Snippets (Single / Double Touch)</p>
+      <p class="adminNote">
+        Select a Client + Campaign. This will generate 1 snippet for single-touch campaigns,
+        or 2 snippets (Touch 1 + Touch 2) for double-touch campaigns.
+      </p>
+      
+      <div class="row">
+        <div>
+          <label>Client ID</label>
+          <input id="snClientId" readonly />
+        </div>
+        <div>
+          <label>Campaign ID</label>
+          <input id="snCampaignId" readonly />
+        </div>
+      </div>
+      
+      <div class="row">
+        <div>
+          <label>Touch model</label>
+          <input id="snTouchModel" readonly />
+        </div>
+        <div>
+          <label>Source site (for tracking)</label>
+          <input id="snSourceSite" placeholder="e.g. martechlogic.com" />
+        </div>
+      </div>
+      
+      <div class="row">
+        <div>
+          <label>Base name</label>
+          <input id="snBaseName" value="download" />
+          <div class="hint">Used to name form_id automatically.</div>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button id="btnGenSnippets" class="btn-secondary" type="button">Generate snippet(s)</button>
+        </div>
+      </div>
+      
+      <label>Touch 1 HTML (paste into Landing Page 1)</label>
+      <textarea id="snTouch1" rows="12" readonly style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;"></textarea>
+      <button id="btnCopySn1" class="btn-secondary" type="button">Copy Touch 1 HTML</button>
+      <div class="adminStatus" id="snStatus1"></div>
+      
+      <div id="snTouch2Wrap" style="display:none;margin-top:14px;">
+        <label>Touch 2 HTML (paste into Landing Page 2)</label>
+        <textarea id="snTouch2" rows="12" readonly style="width:100%;font-family:ui-monospace,Menlo,Consolas,monospace;"></textarea>
+        <button id="btnCopySn2" class="btn-secondary" type="button">Copy Touch 2 HTML</button>
+        <div class="adminStatus" id="snStatus2"></div>
+      </div>
+
+
+
+      <hr class="divider" />
+
+      <!-- Create client -->
+      <div class="row">
+        <div>
+          <label>New client name</label>
+          <input id="newClientName" placeholder="e.g. Deloitte" />
+        </div>
+        <div>
+          <label>Client status</label>
+          <select id="newClientStatus">
+            <option value="active" selected>active</option>
+            <option value="inactive">inactive</option>
+          </select>
+        </div>
+      </div>
+      <button id="createClientBtn" class="btn-secondary" type="button">Create client</button>
+
+      <hr class="divider" />
+
+      <!-- Create campaign -->
+      <div class="row">
+        <div>
+          <label>New campaign name</label>
+          <input id="newCampaignName" placeholder="e.g. Q1 SME Syndication" />
+        </div>
+        <div>
+          <label>Campaign type (optional)</label>
+          <input id="newCampaignType" placeholder="e.g. demand_gen / syndication" />
+        </div>
+      </div>
+
+      <div class="row">
+  <div>
+    <label>Campaign status</label>
+    <select id="newCampaignStatus">
+      <option value="active" selected>active</option>
+      <option value="inactive">inactive</option>
+    </select>
+  </div>
+  <div>
+    <label>Touch model</label>
+    <select id="newCampaignTouchModel">
+      <option value="single" selected>single touch</option>
+      <option value="double">double touch</option>
+    </select>
+  </div>
+</div>
+
+<div class="row">
+  <div>
+    <label>Client ID override (optional)</label>
+    <input id="newCampaignClientId" placeholder="Leave blank to use Selected Client above" />
+  </div>
+  <div>
+    <label>&nbsp;</label>
+    <input disabled value="Tip: double touch generates 2 landing page snippets" />
+  </div>
+</div>
+
+
+      <button id="createCampaignBtn" class="btn-secondary" type="button">Create campaign</button>
+
+      <hr class="divider" />
+
+      <!-- Create source -->
+      <div class="row">
+        <div>
+          <label>New source name</label>
+          <input id="newSourceName" placeholder="e.g. Manual Upload / Partner / Platform" />
+        </div>
+        <div>
+          <label>Source system</label>
+          <select id="newSourceSystem">
+            <option value="manual" selected>manual</option>
+            <option value="internal">internal</option>
+            <option value="partner">partner</option>
+            <option value="platform">platform</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="row">
+        <div>
+          <label>Source channel</label>
+          <select id="newSourceChannel">
+            <option value="csv" selected>csv</option>
+            <option value="email">email</option>
+            <option value="web">web</option>
+            <option value="ads">ads</option>
+            <option value="other">other</option>
+          </select>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <input disabled value="External refs auto-empty (OK for MVP)" />
+        </div>
+      </div>
+
+      <button id="createSourceBtn" class="btn-secondary" type="button">Create source</button>
+
+      <div id="adminStatus" class="adminStatus"></div>
+    </div>
+
+    <!-- DELIVERY EXPORT CARD (separate window) -->
+    <div class="card" id="adminDeliveryExport" style="display:none;">
+      <p class="adminTitle">Delivery Export</p>
+      <p class="adminNote">Generate a delivery-ready CSV server-side and return a signed download link.</p>
+
+      <label>Client</label>
+      <div class="dd" id="ddExportClient"></div>
+      
+      <label>Campaign</label>
+      <div class="dd" id="ddExportCampaign"></div>
+      
+      <label>Delivery batch</label>
+      <div class="dd" id="ddExportDelivery"></div>
+      <button id="btnCreateDeliveryBatch" class="btn-secondary" type="button" style="margin-top:10px;">
+        Create Delivery Batch
+      </button>
+      <div class="adminStatus" id="createBatchStatus" style="margin-top:8px;"></div>
+
+
+      <button id="btnGenerateDeliveryCsv" class="btn-secondary" type="button">Generate CSV</button>
+
+      <div class="adminStatus" id="deliveryExportStatus"></div>
+
+      <div id="deliveryExportResult" style="display:none; margin-top:12px;">
+        <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener">Open signed download link</a>
+        <button id="btnCopySignedUrl" class="btn-ghost" type="button" style="width:auto; margin-left:10px;">Copy link</button>
+      </div>
+      <hr class="divider" />
+
+<!-- DELIVERY LOG (Slice 6.5) -->
+<p class="adminTitle" style="margin-top:0;">Delivery Log</p>
+<p class="adminNote">Read-only audit trail of prior deliveries (who, when, how many rows).</p>
+
+<div class="row">
+  <div>
+    <label>Client</label>
+    <div class="dd" id="ddLogClient"></div>
+  </div>
+  <div>
+    <label>Campaign</label>
+    <div class="dd" id="ddLogCampaign"></div>
+  </div>
+</div>
+
+<button id="btnRefreshDeliveryLog" class="btn-secondary" type="button">Refresh log</button>
+
+<div class="adminStatus" id="deliveryLogStatus"></div>
+
+<div style="margin-top:10px; overflow:auto;">
+  <table style="width:100%; border-collapse:collapse; font-size:13px;">
+    <thead>
+      <tr style="text-align:left; opacity:0.9;">
+        <th style="padding:10px 8px;">Client</th>
+        <th style="padding:10px 8px;">Campaign</th>
+        <th style="padding:10px 8px;">Created by</th>
+        <th style="padding:10px 8px;">Created</th>
+        <th style="padding:10px 8px;">Rows</th>
+        <th style="padding:10px 8px;">Delivery ID</th>
+      </tr>
+    </thead>
+    <tbody id="deliveryLogTbody">
+      <tr>
+        <td colspan="6" style="padding:12px 8px; opacity:0.7;">Click “Refresh log” to load results.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<!-- /DELIVERY LOG -->
+
+</div>   <!-- closes adminDeliveryExport -->
+</div>   <!-- closes adminGrid -->
+
+<!-- Shared nav -->
+<script src="/abm-upload/nav.js?v=11" defer></script>
+  <script src="/abm-upload/admin-export.js?v=9" defer></script>
+
+  <script>
+    // ===== CONFIG =====
+    // Keep anon public key here (safe to be public). Security comes from RLS + auth.
+    window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
+    const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
+    // ==================
+
+    if (!window.supabase) {
+      alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
+      throw new Error("Supabase SDK not loaded");
+    }
+
+    const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
+
+    // Expose for nav.js + admin-export.js
+    window.ABM = window.ABM || {};
+    window.ABM.sb = sb;
+    window.ABM.SUPABASE_URL = SUPABASE_URL;
+    window.ABM.SUPABASE_ANON_KEY = window.ABM_SUPABASE_ANON_KEY;
+
+    const $ = (id) => document.getElementById(id);
+
+    const state = {
+    client: { value: "", label: "Select client...", items: [] },
+    campaign: { value: "", label: "Select campaign...", items: [] }
+  };
+  window.state = state;
+  
+  const cache = { clients: [], campaigns: [] };
+  window.cache = cache;
+
+    $("loginBtn").onclick = login;
+
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+      const c1 = $("ddClient");
+      if (c1 && !c1.contains(e.target)) c1.classList.remove("open");
+    
+      const c2 = $("ddCampaign");
+      if (c2 && !c2.contains(e.target)) c2.classList.remove("open");
+    });
+
+
+    async function isAdmin() {
+      const { data: userRes, error: userErr } = await sb.auth.getUser();
+      if (userErr || !userRes?.user) return false;
+
+      const { data, error } = await sb
+        .from("app_users")
+        .select("role")
+        .eq("user_id", userRes.user.id)
+        .single();
+
+      if (error) {
+        console.error("Admin check failed:", error);
+        return false;
+      }
+      return data?.role === "admin";
+    }
+
+    function renderDropdown(containerId, key, placeholder) {
+      const container = $(containerId);
+      container.innerHTML = "";
+
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "dd-btn";
+      btn.innerHTML = `<span>${state[key].label || placeholder}</span><span class="dd-caret">▾</span>`;
+      btn.addEventListener("click", (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        container.classList.toggle("open");
+        const search = container.querySelector(".dd-search");
+        if (search) {
+          search.value = "";
+          search.focus();
+          filterMenu(containerId, key, "", placeholder);
+        }
+      });
+
+      const menu = document.createElement("div");
+      menu.className = "dd-menu";
+
+      const search = document.createElement("input");
+      search.className = "dd-search";
+      search.placeholder = "Type to filter…";
+      search.addEventListener("input", () => filterMenu(containerId, key, search.value, placeholder));
+      menu.appendChild(search);
+
+      const list = document.createElement("div");
+      list.className = "dd-list";
+      menu.appendChild(list);
+
+      container.appendChild(btn);
+      container.appendChild(menu);
+
+      filterMenu(containerId, key, "", placeholder);
+    }
+
+    function filterMenu(containerId, key, query, placeholder) {
+      const container = $(containerId);
+      const list = container.querySelector(".dd-list");
+      if (!list) return;
+
+      const q = (query || "").toLowerCase().trim();
+      list.innerHTML = "";
+
+      const items = (state[key].items || []).filter(it =>
+        !q || (it.label || "").toLowerCase().includes(q)
+      );
+
+      if (!items.length) {
+        const empty = document.createElement("div");
+        empty.className = "dd-meta";
+        empty.style.padding = "10px";
+        empty.textContent = "No matches.";
+        list.appendChild(empty);
+        return;
+      }
+
+      for (const it of items) {
+        const b = document.createElement("button");
+        b.type = "button";
+        b.className = "dd-item";
+        b.textContent = it.label;
+
+        b.addEventListener("click", async () => {
+        state[key].value = it.value;
+        state[key].label = it.label;
+        container.classList.remove("open");
+        renderDropdown(containerId, key, placeholder);
+      
+        // If a client is selected, load campaigns for that client
+        if (key === "client") {
+          setAdminStatus("Loading campaigns…");
+          try {
+            await loadCampaignsForClient(it.value);
+            setAdminStatus("");
+           
+            syncSnippetPanel();
+          } catch (e) {
+            setAdminStatus(String(e?.message || e));
+          }
+        }
+      
+        // If a campaign is selected, refresh snippet panel
+        if (key === "campaign") {
+          syncSnippetPanel();
+        }
+      });
+
+
+        list.appendChild(b);
+      }
+    }
+    
+  function snippetTemplate({ clientId, campaignId, sourceSite, formId, touchStage }) {
+  const endpoint = "https://mwfnbmkjetriunsddupr.supabase.co/functions/v1/first-party-form";
+
+  return `<form class="abm-lead-form" style="max-width:420px;">
+  <label>Email<br />
+    <input name="email" type="email" required style="width:100%;padding:10px;margin:6px 0;" />
+  </label>
+  <label>First name<br />
+    <input name="first_name" type="text" required style="width:100%;padding:10px;margin:6px 0;" />
+  </label>
+  <label>Last name<br />
+    <input name="last_name" type="text" required style="width:100%;padding:10px;margin:6px 0;" />
+  </label>
+  <label>Company<br />
+    <input name="company" type="text" required style="width:100%;padding:10px;margin:6px 0;" />
+  </label>
+  <label>Title (optional)<br />
+    <input name="title" type="text" style="width:100%;padding:10px;margin:6px 0;" />
+  </label>
+
+  <input type="hidden" name="client_id" value="${clientId}" />
+  <input type="hidden" name="campaign_id" value="${campaignId}" />
+  <input type="hidden" name="source_site" value="${sourceSite}" />
+  <input type="hidden" name="form_id" value="${formId}" />
+  <input type="hidden" name="touch_stage" value="${touchStage}" />
+
+  <div style="display:none;">
+    <label>Website <input name="website" type="text" /></label>
+  </div>
+
+  <button type="submit" style="padding:10px 14px;margin-top:10px;">Submit</button>
+  <p class="abm-form-msg" style="margin-top:10px;"></p>
+</form>
+
+<script>
+(function(){
+  const ENDPOINT = "${endpoint}";
+  function setMsg(form, text, ok){
+    const el = form.querySelector(".abm-form-msg");
+    if (!el) return;
+    el.textContent = text || "";
+    el.style.color = ok ? "green" : "crimson";
+  }
+  document.addEventListener("submit", async function(e){
+    const form = e.target;
+    if (!form.classList.contains("abm-lead-form")) return;
+    e.preventDefault();
+    setMsg(form, "Submitting...", true);
+    const data = Object.fromEntries(new FormData(form).entries());
+    try {
+      const res = await fetch(ENDPOINT, {
+        method: "POST",
+        headers: {"Content-Type":"application/json"},
+        body: JSON.stringify(data)
+      });
+      const out = await res.json().catch(() => ({}));
+      if (res.ok && out.ok) {
+        setMsg(form, "Thanks — we’ve received your details.", true);
+        form.reset();
+      } else {
+        setMsg(form, "Submission failed. Please try again.", false);
+        console.error("Form error:", out);
+      }
+    } catch (err) {
+      setMsg(form, "Network error. Please try again.", false);
+      console.error(err);
+    }
+  });
+})();
+<\/script>`;
+}
+
+function currentTouchModel() {
+  const campaignId = state.campaign.value;
+  const c = (cache.campaigns || []).find(x => x.campaign_id === campaignId);
+  return c?.touch_model || "single";
+}
+
+function syncSnippetPanel() {
+  const clientId = state.client.value || "";
+  const campaignId = state.campaign.value || "";
+  const touchModel = currentTouchModel();
+
+  const snClient = $("snClientId");
+  const snCamp = $("snCampaignId");
+  const snTM = $("snTouchModel");
+
+  if (snClient) snClient.value = clientId;
+  if (snCamp) snCamp.value = campaignId;
+  if (snTM) snTM.value = touchModel;
+
+  const wrap2 = $("snTouch2Wrap");
+  if (wrap2) wrap2.style.display = (touchModel === "double") ? "block" : "none";
+}
+
+async function copyFieldToClipboard(textareaId, statusId) {
+  const el = $(textareaId);
+  if (!el || !el.value) return;
+  await navigator.clipboard.writeText(el.value);
+  const st = $(statusId);
+  if (st) st.textContent = "Copied to clipboard.";
+}
+
+
+    function setAdminStatus(msg) {
+      $("adminStatus").textContent = msg || "";
+    }
+
+    async function login() {
+      $("loginStatus").textContent = "Signing in…";
+
+      const { error } = await sb.auth.signInWithPassword({
+        email: $("email").value.trim(),
+        password: $("password").value
+      });
+
+      if (error) {
+        $("loginStatus").textContent = error.message;
+        return;
+      }
+
+      $("loginStatus").textContent = "";
+      showApp();
+    }
+
+    async function logout() {
+      try { await window.ABM.sb.auth.signOut(); } catch (e) { console.warn("Logout error:", e); }
+      location.href = "/abm-upload/admin.html";
+    }
+
+    async function showApp() {
+      // Get user + set navbar identity
+      const { data: userRes } = await sb.auth.getUser();
+      const user = userRes?.user;
+
+      if (user?.email) window.ABM_USER_EMAIL = user.email;
+      window.ABM_ROLE = "admin"; // this page is admin-only
+      window.dispatchEvent(new Event("abm:nav:refresh"));
+
+      // HARD ADMIN GATE
+      const admin = await isAdmin();
+
+      if (!admin) {
+        document.body.innerHTML = `
+          <div style="max-width:600px;margin:80px auto;text-align:center;font-family:Poppins,Arial,sans-serif;">
+            <h2>Access denied</h2>
+            <p>You do not have permission to view this page.</p>
+            <p style="color:#6b7280;font-size:13px;">(Your app_users.role is not admin.)</p>
+          </div>
+        `;
+        return;
+      }
+
+        const loginCard = $("loginCard");
+        const grid = $("adminGrid");
+        const appCard = $("appCard");
+        const exportCard = $("adminDeliveryExport");
+        
+        if (loginCard) loginCard.style.display = "none";
+        if (grid) grid.style.display = "grid";
+        if (appCard) appCard.style.display = "block";
+        if (exportCard) exportCard.style.display = "block";
+
+
+      setAdminStatus("Loading clients…");
+
+      try {
+        await loadClients();
+
+        state.client.label = "Select client…";
+        state.client.value = "";
+        state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
+        renderDropdown("ddClient", "client", "Select client…");
+        renderDropdown("ddCampaign", "campaign", "Select campaign…");
+
+        setAdminStatus("");
+
+        // Wire buttons
+        $("createClientBtn").onclick = createClient;
+        $("createCampaignBtn").onclick = createCampaign;
+        $("createSourceBtn").onclick = createSource;
+    // =========================
+    // Landing Page Snippet Generator
+    // =========================
+        $("btnGenSnippets").onclick = () => {
+          const clientId = state.client.value;
+          const campaignId = state.campaign.value;
+        
+          if (!clientId) return setAdminStatus("Select a Client first.");
+          if (!campaignId) return setAdminStatus("Select a Campaign first.");
+        
+          const touchModel = currentTouchModel();
+          const sourceSite = $("snSourceSite")?.value?.trim();
+          const base = $("snBaseName")?.value?.trim() || "download";
+        
+          if (!sourceSite) return setAdminStatus("Enter Source site (e.g. martechlogic.com).");
+        
+          // Touch 1 snippet
+          const formId1 = (touchModel === "double") ? `touch1_${base}` : `main_${base}`;
+          $("snTouch1").value = snippetTemplate({
+            clientId,
+            campaignId,
+            sourceSite,
+            formId: formId1,
+            touchStage: "touch1"
+          });
+          $("snStatus1").textContent = "Touch 1 snippet generated.";
+        
+          // Touch 2 snippet (only if double)
+          if (touchModel === "double") {
+            const formId2 = `touch2_${base}`;
+            $("snTouch2").value = snippetTemplate({
+              clientId,
+              campaignId,
+              sourceSite,
+              formId: formId2,
+              touchStage: "touch2"
+            });
+            $("snStatus2").textContent = "Touch 2 snippet generated.";
+            $("snTouch2Wrap").style.display = "block";
+          } else {
+            $("snTouch2").value = "";
+            $("snStatus2").textContent = "";
+            $("snTouch2Wrap").style.display = "none";
+          }
+        
+          setAdminStatus("✅ Snippet(s) generated. Copy and paste into WordPress Custom HTML blocks.");
+        };
+        
+        $("btnCopySn1").onclick = () => copyFieldToClipboard("snTouch1", "snStatus1");
+        $("btnCopySn2").onclick = () => copyFieldToClipboard("snTouch2", "snStatus2");
+        
+        // Keep the panel in sync on first load
+        syncSnippetPanel();
+
+
+      } catch (e) {
+        setAdminStatus(String(e?.message || e));
+      }
+    }
+
+    async function loadClients() {
+      const { data: clients, error } = await sb
+        .from("clients")
+        .select("client_id, name")
+        .order("name");
+
+      if (error) throw new Error(`Failed to load clients: ${error.message}`);
+      cache.clients = clients || [];
+    }
+
+    async function refreshClientsAfterChange() {
+      await loadClients();
+      state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
+
+      const stillExists = cache.clients.some(c => c.client_id === state.client.value);
+      if (!stillExists) {
+        state.client.value = "";
+        state.client.label = "Select client…";
+      }
+      renderDropdown("ddClient", "client", "Select client…");
+      
+    }
+    
+    async function loadCampaignsForClient(clientId) {
+      if (!clientId) {
+        cache.campaigns = [];
+        state.campaign.items = [];
+        state.campaign.value = "";
+        state.campaign.label = "Select campaign…";
+        renderDropdown("ddCampaign", "campaign", "Select campaign…");
+        return;
+      }
+    
+    const { data: campaigns, error } = await sb
+      .from("campaigns")
+      .select("campaign_id,name,touch_model")
+      .eq("client_id", clientId)
+      .order("name");
+    
+      if (error) throw new Error(`Failed to load campaigns: ${error.message}`);
+    
+      cache.campaigns = campaigns || [];
+    
+      state.campaign.items = cache.campaigns.map(c => ({
+        value: c.campaign_id,
+        label: c.name,
+        touch_model: c.touch_model || "single",
+      }));
+
+      state.campaign.value = "";
+      state.campaign.label = "Select campaign…";
+      renderDropdown("ddCampaign", "campaign", "Select campaign…");
+    }
+    
+    async function createClient() {
+      setAdminStatus("Creating client…");
+
+      const name = $("newClientName").value.trim();
+      const status = $("newClientStatus").value;
+
+      if (!name) return setAdminStatus("Client name is required.");
+
+      const { error } = await sb.from("clients").insert({ name, status });
+      if (error) return setAdminStatus(`❌ Client create failed: ${error.message}`);
+
+      $("newClientName").value = "";
+      setAdminStatus("✅ Client created. Refreshing clients…");
+      await refreshClientsAfterChange();
+      setAdminStatus("✅ Done.");
+    }
+
+    async function createCampaign() {
+      setAdminStatus("Creating campaign…");
+
+      const name = $("newCampaignName").value.trim();
+      const type = $("newCampaignType").value.trim() || null;
+      const status = $("newCampaignStatus").value;
+
+      const overrideClientId = $("newCampaignClientId").value.trim();
+      const client_id = overrideClientId || state.client.value;
+
+      if (!client_id) return setAdminStatus("Select a Client above OR paste a Client ID in the override field.");
+      if (!name) return setAdminStatus("Campaign name is required.");
+
+     const touch_model = $("newCampaignTouchModel").value || "single";
+
+     const payload = { client_id, name, status, touch_model };
+     if (type) payload.type = type;
+
+
+      const { error } = await sb.from("campaigns").insert(payload);
+      if (error) return setAdminStatus(`❌ Campaign create failed: ${error.message}`);
+
+      $("newCampaignName").value = "";
+      $("newCampaignType").value = "";
+      $("newCampaignClientId").value = "";
+    
+      await loadCampaignsForClient(client_id);
+      syncSnippetPanel();
+
+      setAdminStatus("✅ Campaign created. Campaign list refreshed.");
+    }
+
+    async function createSource() {
+      setAdminStatus("Creating source…");
+
+      const source_name = $("newSourceName").value.trim();
+      const source_system = $("newSourceSystem").value;
+      const source_channel = $("newSourceChannel").value;
+
+      if (!source_name) return setAdminStatus("Source name is required.");
+
+      const { error } = await sb.from("sources").insert({
+        source_name,
+        source_system,
+        source_channel
+      });
+
+      if (error) return setAdminStatus(`❌ Source create failed: ${error.message}`);
+
+      $("newSourceName").value = "";
+      setAdminStatus("✅ Source created.");
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const btn = document.getElementById("logoutBtn");
+      if (btn) btn.addEventListener("click", logout);
+    });
+
+    // Auto-show app if already logged in
+    sb.auth.getSession()
+      .then(async (r) => { if (r.data.session) showApp(); })
+      .catch(()=>{});
+  </script>
+</body>
+</html>
