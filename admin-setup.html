@@ -196,7 +196,7 @@
 /* 3-col inline form row */
   .row.threeCol {
   display: grid;
-  grid-template-columns: 1fr 180px 160px;
+  grid-template-columns: 1fr 180px 220px;
   gap: 12px;
   align-items: end;
 }
@@ -208,7 +208,11 @@
   border-radius: 10px !important;
   font-size: 13px !important;
 }
-
+    
+.row.threeCol button {
+  width: 100%;
+}
+    
 /* Keep selects/inputs from being too tall vs button */
 .row.threeCol input,
 .row.threeCol select {
