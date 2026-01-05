@@ -27,15 +27,14 @@
   const cache = { clients: [], campaigns: [] };
   window.cache = cache;
 
-    // Close dropdown when clicking outside
-    document.addEventListener("click", (e) => {
-      const c1 = $("ddClient");
-      if (c1 && !c1.contains(e.target)) c1.classList.remove("open");
-    
-      const c2 = $("ddCampaign");
-      if (c2 && !c2.contains(e.target)) c2.classList.remove("open");
-    });
-
+// Close dropdown when clicking outside
+document.addEventListener("click", (e) => {
+  const ids = ["ddClient", "ddCampaign"]; // add more IDs later
+  for (const id of ids) {
+    const el = $(id);
+    if (el && !el.contains(e.target)) el.classList.remove("open");
+  }
+});
 
     async function isAdmin() {
       const { data: userRes, error: userErr } = await sb.auth.getUser();
@@ -253,9 +252,10 @@ async function copyFieldToClipboard(textareaId, statusId) {
   if (st) st.textContent = "Copied to clipboard.";
 }
 
-    function setAdminStatus(msg) {
-      $("adminStatus").textContent = msg || "";
-    }
+function setAdminStatus(msg) {
+  const el = $("adminStatus");
+  if (el) el.textContent = msg || "";
+}
 
     async function login() {
       $("loginStatus").textContent = "Signing in…";
@@ -270,8 +270,9 @@ async function copyFieldToClipboard(textareaId, statusId) {
         return;
       }
 
-      $("loginStatus").textContent = "";
-      showApp();
+     $("loginStatus").textContent = "";
+     await showApp();
+
     }
 
     async function logout() {
@@ -519,7 +520,7 @@ async function copyFieldToClipboard(textareaId, statusId) {
      if (loginBtn) loginBtn.onclick = login;
     });
 
-    // Auto-show app if already logged in
-    sb.auth.getSession()
-      .then(async (r) => { if (r.data.session) showApp(); })
-      .catch(()=>{});
+ // Auto-show app if already logged in
+ sb.auth.getSession()
+  .then(async (r) => { if (r.data.session) await showApp(); })
+  .catch(()=>{});
