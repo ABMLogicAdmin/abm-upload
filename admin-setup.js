@@ -257,6 +257,22 @@ function setAdminStatus(msg) {
   if (el) el.textContent = msg || "";
 }
 
+function setActiveTab(tabKey) {
+  document.querySelectorAll(".tabBtn").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.tab === tabKey);
+  });
+
+  document.querySelectorAll(".tabPanel").forEach(panel => {
+    panel.classList.toggle("active", panel.dataset.panel === tabKey);
+  });
+}
+
+function wireTabs() {
+  document.querySelectorAll(".tabBtn").forEach(btn => {
+    btn.addEventListener("click", () => setActiveTab(btn.dataset.tab));
+  });
+}
+
     async function login() {
       $("loginStatus").textContent = "Signing in…";
 
@@ -310,6 +326,10 @@ function setAdminStatus(msg) {
         if (loginCard) loginCard.style.display = "none";
         if (grid) grid.style.display = "grid";
         if (appCard) appCard.style.display = "block";
+     
+        wireTabs();
+        setActiveTab("setup");
+
 
       setAdminStatus("Loading clients…");
 
