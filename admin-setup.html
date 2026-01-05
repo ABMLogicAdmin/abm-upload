@@ -225,6 +225,27 @@
 .tabPanel{ display:none; margin-top:14px; }
 .tabPanel.active{ display:block; }
 
+/* Give space so content never hides behind sticky context bar */
+.tabPanel {
+  padding-top: 8px;
+}
+
+/* Make the inner card scroll instead of the page */
+.tabPanel .stageCard {
+  max-height: calc(100vh - 220px); /* viewport minus header/context */
+  overflow-y: auto;
+  padding-right: 6px; /* room for scrollbar */
+}
+
+/* Optional: nicer scrollbar */
+.tabPanel .stageCard::-webkit-scrollbar {
+  width: 8px;
+}
+.tabPanel .stageCard::-webkit-scrollbar-thumb {
+  background: rgba(34,35,61,.25);
+  border-radius: 6px;
+}
+
 .panelTitle{
   margin:0 0 6px;
   font-size:13px;
