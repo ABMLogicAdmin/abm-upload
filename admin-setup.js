@@ -66,46 +66,6 @@ const BRIEF_OPTIONS = {
   ]
 };
 
-// =========================
-// Multi-select (pill buttons)
-// =========================
-function renderMultiSelect(containerId, options = [], initialValues = []) {
-  const el = document.getElementById(containerId);
-  if (!el) return;
-
-  let selected = new Set(initialValues || []);
-
-  // Methods used by saveBrief/loadBrief
-  el.getValues = () => Array.from(selected);
-  el.setValues = (vals) => {
-    selected = new Set(vals || []);
-    paint();
-  };
-
-  function paint() {
-    el.innerHTML = "";
-
-    for (const opt of options) {
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.textContent = opt;
-
-      if (selected.has(opt)) btn.classList.add("active");
-
-      btn.addEventListener("click", () => {
-        if (selected.has(opt)) selected.delete(opt);
-        else selected.add(opt);
-        paint();
-      });
-
-      el.appendChild(btn);
-    }
-  }
-
-  paint();
-}
-
-
     async function isAdmin() {
       const { data: userRes, error: userErr } = await sb.auth.getUser();
       if (userErr || !userRes?.user) return false;
@@ -370,30 +330,26 @@ async function saveBrief(status = "draft"){
     return;
   }
 
-  const qc_brief = {
-    schema_version: "qc_brief.v1",
-    personas: {
-      primary: {
-        titles: lines("brief_primary_titles"),
-        departments: document.getElementById("ms_primary_departments")?.getValues() || [],
-        seniorities: document.getElementById("ms_primary_seniorities")?.getValues() || []
-      },
-     
-secondary: {
-  titles: lines("brief_secondary_titles"),
-  departments: document.getElementById("ms_secondary_departments")?.getValues() || [],
-  seniorities: document.getElementById("ms_secondary_seniorities")?.getValues() || []
-}
-
-     
+const qc_brief = {
+  schema_version: "qc_brief.v1",
+  personas: {
+    primary: {
+      titles: lines("brief_primary_titles"),
+      departments: document.getElementById("ms_primary_departments")?.getValues() || [],
+      seniorities: document.getElementById("ms_primary_seniorities")?.getValues() || []
     },
+    secondary: {
+      titles: lines("brief_secondary_titles"),
+      departments: document.getElementById("ms_secondary_departments")?.getValues() || [],
+      seniorities: document.getElementById("ms_secondary_seniorities")?.getValues() || []
+    }
+  },
   targeting: {
-  accounts: lines("brief_target_accounts"),
-  countries: document.getElementById("ms_countries")?.getValues() || [],
-  industries: lines("brief_industries"),
-},
-    notes: document.getElementById("brief_notes")?.value || ""
-  };
+    accounts: lines("brief_target_accounts"),
+    countries: document.getElementById("ms_countries")?.getValues() || [],
+    industries: lines("brief_industries")
+  }
+};
 
   setBriefStatus(status === "active" ? "Activating…" : "Saving draft…");
 
@@ -476,8 +432,6 @@ document.getElementById("ms_secondary_seniorities")?.setValues(
 );
  
   fill("brief_industries", b?.targeting?.industries);
-
-  document.getElementById("brief_notes").value = b?.notes || "";
 
   setBriefStatus("Loaded.");
 }
@@ -791,6 +745,8 @@ function renderMultiSelectDropdown(containerId, options = [], initialValues = []
         const cb = document.createElement("input");
         cb.type = "checkbox";
         cb.checked = selected.has(opt);
+        cb.addEventListener("click", (e) => e.stopPropagation());
+
 
         const label = document.createElement("div");
         label.textContent = opt;
@@ -909,8 +865,6 @@ setAdminStatus("Loading clients…");
 
         setAdminStatus("");
 
-
-       
         // Wire buttons
         $("createClientBtn").onclick = createClient;
         $("createCampaignBtn").onclick = createCampaign;
@@ -924,54 +878,53 @@ setAdminStatus("Loading clients…");
        const validateBtn = document.getElementById("btnValidateAccounts");
        if (validateBtn) validateBtn.onclick = validateAccountsFromTextarea;
 
-
-    // =========================
-    // Landing Page Snippet Generator
-    // =========================
-        $("btnGenSnippets").onclick = () => {
-          const clientId = state.client.value;
-          const campaignId = state.campaign.value;
-        
-          if (!clientId) return setAdminStatus("Select a Client first.");
-          if (!campaignId) return setAdminStatus("Select a Campaign first.");
-        
-          const touchModel = currentTouchModel();
-          const sourceSite = $("snSourceSite")?.value?.trim();
-          const base = $("snBaseName")?.value?.trim() || "download";
-        
-          if (!sourceSite) return setAdminStatus("Enter Source site (e.g. martechlogic.com).");
-        
-          // Touch 1 snippet
-          const formId1 = (touchModel === "double") ? `touch1_${base}` : `main_${base}`;
-          $("snTouch1").value = snippetTemplate({
-            clientId,
-            campaignId,
-            sourceSite,
-            formId: formId1,
-            touchStage: "touch1"
-          });
-          $("snStatus1").textContent = "Touch 1 snippet generated.";
-        
-          // Touch 2 snippet (only if double)
-          if (touchModel === "double") {
-            const formId2 = `touch2_${base}`;
-            $("snTouch2").value = snippetTemplate({
-              clientId,
-              campaignId,
-              sourceSite,
-              formId: formId2,
-              touchStage: "touch2"
-            });
-            $("snStatus2").textContent = "Touch 2 snippet generated.";
-            $("snTouch2Wrap").style.display = "block";
-          } else {
-            $("snTouch2").value = "";
-            $("snStatus2").textContent = "";
-            $("snTouch2Wrap").style.display = "none";
-          }
-        
-          setAdminStatus("✅ Snippet(s) generated. Copy and paste into WordPress Custom HTML blocks.");
-        };
+// =========================
+// Landing Page Snippet Generator
+// =========================
+   $("btnGenSnippets").onclick = () => {
+     const clientId = state.client.value;
+     const campaignId = state.campaign.value;
+   
+     if (!clientId) return setAdminStatus("Select a Client first.");
+     if (!campaignId) return setAdminStatus("Select a Campaign first.");
+   
+     const touchModel = currentTouchModel();
+     const sourceSite = $("snSourceSite")?.value?.trim();
+     const base = $("snBaseName")?.value?.trim() || "download";
+   
+     if (!sourceSite) return setAdminStatus("Enter Source site (e.g. martechlogic.com).");
+   
+     // Touch 1 snippet
+     const formId1 = (touchModel === "double") ? `touch1_${base}` : `main_${base}`;
+     $("snTouch1").value = snippetTemplate({
+       clientId,
+       campaignId,
+       sourceSite,
+       formId: formId1,
+       touchStage: "touch1"
+     });
+     $("snStatus1").textContent = "Touch 1 snippet generated.";
+   
+     // Touch 2 snippet (only if double)
+     if (touchModel === "double") {
+       const formId2 = `touch2_${base}`;
+       $("snTouch2").value = snippetTemplate({
+         clientId,
+         campaignId,
+         sourceSite,
+         formId: formId2,
+         touchStage: "touch2"
+       });
+       $("snStatus2").textContent = "Touch 2 snippet generated.";
+       $("snTouch2Wrap").style.display = "block";
+     } else {
+       $("snTouch2").value = "";
+       $("snStatus2").textContent = "";
+       $("snTouch2Wrap").style.display = "none";
+     }
+   
+     setAdminStatus("✅ Snippet(s) generated. Copy and paste into WordPress Custom HTML blocks.");
+   };
         
         $("btnCopySn1").onclick = () => copyFieldToClipboard("snTouch1", "snStatus1");
         $("btnCopySn2").onclick = () => copyFieldToClipboard("snTouch2", "snStatus2");
