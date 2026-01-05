@@ -378,82 +378,6 @@
       <div id="adminStatus" class="adminStatus"></div>
     </div>
 
-    <!-- DELIVERY EXPORT CARD (separate window) -->
-    <div class="card" id="adminDeliveryExport" style="display:none;">
-      <p class="adminTitle">Delivery Export</p>
-      <p class="adminNote">Generate a delivery-ready CSV server-side and return a signed download link.</p>
-
-      <label>Client</label>
-      <div class="dd" id="ddExportClient"></div>
-      
-      <label>Campaign</label>
-      <div class="dd" id="ddExportCampaign"></div>
-      
-      <label>Delivery batch</label>
-      <div class="dd" id="ddExportDelivery"></div>
-      <button id="btnCreateDeliveryBatch" class="btn-secondary" type="button" style="margin-top:10px;">
-        Create Delivery Batch
-      </button>
-      <div class="adminStatus" id="createBatchStatus" style="margin-top:8px;"></div>
-
-
-      <button id="btnGenerateDeliveryCsv" class="btn-secondary" type="button">Generate CSV</button>
-
-      <div class="adminStatus" id="deliveryExportStatus"></div>
-
-      <div id="deliveryExportResult" style="display:none; margin-top:12px;">
-        <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener">Open signed download link</a>
-        <button id="btnCopySignedUrl" class="btn-ghost" type="button" style="width:auto; margin-left:10px;">Copy link</button>
-      </div>
-      <hr class="divider" />
-
-<!-- DELIVERY LOG (Slice 6.5) -->
-<p class="adminTitle" style="margin-top:0;">Delivery Log</p>
-<p class="adminNote">Read-only audit trail of prior deliveries (who, when, how many rows).</p>
-
-<div class="row">
-  <div>
-    <label>Client</label>
-    <div class="dd" id="ddLogClient"></div>
-  </div>
-  <div>
-    <label>Campaign</label>
-    <div class="dd" id="ddLogCampaign"></div>
-  </div>
-</div>
-
-<button id="btnRefreshDeliveryLog" class="btn-secondary" type="button">Refresh log</button>
-
-<div class="adminStatus" id="deliveryLogStatus"></div>
-
-<div style="margin-top:10px; overflow:auto;">
-  <table style="width:100%; border-collapse:collapse; font-size:13px;">
-    <thead>
-      <tr style="text-align:left; opacity:0.9;">
-        <th style="padding:10px 8px;">Client</th>
-        <th style="padding:10px 8px;">Campaign</th>
-        <th style="padding:10px 8px;">Created by</th>
-        <th style="padding:10px 8px;">Created</th>
-        <th style="padding:10px 8px;">Rows</th>
-        <th style="padding:10px 8px;">Delivery ID</th>
-      </tr>
-    </thead>
-    <tbody id="deliveryLogTbody">
-      <tr>
-        <td colspan="6" style="padding:12px 8px; opacity:0.7;">Click “Refresh log” to load results.</td>
-      </tr>
-    </tbody>
-  </table>
-</div>
-<!-- /DELIVERY LOG -->
-
-</div>   <!-- closes adminDeliveryExport -->
-</div>   <!-- closes adminGrid -->
-
-<!-- Shared nav -->
-<script src="/abm-upload/nav.js?v=11" defer></script>
-  <script src="/abm-upload/admin-export.js?v=9" defer></script>
-
   <script>
     // ===== CONFIG =====
     // Keep anon public key here (safe to be public). Security comes from RLS + auth.
@@ -737,7 +661,7 @@ async function copyFieldToClipboard(textareaId, statusId) {
 
     async function logout() {
       try { await window.ABM.sb.auth.signOut(); } catch (e) { console.warn("Logout error:", e); }
-      location.href = "/abm-upload/admin.html";
+      location.href = "/abm-upload/admin-setup.html";
     }
 
     async function showApp() {
@@ -766,13 +690,10 @@ async function copyFieldToClipboard(textareaId, statusId) {
         const loginCard = $("loginCard");
         const grid = $("adminGrid");
         const appCard = $("appCard");
-        const exportCard = $("adminDeliveryExport");
         
         if (loginCard) loginCard.style.display = "none";
         if (grid) grid.style.display = "grid";
         if (appCard) appCard.style.display = "block";
-        if (exportCard) exportCard.style.display = "block";
-
 
       setAdminStatus("Loading clients…");
 
@@ -984,6 +905,11 @@ async function copyFieldToClipboard(textareaId, statusId) {
     sb.auth.getSession()
       .then(async (r) => { if (r.data.session) showApp(); })
       .catch(()=>{});
+
+       </div> <!-- end #adminGrid -->
+  </div> <!-- end .wrap -->
+    
   </script>
+  <script src="/abm-upload/nav.js?v=1" defer></script>
 </body>
 </html>
