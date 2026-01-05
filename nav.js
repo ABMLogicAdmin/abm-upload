@@ -3,10 +3,12 @@
   function getPageName() {
     const p = (location.pathname || "").toLowerCase();
     if (p.endsWith("/workbench.html")) return "Workbench";
-    if (p.endsWith("/admin.html")) return "Admin Setup";
+    if (p.endsWith("/admin-setup.html")) return "Admin Setup";
+    if (p.endsWith("/admin-export.html")) return "Admin Export";
     if (p.endsWith("/index.html") || p.endsWith("/")) return "CSV Upload";
     return "ABM Logic";
   }
+
 
   function getRole() {
     // Prefer an explicit value if your pages set it (recommended)
@@ -130,7 +132,7 @@
     const tabs = [
       { label: "Upload", href: "/abm-upload/index.html", match: "/index.html" },
       { label: "Workbench", href: "/abm-upload/workbench.html", match: "/workbench.html" },
-      { label: "Admin", href: "/abm-upload/admin.html", match: "/admin.html" },
+      { label: "Admin", href: "/abm-upload/admin-setup.html", match: "/admin-setup.html" },
     ];
 
     const path = (location.pathname || "").toLowerCase();
