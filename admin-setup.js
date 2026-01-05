@@ -348,7 +348,7 @@ async function saveBrief(status = "draft"){
   targeting: {
   accounts: lines("brief_target_accounts"),
   countries: document.getElementById("ms_countries")?.getValues() || [],
-  industries: lines("brief_industries")
+  industries: lines("brief_industries"),
 },
     notes: document.getElementById("brief_notes")?.value || ""
   };
