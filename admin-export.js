@@ -225,9 +225,6 @@ function setBusy(isBusy) {
     renderList("");
   }
 
-  // Close dropdowns when clicking outside
-  document.addEventListener("click", () => closeAllDropdowns(null));
-
   // -----------------------------
   // Supabase helpers
   // -----------------------------
@@ -709,9 +706,6 @@ function setBusy(isBusy) {
   // Init
   // -----------------------------
   async function init() {
-    // admin.html already gates admin users; keep this visible
-    const box = UI.box();
-    if (box) box.style.display = "block";
 
     // Render empty disabled dropdowns immediately (nice UX)
     cache.clients = [];
@@ -747,9 +741,29 @@ function setBusy(isBusy) {
     UI.btnGenerate()?.addEventListener("click", generateDeliveryCsv);
     UI.btnCopy()?.addEventListener("click", copySignedUrl);
 
-    // --- Landing Page Snippet Generator (Slice 7) ---
-
   }
    
-  document.addEventListener("DOMContentLoaded", init);
-})();
+    let _exportInited = false;
+    
+    function initOnce() {
+      if (_exportInited) return;
+      _exportInited = true;
+    
+      // Hard guard: export bootstrap MUST have created the supabase client
+      if (!window.ABM?.sb) {
+        console.error("ABM.sb missing. Export bootstrap did not run or user not logged in.");
+        setStatus("ERROR: Export page is not initialised (missing session). Refresh and log in again.");
+        return;
+      }
+    
+      init();
+    }
+    
+    // Preferred: wait for export bootstrap (admin-export.html) to say "ready"
+    window.addEventListener("abm:export:ready", initOnce);
+    
+    // Fallback: if someone loads this file without the bootstrap event,
+    // try once after DOM is ready (won't double-run because initOnce guards)
+    document.addEventListener("DOMContentLoaded", initOnce);
+ })();
+
