@@ -416,6 +416,186 @@ async function loadBrief(){
       location.href = "/abm-upload/admin-setup.html";
     }
 
+function normalizeDomain(input) {
+  let s = (input || "").trim().toLowerCase();
+  if (!s) return "";
+
+  // Strip quotes
+  s = s.replace(/^"+|"+$/g, "").replace(/^'+|'+$/g, "");
+
+  // If it's a URL, parse hostname
+  try {
+    if (s.includes("://")) {
+      const u = new URL(s);
+      s = u.hostname || "";
+    } else {
+      // Might be domain/path -> try parsing as URL
+      const u = new URL("https://" + s);
+      s = u.hostname || "";
+    }
+  } catch {
+    // If parsing fails, keep s and continue cleanup
+  }
+
+  s = s.replace(/^www\./, "");
+  s = s.replace(/\.$/, ""); // trailing dot
+
+  // Basic sanity: must contain at least one dot and only valid chars
+  if (!s.includes(".")) return "";
+  if (s.length > 253) return "";
+  if (!/^[a-z0-9.-]+$/.test(s)) return "";
+
+  // Prevent obvious junk like consecutive dots
+  if (s.includes("..")) return "";
+
+  return s;
+}
+
+function parseCsvToCells(text) {
+  // Minimal MVP: split on lines and commas.
+  // (If you later need quoted commas, we can upgrade.)
+  return (text || "")
+    .split(/\r?\n/)
+    .flatMap(line => line.split(","))
+    .map(x => x.trim())
+    .filter(Boolean);
+}
+
+function showAccountsValidation(text) {
+  const box = document.getElementById("accountsValidationBox");
+  const out = document.getElementById("accountsValidationOut");
+  if (!box || !out) return;
+
+  out.textContent = text || "";
+  box.style.display = text ? "block" : "none";
+}
+
+async function importAccountsCsv() {
+  const fileEl = document.getElementById("brief_accounts_csv");
+  const ta = document.getElementById("brief_target_accounts");
+  if (!fileEl || !ta) return;
+
+  const f = fileEl.files && fileEl.files[0];
+  if (!f) {
+    setBriefStatus("Select a CSV file first.");
+    return;
+  }
+
+  setBriefStatus("Importing CSV…");
+  showAccountsValidation("");
+
+  const text = await f.text();
+  const cells = parseCsvToCells(text);
+
+  const seen = new Set();
+  const domains = [];
+
+  for (const cell of cells) {
+    const d = normalizeDomain(cell);
+    if (!d) continue;
+    if (seen.has(d)) continue;
+    seen.add(d);
+    domains.push(d);
+  }
+
+  if (!domains.length) {
+    setBriefStatus("No valid domains found in CSV.");
+    return;
+  }
+
+  ta.value = domains.join("\n");
+  setBriefStatus(`✅ Imported ${domains.length} domain(s). Now click Validate Accounts.`);
+}
+
+function validateAccountsFromTextarea() {
+  const ta = document.getElementById("brief_target_accounts");
+  if (!ta) return;
+
+  const rawLines = (ta.value || "").split("\n").map(s => s.trim()).filter(Boolean);
+
+  const personalDomains = new Set([
+    "gmail.com", "googlemail.com",
+    "outlook.com", "hotmail.com", "live.com",
+    "yahoo.com", "icloud.com", "me.com",
+    "aol.com", "proton.me", "protonmail.com"
+  ]);
+
+  const normalized = [];
+  const seen = new Set();
+
+  const invalid = [];
+  const duplicates = [];
+  const personal = [];
+  const subdomains = [];
+
+  for (const line of rawLines) {
+    const d = normalizeDomain(line);
+
+    if (!d) {
+      invalid.push(line);
+      continue;
+    }
+
+    // Flag if user pasted a subdomain (we accept, but warn)
+    // e.g. "uk.company.com" still works, but ABM lists are usually root domains.
+    if (d.split(".").length > 2 && !d.endsWith(".co.uk") && !d.endsWith(".com.au")) {
+      // This heuristic isn't perfect; it's a warning only.
+      subdomains.push(d);
+    }
+
+    if (personalDomains.has(d)) personal.push(d);
+
+    if (seen.has(d)) {
+      duplicates.push(d);
+      continue;
+    }
+
+    seen.add(d);
+    normalized.push(d);
+  }
+
+  // Rewrite textarea with clean, deduped domains (so saved brief is clean)
+  ta.value = normalized.join("\n");
+
+  const linesOut = [];
+  linesOut.push(`Total input lines: ${rawLines.length}`);
+  linesOut.push(`Valid unique domains saved: ${normalized.length}`);
+  linesOut.push("");
+
+  if (invalid.length) {
+    linesOut.push(`INVALID (${invalid.length})`);
+    linesOut.push(invalid.slice(0, 50).map(x => `- ${x}`).join("\n"));
+    if (invalid.length > 50) linesOut.push(`- ...and ${invalid.length - 50} more`);
+    linesOut.push("");
+  }
+
+  if (duplicates.length) {
+    linesOut.push(`DUPLICATES REMOVED (${duplicates.length})`);
+    linesOut.push([...new Set(duplicates)].slice(0, 50).map(x => `- ${x}`).join("\n"));
+    linesOut.push("");
+  }
+
+  if (personal.length) {
+    linesOut.push(`PERSONAL EMAIL DOMAINS FOUND (${personal.length}) — usually wrong for account lists`);
+    linesOut.push([...new Set(personal)].map(x => `- ${x}`).join("\n"));
+    linesOut.push("");
+  }
+
+  if (subdomains.length) {
+    linesOut.push(`SUBDOMAINS WARNING (${subdomains.length}) — check if you meant the root domain`);
+    linesOut.push([...new Set(subdomains)].slice(0, 50).map(x => `- ${x}`).join("\n"));
+    linesOut.push("");
+  }
+
+  if (!invalid.length && !duplicates.length && !personal.length && !subdomains.length) {
+    linesOut.push("✅ No issues detected.");
+  }
+
+  showAccountsValidation(linesOut.join("\n"));
+  setBriefStatus("✅ Accounts validated (textarea normalized).");
+}
+
+
     async function showApp() {
       // Get user + set navbar identity
       const { data: userRes } = await sb.auth.getUser();
@@ -464,12 +644,21 @@ async function loadBrief(){
 
         setAdminStatus("");
 
+
+       
         // Wire buttons
         $("createClientBtn").onclick = createClient;
         $("createCampaignBtn").onclick = createCampaign;
         $("createSourceBtn").onclick = createSource;
         $("btnSaveBrief").onclick = () => saveBrief("draft");
         $("btnActivateBrief").onclick = () => saveBrief("active");
+
+       const importBtn = document.getElementById("btnImportAccountsCsv");
+       if (importBtn) importBtn.onclick = importAccountsCsv;
+
+       const validateBtn = document.getElementById("btnValidateAccounts");
+       if (validateBtn) validateBtn.onclick = validateAccountsFromTextarea;
+
 
     // =========================
     // Landing Page Snippet Generator
