@@ -420,7 +420,85 @@
 <div class="tabPanel" data-panel="brief" id="panelBrief">
   <div class="card stageCard">
     <p class="panelTitle">Campaign Brief</p>
-    <p class="panelNote">We’ll build the brief form here next.</p>
+    <p class="panelNote">Define ICP, personas, and qualification rules for this campaign.</p>
+
+    <hr class="divider" />
+
+    <p class="adminTitle">Primary Personas</p>
+    <div class="row">
+      <div>
+        <label>Titles (one per line)</label>
+        <textarea id="brief_primary_titles" rows="6"
+          placeholder="Head of Marketing&#10;VP Marketing"></textarea>
+      </div>
+      <div>
+        <label>Departments (one per line)</label>
+        <textarea id="brief_primary_departments" rows="6"
+          placeholder="Marketing&#10;Growth"></textarea>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Seniorities (one per line)</label>
+        <textarea id="brief_primary_seniorities" rows="4"
+          placeholder="C-Level&#10;VP&#10;Director"></textarea>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <p class="adminTitle">Secondary Personas</p>
+    <div class="row">
+      <div>
+        <label>Titles (one per line)</label>
+        <textarea id="brief_secondary_titles" rows="6"></textarea>
+      </div>
+      <div>
+        <label>Departments (one per line)</label>
+        <textarea id="brief_secondary_departments" rows="6"></textarea>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Seniorities (one per line)</label>
+        <textarea id="brief_secondary_seniorities" rows="4"></textarea>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <p class="adminTitle">Targeting</p>
+    <div class="row">
+      <div>
+        <label>Target accounts (domains, optional)</label>
+        <textarea id="brief_target_accounts" rows="6"
+          placeholder="company.com"></textarea>
+      </div>
+      <div>
+        <label>Regions (one per line)</label>
+        <textarea id="brief_regions" rows="6"
+          placeholder="UK&#10;Belgium"></textarea>
+      </div>
+    </div>
+    <div class="row">
+      <div>
+        <label>Industries (one per line)</label>
+        <textarea id="brief_industries" rows="5"></textarea>
+      </div>
+      <div>
+        <label>Notes</label>
+        <textarea id="brief_notes" rows="5"></textarea>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <div class="row">
+      <button id="btnSaveBrief" class="btn-secondary" type="button">Save Draft</button>
+      <button id="btnActivateBrief" class="btn" type="button">Activate Brief</button>
+    </div>
+
+    <div class="adminStatus" id="briefStatus"></div>
   </div>
 </div>
 
