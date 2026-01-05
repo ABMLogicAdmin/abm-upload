@@ -375,11 +375,18 @@ tr.selected-row td:last-child{
   font-size:12.5px;
 }
 
-/* Raise Workbench content */
+/* Raise Workbench content (override base.css) */
 body{
-  padding-top: 12px;   /* was effectively 28px via base.css */
+  padding-top: 10px !important;  /* base.css is 28px */
 }
 
-.grid{
-  margin-top: 6px;     /* was 16px */
+/* Reduce gap between nav and the cards */
+#siteNav{
+  margin-bottom: 8px !important;
 }
+
+/* Reduce gap before the main grid */
+.grid{
+  margin-top: 6px !important;    /* was 16px */
+}
+
