@@ -141,9 +141,9 @@ document.addEventListener("click", (e) => {
         // If a campaign is selected, refresh snippet panel
         if (key === "campaign") {
           syncSnippetPanel();
+          loadBrief();
         }
       });
-
 
         list.appendChild(b);
       }
@@ -273,6 +273,120 @@ function wireTabs() {
   });
 }
 
+function lines(id){
+  const v = document.getElementById(id)?.value || "";
+  return v.split("\n").map(s => s.trim()).filter(Boolean);
+}
+
+function fill(id, arr){
+  const el = document.getElementById(id);
+  if (el) el.value = (arr || []).join("\n");
+}
+
+function setBriefStatus(msg){
+  const el = document.getElementById("briefStatus");
+  if (el) el.textContent = msg || "";
+}
+async function saveBrief(status = "draft"){
+  const campaignId = state.campaign.value;
+  if (!campaignId) {
+    setBriefStatus("Select a campaign first.");
+    return;
+  }
+
+  const qc_brief = {
+    schema_version: "qc_brief.v1",
+    personas: {
+      primary: {
+        titles: lines("brief_primary_titles"),
+        departments: lines("brief_primary_departments"),
+        seniorities: lines("brief_primary_seniorities")
+      },
+      secondary: {
+        titles: lines("brief_secondary_titles"),
+        departments: lines("brief_secondary_departments"),
+        seniorities: lines("brief_secondary_seniorities")
+      }
+    },
+    targeting: {
+      accounts: lines("brief_target_accounts"),
+      regions: lines("brief_regions"),
+      industries: lines("brief_industries")
+    },
+    notes: document.getElementById("brief_notes")?.value || ""
+  };
+
+  setBriefStatus(status === "active" ? "Activating…" : "Saving draft…");
+
+  // If activating, archive any existing active for this campaign first
+  if (status === "active") {
+    const { error: archErr } = await sb
+      .from("campaign_qc_briefs")
+      .update({ status: "archived" })
+      .eq("campaign_id", campaignId)
+      .eq("status", "active");
+
+    if (archErr) {
+      setBriefStatus(`❌ Failed to archive existing active: ${archErr.message}`);
+      return;
+    }
+  }
+
+  // Insert a new version row (this matches your table design: id PK + versioning)
+  const { error } = await sb
+    .from("campaign_qc_briefs")
+    .insert({
+      campaign_id: campaignId,
+      status,
+      qc_brief
+    });
+
+  if (error) {
+    setBriefStatus(`❌ ${error.message}`);
+    return;
+  }
+
+  setBriefStatus(`✅ ${status === "active" ? "Activated" : "Draft saved"}`);
+}
+
+async function loadBrief(){
+  const campaignId = state.campaign.value;
+  if (!campaignId) return;
+
+  setBriefStatus("Loading…");
+
+  const { data, error } = await sb
+    .from("campaign_qc_briefs")
+    .select("qc_brief")
+    .eq("campaign_id", campaignId)
+    .order("updated_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error || !data) {
+    setBriefStatus("No brief yet.");
+    return;
+  }
+
+  const b = data.qc_brief || {};
+
+  fill("brief_primary_titles", b?.personas?.primary?.titles);
+  fill("brief_primary_departments", b?.personas?.primary?.departments);
+  fill("brief_primary_seniorities", b?.personas?.primary?.seniorities);
+
+  fill("brief_secondary_titles", b?.personas?.secondary?.titles);
+  fill("brief_secondary_departments", b?.personas?.secondary?.departments);
+  fill("brief_secondary_seniorities", b?.personas?.secondary?.seniorities);
+
+  fill("brief_target_accounts", b?.targeting?.accounts);
+  fill("brief_regions", b?.targeting?.regions);
+  fill("brief_industries", b?.targeting?.industries);
+
+  document.getElementById("brief_notes").value = b?.notes || "";
+
+  setBriefStatus("Loaded.");
+}
+
     async function login() {
       $("loginStatus").textContent = "Signing in…";
 
@@ -348,6 +462,9 @@ function wireTabs() {
         $("createClientBtn").onclick = createClient;
         $("createCampaignBtn").onclick = createCampaign;
         $("createSourceBtn").onclick = createSource;
+        $("btnSaveBrief").onclick = () => saveBrief("draft");
+        $("btnActivateBrief").onclick = () => saveBrief("active");
+
     // =========================
     // Landing Page Snippet Generator
     // =========================
