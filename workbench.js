@@ -112,6 +112,9 @@
   let queueRows = [];
   let currentLead = null;
   let selectedKey = null;
+  let currentLeadId = null;      // <-- lead_id from public.leads
+  let currentFacts = null;       // <-- row from public.lead_facts
+
 
   // =========================
   // Wire buttons
@@ -501,6 +504,32 @@ if (viewName === "v_workbench_queue_done") {
   }
 
   // =========================
+  // NEW HELPERS: lead id + lead facts
+  // =========================
+  async function resolveLeadId(ingest_job_id, row_number) {
+    const { data, error } = await sb
+      .from("leads")
+      .select("lead_id")
+      .eq("ingest_job_id", ingest_job_id)
+      .eq("row_number", row_number)
+      .maybeSingle();
+  
+    if (error) throw error;
+    return data?.lead_id || null;
+  }
+  
+  async function fetchLeadFacts(lead_id) {
+    const { data, error } = await sb
+      .from("lead_facts")
+      .select("*")
+      .eq("lead_id", lead_id)
+      .maybeSingle();
+  
+    if (error) throw error;
+    return data || null;
+  }
+  
+  // =========================
   // Lead detail
   // =========================
   async function fetchLead(ingest_job_id, row_number) {
@@ -519,11 +548,14 @@ if (viewName === "v_workbench_queue_done") {
     setDetailStatus("Opening lead…");
     showEmptyState(false);
 
-
-    try {
-      const lead = await fetchLead(ingest_job_id, row_number);
-      currentLead = lead;
-      selectedKey = leadKey(lead);
+  try {
+    const lead = await fetchLead(ingest_job_id, row_number);
+    currentLead = lead;
+    selectedKey = leadKey(lead);
+  
+    // NEW: resolve lead_id + load facts
+    currentLeadId = await resolveLeadId(ingest_job_id, row_number);
+    currentFacts = currentLeadId ? await fetchLeadFacts(currentLeadId) : null;
 
       $("detailStatusPill").textContent = lead.enrichment_status || "unknown";
 
