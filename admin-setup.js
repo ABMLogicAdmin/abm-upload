@@ -333,16 +333,18 @@ async function saveBrief(status = "draft"){
 const qc_brief = {
   schema_version: "qc_brief.v1",
   personas: {
-    primary: {
-      titles: lines("brief_primary_titles"),
-      departments: document.getElementById("ms_primary_departments")?.getValues() || [],
-      seniorities: document.getElementById("ms_primary_seniorities")?.getValues() || []
-    },
-    secondary: {
-      titles: lines("brief_secondary_titles"),
-      departments: document.getElementById("ms_secondary_departments")?.getValues() || [],
-      seniorities: document.getElementById("ms_secondary_seniorities")?.getValues() || []
-    }
+   primary: {
+    titles: lines("brief_primary_titles"),
+    block_keywords: lines("brief_primary_block_keywords"),
+    departments: document.getElementById("ms_primary_departments")?.getValues() || [],
+    seniorities: document.getElementById("ms_primary_seniorities")?.getValues() || []
+  },
+  secondary: {
+    titles: lines("brief_secondary_titles"),
+    block_keywords: lines("brief_secondary_block_keywords"),
+    departments: document.getElementById("ms_secondary_departments")?.getValues() || [],
+    seniorities: document.getElementById("ms_secondary_seniorities")?.getValues() || []
+  }
   },
   targeting: {
     accounts: lines("brief_target_accounts"),
@@ -367,14 +369,31 @@ const qc_brief = {
     }
   }
 
+ const { data: latest, error: vErr } = await sb
+  .from("campaign_qc_briefs")
+  .select("version")
+  .eq("campaign_id", campaignId)
+  .order("created_at", { ascending: false })
+  .limit(1)
+  .maybeSingle();
+
+if (vErr) {
+  setBriefStatus(`❌ Failed to read latest version: ${vErr.message}`);
+  return;
+}
+
+const nextVersion = (latest?.version || 0) + 1;
+ 
   // Insert a new version row (this matches your table design: id PK + versioning)
   const { error } = await sb
     .from("campaign_qc_briefs")
     .insert({
       campaign_id: campaignId,
       status,
+      version: nextVersion,
       qc_brief
-    });
+ });
+
 
   if (error) {
     setBriefStatus(`❌ ${error.message}`);
@@ -397,7 +416,7 @@ async function loadBrief(){
     .select("qc_brief,status,version,created_at")
     .eq("campaign_id", campaignId)
     .eq("status", "active")
-    .order("version", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -408,7 +427,7 @@ async function loadBrief(){
       .select("qc_brief,status,version,created_at")
       .eq("campaign_id", campaignId)
       .eq("status", "draft")
-      .order("version", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(1)
       .maybeSingle()
     );
@@ -427,10 +446,12 @@ async function loadBrief(){
   const b = data.qc_brief || {};
 
   fill("brief_primary_titles", b?.personas?.primary?.titles);
+  fill("brief_primary_block_keywords", b?.personas?.primary?.block_keywords);
   document.getElementById("ms_primary_departments")?.setValues(b?.personas?.primary?.departments || []);
   document.getElementById("ms_primary_seniorities")?.setValues(b?.personas?.primary?.seniorities || []);
 
   fill("brief_secondary_titles", b?.personas?.secondary?.titles);
+  fill("brief_secondary_block_keywords", b?.personas?.secondary?.block_keywords);
   document.getElementById("ms_secondary_departments")?.setValues(b?.personas?.secondary?.departments || []);
   document.getElementById("ms_secondary_seniorities")?.setValues(b?.personas?.secondary?.seniorities || []);
 
