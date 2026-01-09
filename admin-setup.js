@@ -384,21 +384,42 @@ const qc_brief = {
   setBriefStatus(`✅ ${status === "active" ? "Activated" : "Draft saved"}`);
 }
 
+//S7_04_loadBrief_prefer_active_then_latest_draft//
 async function loadBrief(){
   const campaignId = state.campaign.value;
   if (!campaignId) return;
 
   setBriefStatus("Loading…");
 
-  const { data, error } = await sb
+  // 1) Try ACTIVE first (this is the contract)
+  let { data, error } = await sb
     .from("campaign_qc_briefs")
-    .select("qc_brief")
+    .select("qc_brief,status,version,created_at")
     .eq("campaign_id", campaignId)
-    .order("updated_at", { ascending: false })
+    .eq("status", "active")
+    .order("version", { ascending: false })
     .limit(1)
     .maybeSingle();
 
-  if (error || !data) {
+  // 2) If no active, fall back to latest DRAFT
+  if (!error && !data) {
+    ({ data, error } = await sb
+      .from("campaign_qc_briefs")
+      .select("qc_brief,status,version,created_at")
+      .eq("campaign_id", campaignId)
+      .eq("status", "draft")
+      .order("version", { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    );
+  }
+
+  if (error) {
+    setBriefStatus(`❌ Failed to load: ${error.message}`);
+    return;
+  }
+
+  if (!data) {
     setBriefStatus("No brief yet.");
     return;
   }
@@ -406,34 +427,18 @@ async function loadBrief(){
   const b = data.qc_brief || {};
 
   fill("brief_primary_titles", b?.personas?.primary?.titles);
-  
- document.getElementById("ms_primary_departments")?.setValues(
-  b?.personas?.primary?.departments || []
-);
- 
-  document.getElementById("ms_primary_seniorities")?.setValues(
-   b?.personas?.primary?.seniorities || []
- );
+  document.getElementById("ms_primary_departments")?.setValues(b?.personas?.primary?.departments || []);
+  document.getElementById("ms_primary_seniorities")?.setValues(b?.personas?.primary?.seniorities || []);
 
-fill("brief_secondary_titles", b?.personas?.secondary?.titles);
-
-document.getElementById("ms_secondary_departments")?.setValues(
-  b?.personas?.secondary?.departments || []
-);
-
-document.getElementById("ms_secondary_seniorities")?.setValues(
-  b?.personas?.secondary?.seniorities || []
-);
+  fill("brief_secondary_titles", b?.personas?.secondary?.titles);
+  document.getElementById("ms_secondary_departments")?.setValues(b?.personas?.secondary?.departments || []);
+  document.getElementById("ms_secondary_seniorities")?.setValues(b?.personas?.secondary?.seniorities || []);
 
   fill("brief_target_accounts", b?.targeting?.accounts);
-
- document.getElementById("ms_countries")?.setValues(
-  b?.targeting?.countries || []
-);
- 
+  document.getElementById("ms_countries")?.setValues(b?.targeting?.countries || []);
   fill("brief_industries", b?.targeting?.industries);
 
-  setBriefStatus("Loaded.");
+  setBriefStatus(`Loaded (${data.status}, v${data.version}).`);
 }
 
     async function login() {
