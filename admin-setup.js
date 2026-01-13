@@ -74,7 +74,7 @@ const BRIEF_OPTIONS = {
         .from("app_users")
         .select("role")
         .eq("user_id", userRes.user.id)
-        .single();
+        .maybeSingle();
 
       if (error) {
         console.error("Admin check failed:", error);
@@ -171,8 +171,8 @@ const BRIEF_OPTIONS = {
         // If a campaign is selected, refresh snippet panel
        if (key === "campaign") {
          syncSnippetPanel();
-         loadBrief();
-         setActiveTab("brief"); // makes the result visible immediately
+        await loadBrief();
+        setActiveTab("brief");
        }
 
       });
@@ -256,7 +256,7 @@ const BRIEF_OPTIONS = {
 function currentTouchModel() {
   const campaignId = state.campaign.value;
   const c = (cache.campaigns || []).find(x => x.campaign_id === campaignId);
-  return c?.touch_model || "single";
+  return (c && c.touch_model) ? c.touch_model : "single";
 }
 
 function syncSnippetPanel() {
@@ -413,20 +413,22 @@ async function printBriefRecord() {
   if (!clientId) return setBriefStatus("Select a client first.");
   if (!campaignId) return setBriefStatus("Select a campaign first.");
 
+  // Open window immediately (prevents popup blocking)
+  const w = window.open("", "_blank");
+  if (!w) return setBriefStatus("Popup blocked. Allow popups then try again.");
+
   // Ensure we have a loaded record
-  if (!window.currentBriefRecord) {
-    await loadBrief();
-  }
+  await loadBrief();
   const record = window.currentBriefRecord;
-  if (!record) return setBriefStatus("No brief found to print. Save a draft first.");
+  if (!record) {
+    w.close();
+    return setBriefStatus("No brief found to print. Save a draft first.");
+  }
 
   const clientName = (cache.clients || []).find(c => c.client_id === clientId)?.name || "";
   const campaignName = (cache.campaigns || []).find(c => c.campaign_id === campaignId)?.name || "";
 
   const html = buildBriefRecordHtml({ clientName, campaignName, clientId, campaignId, record });
-
-  const w = window.open("", "_blank");
-  if (!w) return setBriefStatus("Popup blocked. Allow popups then try again.");
 
   w.document.open();
   w.document.write(html);
@@ -505,6 +507,31 @@ const qc_brief = {
     industries: lines("brief_industries")
   }
 };
+ 
+// ===== Slice 7 Validation (minimum required rules) =====
+  const p = qc_brief.personas.primary;
+  const t = qc_brief.targeting;
+
+  const hasPrimary =
+    (p.titles && p.titles.length > 0) ||
+    (p.departments && p.departments.length > 0) ||
+    (p.seniorities && p.seniorities.length > 0);
+
+  const hasTargeting =
+    (t.accounts && t.accounts.length > 0) ||
+    (t.countries && t.countries.length > 0) ||
+    (t.industries && t.industries.length > 0);
+
+  if (!hasPrimary) {
+    setBriefStatus("❌ Primary persona is missing. Add at least 1 Title OR select a Department OR select a Seniority.");
+    return;
+  }
+
+  if (!hasTargeting) {
+    setBriefStatus("❌ Targeting is missing. Add at least 1 Country OR Industry OR Target Account domain.");
+    return;
+  }
+ // ===== End validation =====
 
   setBriefStatus(status === "active" ? "Activating…" : "Saving draft…");
 
@@ -522,13 +549,13 @@ const qc_brief = {
     }
   }
 
- const { data: latest, error: vErr } = await sb
-  .from("campaign_qc_briefs")
-  .select("version")
-  .eq("campaign_id", campaignId)
-  .order("created_at", { ascending: false })
-  .limit(1)
-  .maybeSingle();
+const { data: latest, error: vErr } = await sb
+ .from("campaign_qc_briefs")
+ .select("version")
+ .eq("campaign_id", campaignId)
+ .order("version", { ascending: false })
+ .limit(1)
+ .maybeSingle();
 
 if (vErr) {
   setBriefStatus(`❌ Failed to read latest version: ${vErr.message}`);
@@ -553,7 +580,8 @@ const nextVersion = (latest?.version || 0) + 1;
     return;
   }
 
-  setBriefStatus(`✅ ${status === "active" ? "Activated" : "Draft saved"}`);
+await loadBrief(); // refresh currentBriefRecord to the newest active/draft
+setBriefStatus(`✅ ${status === "active" ? "Activated" : "Draft saved"}`);
 }
 
 //S7_04_loadBrief_prefer_active_then_latest_draft//
@@ -569,7 +597,7 @@ async function loadBrief(){
     .select("qc_brief,status,version,created_at")
     .eq("campaign_id", campaignId)
     .eq("status", "active")
-    .order("created_at", { ascending: false })
+    .order("version", { ascending: false })
     .limit(1)
     .maybeSingle();
 
@@ -580,7 +608,7 @@ async function loadBrief(){
       .select("qc_brief,status,version,created_at")
       .eq("campaign_id", campaignId)
       .eq("status", "draft")
-      .order("created_at", { ascending: false })
+      .order("version", { ascending: false })
       .limit(1)
       .maybeSingle()
     );
@@ -614,6 +642,20 @@ async function loadBrief(){
   fill("brief_industries", b?.targeting?.industries);
 
   setBriefStatus(`Loaded (${data.status}, v${data.version}).`);
+}
+
+async function loadActiveBriefOnly(campaignId) {
+  const { data, error } = await sb
+    .from("campaign_qc_briefs")
+    .select("qc_brief,status,version,created_at")
+    .eq("campaign_id", campaignId)
+    .eq("status", "active")
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data || null;
 }
 
     async function login() {
@@ -1077,14 +1119,15 @@ setAdminStatus("Loading clients…");
      if (!sourceSite) return setAdminStatus("Enter Source site (e.g. martechlogic.com).");
    
      // Touch 1 snippet
-     const formId1 = (touchModel === "double") ? `touch1_${base}` : `main_${base}`;
+     const stage1 = (touchModel === "double") ? "touch1" : "single";
      $("snTouch1").value = snippetTemplate({
-       clientId,
-       campaignId,
-       sourceSite,
-       formId: formId1,
-       touchStage: "touch1"
-     });
+     clientId,
+     campaignId,
+     sourceSite,
+     formId: formId1,
+     touchStage: stage1
+   });
+
      $("snStatus1").textContent = "Touch 1 snippet generated.";
    
      // Touch 2 snippet (only if double)
