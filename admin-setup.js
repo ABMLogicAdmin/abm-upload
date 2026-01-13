@@ -347,12 +347,13 @@ function listBlock(title, items){
 
 function buildBriefRecordHtml({ clientName, campaignName, clientId, campaignId, record }) {
   const b = record?.qc_brief || {};
-  const primary = b?.personas?.primary || {};
-  const secondary = b?.personas?.secondary || {};
-  const targeting = b?.targeting || {};
+
+  const primary = b?.person_targeting?.primary_personas?.[0] || {};
+  const secondary = b?.person_targeting?.secondary_personas?.[0] || {};
+  const acct = b?.account_targeting || {};
 
   const createdAt = record?.created_at ? new Date(record.created_at).toISOString() : "";
-  const printedAt = new Date().toISOString();
+  const printedAt = new Date().toISOString();;
 
   return `<!DOCTYPE html>
 <html>
@@ -387,22 +388,22 @@ function buildBriefRecordHtml({ clientName, campaignName, clientId, campaignId, 
     <div class="muted">Schema: ${escapeHtml(b?.schema_version || "")}</div>
   </div>
 
-  <h2>Primary Persona</h2>
-  ${listBlock("Titles", primary.titles)}
-  ${listBlock("Block keywords", primary.block_keywords)}
-  ${listBlock("Departments", primary.departments)}
-  ${listBlock("Seniorities", primary.seniorities)}
+<h2>Primary Persona</h2>
+${listBlock("Titles", primary.titles)}
+${listBlock("Block keywords", primary.block_keywords)}
+${listBlock("Departments", primary.departments)}
+${listBlock("Seniorities", primary.seniorities)}
 
-  <h2>Secondary Persona</h2>
-  ${listBlock("Titles", secondary.titles)}
-  ${listBlock("Block keywords", secondary.block_keywords)}
-  ${listBlock("Departments", secondary.departments)}
-  ${listBlock("Seniorities", secondary.seniorities)}
+<h2>Secondary Persona</h2>
+${listBlock("Titles", secondary.titles)}
+${listBlock("Block keywords", secondary.block_keywords)}
+${listBlock("Departments", secondary.departments)}
+${listBlock("Seniorities", secondary.seniorities)}
 
-  <h2>Targeting</h2>
-  ${listBlock("Target accounts (domains)", targeting.accounts)}
-  ${listBlock("Countries", targeting.countries)}
-  ${listBlock("Industries", targeting.industries)}
+<h2>Targeting</h2>
+${listBlock("Target accounts (domains)", acct?.account_allowlist?.domains)}
+${listBlock("Countries", acct?.regions)}
+${listBlock("Industries", acct?.industry_codes)}
 
 </body>
 </html>`;
@@ -489,50 +490,67 @@ async function saveBrief(status = "draft"){
 
 const qc_brief = {
   schema_version: "qc_brief.v1",
-  personas: {
-   primary: {
-    titles: lines("brief_primary_titles"),
-    block_keywords: lines("brief_primary_block_keywords"),
-    departments: document.getElementById("ms_primary_departments")?.getValues() || [],
-    seniorities: document.getElementById("ms_primary_seniorities")?.getValues() || []
+
+  // ✅ MUST match DB constraint
+  person_targeting: {
+    primary_personas: [
+      {
+        titles: lines("brief_primary_titles"),
+        block_keywords: lines("brief_primary_block_keywords"),
+        departments: document.getElementById("ms_primary_departments")?.getValues() || [],
+        seniorities: document.getElementById("ms_primary_seniorities")?.getValues() || []
+      }
+    ],
+    secondary_personas: [
+      {
+        titles: lines("brief_secondary_titles"),
+        block_keywords: lines("brief_secondary_block_keywords"),
+        departments: document.getElementById("ms_secondary_departments")?.getValues() || [],
+        seniorities: document.getElementById("ms_secondary_seniorities")?.getValues() || []
+      }
+    ]
   },
-  secondary: {
-    titles: lines("brief_secondary_titles"),
-    block_keywords: lines("brief_secondary_block_keywords"),
-    departments: document.getElementById("ms_secondary_departments")?.getValues() || [],
-    seniorities: document.getElementById("ms_secondary_seniorities")?.getValues() || []
-  }
-  },
-  targeting: {
-    accounts: lines("brief_target_accounts"),
-    countries: document.getElementById("ms_countries")?.getValues() || [],
-    industries: lines("brief_industries")
+
+  // ✅ MUST match DB constraint
+  account_targeting: {
+    regions: document.getElementById("ms_countries")?.getValues() || [], // yes: mapped to regions for now
+    industry_codes: lines("brief_industries"), // yes: your industries lines mapped to industry_codes
+    account_allowlist: {
+      domains: lines("brief_target_accounts"),
+      urls: [],
+      ips: []
+    }
   }
 };
+
  
 // ===== Slice 7 Validation (minimum required rules) =====
-  const p = qc_brief.personas.primary;
-  const t = qc_brief.targeting;
+const p1 = qc_brief.person_targeting.primary_personas?.[0] || {};
+const p2 = qc_brief.person_targeting.secondary_personas?.[0] || {};
+const acct = qc_brief.account_targeting || {};
 
-  const hasPrimary =
-    (p.titles && p.titles.length > 0) ||
-    (p.departments && p.departments.length > 0) ||
-    (p.seniorities && p.seniorities.length > 0);
+const hasPrimary =
+  (p1.titles && p1.titles.length > 0) ||
+  (p1.departments && p1.departments.length > 0) ||
+  (p1.seniorities && p1.seniorities.length > 0);
 
-  const hasTargeting =
-    (t.accounts && t.accounts.length > 0) ||
-    (t.countries && t.countries.length > 0) ||
-    (t.industries && t.industries.length > 0);
+const hasAccountTargeting =
+  (acct.industry_codes && acct.industry_codes.length > 0) ||
+  (acct.regions && acct.regions.length > 0) ||
+  ((acct.account_allowlist?.domains || []).length > 0) ||
+  ((acct.account_allowlist?.urls || []).length > 0) ||
+  ((acct.account_allowlist?.ips || []).length > 0);
 
-  if (!hasPrimary) {
-    setBriefStatus("❌ Primary persona is missing. Add at least 1 Title OR select a Department OR select a Seniority.");
-    return;
-  }
+if (!hasPrimary) {
+  setBriefStatus("❌ Primary persona is missing. Add at least 1 Title OR select a Department OR select a Seniority.");
+  return;
+}
 
-  if (!hasTargeting) {
-    setBriefStatus("❌ Targeting is missing. Add at least 1 Country OR Industry OR Target Account domain.");
-    return;
-  }
+if (!hasAccountTargeting) {
+  setBriefStatus("❌ Targeting is missing. Add at least 1 Country OR Industry OR Target Account domain.");
+  return;
+}
+
  // ===== End validation =====
 
   setBriefStatus(status === "active" ? "Activating…" : "Saving draft…");
@@ -627,23 +645,30 @@ async function loadBrief(){
   }
   window.currentBriefRecord = data;
 
-  const b = data.qc_brief || {};
+const b = data.qc_brief || {};
 
-  fill("brief_primary_titles", b?.personas?.primary?.titles);
-  fill("brief_primary_block_keywords", b?.personas?.primary?.block_keywords);
-  document.getElementById("ms_primary_departments")?.setValues(b?.personas?.primary?.departments || []);
-  document.getElementById("ms_primary_seniorities")?.setValues(b?.personas?.primary?.seniorities || []);
+const p1 = b?.person_targeting?.primary_personas?.[0] || {};
+const p2 = b?.person_targeting?.secondary_personas?.[0] || {};
+const acct = b?.account_targeting || {};
 
-  fill("brief_secondary_titles", b?.personas?.secondary?.titles);
-  fill("brief_secondary_block_keywords", b?.personas?.secondary?.block_keywords);
-  document.getElementById("ms_secondary_departments")?.setValues(b?.personas?.secondary?.departments || []);
-  document.getElementById("ms_secondary_seniorities")?.setValues(b?.personas?.secondary?.seniorities || []);
+fill("brief_primary_titles", p1.titles);
+fill("brief_primary_block_keywords", p1.block_keywords);
+document.getElementById("ms_primary_departments")?.setValues(p1.departments || []);
+document.getElementById("ms_primary_seniorities")?.setValues(p1.seniorities || []);
 
-  fill("brief_target_accounts", b?.targeting?.accounts);
-  document.getElementById("ms_countries")?.setValues(b?.targeting?.countries || []);
-  fill("brief_industries", b?.targeting?.industries);
+fill("brief_secondary_titles", p2.titles);
+fill("brief_secondary_block_keywords", p2.block_keywords);
+document.getElementById("ms_secondary_departments")?.setValues(p2.departments || []);
+document.getElementById("ms_secondary_seniorities")?.setValues(p2.seniorities || []);
 
-  setBriefStatus(`Loaded (${data.status}, v${data.version}).`);
+// map regions back into your countries UI
+document.getElementById("ms_countries")?.setValues(acct.regions || []);
+fill("brief_industries", acct.industry_codes);
+
+// domains list back into textarea
+fill("brief_target_accounts", acct.account_allowlist?.domains || []);
+
+setBriefStatus(`Loaded (${data.status}, v${data.version}).`); 
 }
 
 async function loadActiveBriefOnly(campaignId) {
