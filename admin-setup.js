@@ -325,6 +325,53 @@ function setBriefStatus(msg){
   setAdminStatus(msg || "");
 }
 
+// --- NEW: load latest draft only (so Draft Save doesn't get overwritten by Active load) ---
+async function loadLatestDraftOnly(campaignId){
+  const { data, error } = await sb
+    .from("campaign_qc_briefs")
+    .select("qc_brief,status,version,created_at")
+    .eq("campaign_id", campaignId)
+    .eq("status", "draft")
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  if (error) {
+    setBriefStatus(`❌ Failed to load latest draft: ${error.message}`);
+    return null;
+  }
+
+  if (!data) {
+    setBriefStatus("No draft found.");
+    return null;
+  }
+
+  window.currentBriefRecord = data;
+
+  const b = data.qc_brief || {};
+  const p1 = b?.person_targeting?.primary_personas?.[0] || {};
+  const p2 = b?.person_targeting?.secondary_personas?.[0] || {};
+  const acct = b?.account_targeting || {};
+
+  fill("brief_primary_titles", p1.titles);
+  fill("brief_primary_block_keywords", p1.block_keywords);
+  document.getElementById("ms_primary_departments")?.setValues(p1.departments || []);
+  document.getElementById("ms_primary_seniorities")?.setValues(p1.seniorities || []);
+
+  fill("brief_secondary_titles", p2.titles);
+  fill("brief_secondary_block_keywords", p2.block_keywords);
+  document.getElementById("ms_secondary_departments")?.setValues(p2.departments || []);
+  document.getElementById("ms_secondary_seniorities")?.setValues(p2.seniorities || []);
+
+  document.getElementById("ms_countries")?.setValues(acct.regions || []);
+  fill("brief_industries", acct.industry_codes);
+  fill("brief_target_accounts", acct.account_allowlist?.domains || []);
+
+  setBriefStatus(`Loaded (draft, v${data.version}).`);
+  return data;
+}
+
+
 function escapeHtml(s){
   return String(s ?? "")
     .replaceAll("&","&amp;")
@@ -600,8 +647,12 @@ const nextVersion = (latest?.version || 0) + 1;
     return;
   }
 
-await loadBrief(); // refresh currentBriefRecord to the newest active/draft
-setBriefStatus(`✅ ${status === "active" ? "Activated" : "Draft saved"}`);
+if (status === "active") {
+  await loadBrief(); // active-first is correct after activation
+  setBriefStatus("✅ Activated");
+} else {
+  await loadLatestDraftOnly(campaignId); // IMPORTANT: show the draft you just saved
+  setBriefStatus("✅ Draft saved");
 }
 
 //S7_04_loadBrief_prefer_active_then_latest_draft//
