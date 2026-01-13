@@ -442,6 +442,7 @@ async function loadBrief(){
     setBriefStatus("No brief yet.");
     return;
   }
+  window.currentBriefRecord = data;
 
   const b = data.qc_brief || {};
 
