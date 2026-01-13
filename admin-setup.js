@@ -217,6 +217,8 @@ const BRIEF_OPTIONS = {
 
 <script>
 (function(){
+if (window.__abmLeadFormBound) return;
+window.__abmLeadFormBound = true;
   const ENDPOINT = "${endpoint}";
   function setMsg(form, text, ok){
     const el = form.querySelector(".abm-form-msg");
@@ -1118,19 +1120,24 @@ setAdminStatus("Loading clients…");
    
      if (!sourceSite) return setAdminStatus("Enter Source site (e.g. martechlogic.com).");
    
-     // Touch 1 snippet
-     const stage1 = (touchModel === "double") ? "touch1" : "single";
-     $("snTouch1").value = snippetTemplate({
-     clientId,
-     campaignId,
-     sourceSite,
-     formId: formId1,
-     touchStage: stage1
-   });
+// Touch 1 snippet
+const formId1 = (touchModel === "double") ? `touch1_${base}` : `main_${base}`;
+const stage1  = (touchModel === "double") ? "touch1" : "single";
 
-     $("snStatus1").textContent = "Touch 1 snippet generated.";
+$("snTouch1").value = snippetTemplate({
+  clientId,
+  campaignId,
+  sourceSite,
+  formId: formId1,
+  touchStage: stage1
+});
+
+$("snStatus1").textContent = (touchModel === "double")
+  ? "Touch 1 snippet generated."
+  : "Single-touch snippet generated.";
+
    
-     // Touch 2 snippet (only if double)
+// Touch 2 snippet (only if double)
      if (touchModel === "double") {
        const formId2 = `touch2_${base}`;
        $("snTouch2").value = snippetTemplate({
