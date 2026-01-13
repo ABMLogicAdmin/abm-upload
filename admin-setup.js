@@ -323,6 +323,89 @@ function setBriefStatus(msg){
   setAdminStatus(msg || "");
 }
 
+function escapeHtml(s){
+  return String(s ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
+function listBlock(title, items){
+  const arr = Array.isArray(items) ? items : [];
+  if (!arr.length) return "";
+  return `
+    <div class="block">
+      <h3>${escapeHtml(title)}</h3>
+      <ul>${arr.map(x => `<li>${escapeHtml(x)}</li>`).join("")}</ul>
+    </div>
+  `;
+}
+
+function buildBriefRecordHtml({ clientName, campaignName, clientId, campaignId, record }) {
+  const b = record?.qc_brief || {};
+  const primary = b?.personas?.primary || {};
+  const secondary = b?.personas?.secondary || {};
+  const targeting = b?.targeting || {};
+
+  const createdAt = record?.created_at ? new Date(record.created_at).toISOString() : "";
+  const printedAt = new Date().toISOString();
+
+  return `<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Campaign Brief Record</title>
+  <style>
+    body{ font-family: Arial, sans-serif; padding:24px; color:#111; }
+    .meta{ border:1px solid #ddd; padding:12px; border-radius:10px; margin-bottom:16px; }
+    .meta div{ margin:4px 0; }
+    h1{ margin:0 0 12px; font-size:20px; }
+    h2{ margin:18px 0 8px; font-size:16px; border-bottom:1px solid #eee; padding-bottom:6px; }
+    h3{ margin:12px 0 6px; font-size:14px; }
+    ul{ margin:6px 0 0 18px; }
+    .block{ margin-bottom:10px; }
+    .muted{ color:#666; font-size:12px; }
+    .mono{ font-family: ui-monospace, Menlo, Consolas, monospace; }
+  </style>
+</head>
+<body>
+  <h1>Campaign Brief Record</h1>
+
+  <div class="meta">
+    <div><b>Client:</b> ${escapeHtml(clientName || "")}</div>
+    <div><b>Campaign:</b> ${escapeHtml(campaignName || "")}</div>
+    <div><b>Client ID:</b> <span class="mono">${escapeHtml(clientId || "")}</span></div>
+    <div><b>Campaign ID:</b> <span class="mono">${escapeHtml(campaignId || "")}</span></div>
+    <div><b>Status:</b> ${escapeHtml(record?.status || "")}</div>
+    <div><b>Version:</b> ${escapeHtml(record?.version || "")}</div>
+    <div><b>Saved at:</b> <span class="mono">${escapeHtml(createdAt)}</span></div>
+    <div><b>Printed at:</b> <span class="mono">${escapeHtml(printedAt)}</span></div>
+    <div class="muted">Schema: ${escapeHtml(b?.schema_version || "")}</div>
+  </div>
+
+  <h2>Primary Persona</h2>
+  ${listBlock("Titles", primary.titles)}
+  ${listBlock("Block keywords", primary.block_keywords)}
+  ${listBlock("Departments", primary.departments)}
+  ${listBlock("Seniorities", primary.seniorities)}
+
+  <h2>Secondary Persona</h2>
+  ${listBlock("Titles", secondary.titles)}
+  ${listBlock("Block keywords", secondary.block_keywords)}
+  ${listBlock("Departments", secondary.departments)}
+  ${listBlock("Seniorities", secondary.seniorities)}
+
+  <h2>Targeting</h2>
+  ${listBlock("Target accounts (domains)", targeting.accounts)}
+  ${listBlock("Countries", targeting.countries)}
+  ${listBlock("Industries", targeting.industries)}
+
+</body>
+</html>`;
+}
+
 async function saveBrief(status = "draft"){
   const campaignId = state.campaign.value;
   if (!campaignId) {
