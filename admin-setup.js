@@ -406,6 +406,76 @@ function buildBriefRecordHtml({ clientName, campaignName, clientId, campaignId, 
 </html>`;
 }
 
+async function printBriefRecord() {
+  const clientId = state.client.value;
+  const campaignId = state.campaign.value;
+
+  if (!clientId) return setBriefStatus("Select a client first.");
+  if (!campaignId) return setBriefStatus("Select a campaign first.");
+
+  // Ensure we have a loaded record
+  if (!window.currentBriefRecord) {
+    await loadBrief();
+  }
+  const record = window.currentBriefRecord;
+  if (!record) return setBriefStatus("No brief found to print. Save a draft first.");
+
+  const clientName = (cache.clients || []).find(c => c.client_id === clientId)?.name || "";
+  const campaignName = (cache.campaigns || []).find(c => c.campaign_id === campaignId)?.name || "";
+
+  const html = buildBriefRecordHtml({ clientName, campaignName, clientId, campaignId, record });
+
+  const w = window.open("", "_blank");
+  if (!w) return setBriefStatus("Popup blocked. Allow popups then try again.");
+
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+
+  w.focus();
+  w.print();
+
+  setBriefStatus("✅ Print window opened (use Save as PDF to download).");
+}
+
+async function downloadBriefHtml() {
+  const clientId = state.client.value;
+  const campaignId = state.campaign.value;
+
+  if (!clientId) return setBriefStatus("Select a client first.");
+  if (!campaignId) return setBriefStatus("Select a campaign first.");
+
+  if (!window.currentBriefRecord) {
+    await loadBrief();
+  }
+  const record = window.currentBriefRecord;
+  if (!record) return setBriefStatus("No brief found to download. Save a draft first.");
+
+  const clientName = (cache.clients || []).find(c => c.client_id === clientId)?.name || "";
+  const campaignName = (cache.campaigns || []).find(c => c.campaign_id === campaignId)?.name || "";
+
+  const html = buildBriefRecordHtml({ clientName, campaignName, clientId, campaignId, record });
+
+  const ts = new Date().toISOString().replace(/[:.]/g, "-");
+  const safeClient = (clientName || "client").replace(/[^a-z0-9-_]+/gi, "_");
+  const safeCamp = (campaignName || "campaign").replace(/[^a-z0-9-_]+/gi, "_");
+  const filename = `brief_${safeClient}_${safeCamp}_v${record.version || "x"}_${ts}.html`;
+
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+
+  URL.revokeObjectURL(url);
+
+  setBriefStatus(`✅ Downloaded: ${filename}`);
+}
+
 async function saveBrief(status = "draft"){
   const campaignId = state.campaign.value;
   if (!campaignId) {
@@ -975,12 +1045,14 @@ setAdminStatus("Loading clients…");
 
         setAdminStatus("");
 
-        // Wire buttons
+// Wire buttons
         $("createClientBtn").onclick = createClient;
         $("createCampaignBtn").onclick = createCampaign;
         $("createSourceBtn").onclick = createSource;
         $("btnSaveBrief").onclick = () => saveBrief("draft");
         $("btnActivateBrief").onclick = () => saveBrief("active");
+        $("btnPrintBrief").onclick = printBriefRecord;
+        $("btnDownloadBrief").onclick = downloadBriefHtml;
 
        const importBtn = document.getElementById("btnImportAccountsCsv");
        if (importBtn) importBtn.onclick = importAccountsCsv;
