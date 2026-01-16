@@ -371,7 +371,6 @@ async function loadLatestDraftOnly(campaignId){
   return data;
 }
 
-
 function escapeHtml(s){
   return String(s ?? "")
     .replaceAll("&","&amp;")
@@ -653,6 +652,8 @@ if (status === "active") {
 } else {
   await loadLatestDraftOnly(campaignId); // IMPORTANT: show the draft you just saved
   setBriefStatus("✅ Draft saved");
+}
+ 
 }
 
 //S7_04_loadBrief_prefer_active_then_latest_draft//
