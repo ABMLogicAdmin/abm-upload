@@ -1266,14 +1266,16 @@ $("btnSaveBrief").onclick = () => saveBrief("draft");
 $("btnActivateBrief").onclick = () => saveBrief("active");
 $("btnPrintBrief").onclick = printBriefRecord;
 $("btnDownloadBrief").onclick = downloadBriefHtml;
-$("btnLoadBriefHistory").onclick = loadBriefHistory;
+       
+const hb = $("btnLoadBriefHistory");
+if (hb) hb.onclick = loadBriefHistory;
 window.viewBriefVersion = viewBriefVersion; // needed because table buttons use onclick=""
 
-       const importBtn = document.getElementById("btnImportAccountsCsv");
-       if (importBtn) importBtn.onclick = importAccountsCsv;
+const importBtn = document.getElementById("btnImportAccountsCsv");
+if (importBtn) importBtn.onclick = importAccountsCsv;
 
-       const validateBtn = document.getElementById("btnValidateAccounts");
-       if (validateBtn) validateBtn.onclick = validateAccountsFromTextarea;
+const validateBtn = document.getElementById("btnValidateAccounts");
+if (validateBtn) validateBtn.onclick = validateAccountsFromTextarea;
 
 // =========================
 // Landing Page Snippet Generator
