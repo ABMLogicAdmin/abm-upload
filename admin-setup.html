@@ -769,6 +769,41 @@ hr.divider {
     
 <div id="briefStatus" class="adminStatus" style="margin-top:10px;"></div>
 
+  <!-- ===== Brief History (Version Control) ===== -->
+<div class="card" style="margin-top:16px;">
+<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+  <div>
+    <div style="font-weight:700;color:var(--brand-navy);">Brief History</div>
+    <div style="font-size:12px;color:var(--muted);">View historic versions (read-only).</div>
+  </div>
+  <button id="btnLoadBriefHistory" type="button" class="btn-secondary btn-sm" style="width:auto;">
+    Refresh History
+  </button>
+</div>
+
+<div id="briefHistoryStatus" style="margin-top:8px;font-size:12px;color:var(--muted);"></div>
+
+<div style="margin-top:10px;overflow:auto;border:1px solid var(--border);border-radius:12px;background:#fff;">
+  <table style="width:100%;border-collapse:collapse;font-size:13px;">
+    <thead>
+      <tr style="background:#f9fafb;border-bottom:1px solid var(--border);">
+        <th style="text-align:left;padding:10px;">Version</th>
+        <th style="text-align:left;padding:10px;">Status</th>
+        <th style="text-align:left;padding:10px;">Created</th>
+        <th style="text-align:left;padding:10px;">ID</th>
+        <th style="text-align:right;padding:10px;">Actions</th>
+      </tr>
+    </thead>
+    <tbody id="briefHistoryBody">
+      <tr>
+        <td colspan="5" style="padding:10px;color:var(--muted);">Click “Refresh History”.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</div>
+<!-- ===== /Brief History ===== -->
+    
   </div>
 </div>
 
