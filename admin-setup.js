@@ -168,13 +168,14 @@ const BRIEF_OPTIONS = {
           }
         }
       
-        // If a campaign is selected, refresh snippet panel
-       if (key === "campaign") {
-         syncSnippetPanel();
-        await loadBrief();
-        setActiveTab("brief");
-       }
-
+  // If a campaign is selected, refresh snippet panel
+  if (key === "campaign") {
+   syncSnippetPanel();
+   await loadBrief();        // loads the brief into the form
+   await loadBriefHistory(); // loads the history table under the form
+   setActiveTab("brief");
+ }
+         
       });
 
         list.appendChild(b);
@@ -525,6 +526,97 @@ async function downloadBriefHtml() {
   URL.revokeObjectURL(url);
 
   setBriefStatus(`✅ Downloaded: ${filename}`);
+}
+
+function setBriefHistoryStatus(msg){
+  const el = document.getElementById("briefHistoryStatus");
+  if (el) el.textContent = msg || "";
+}
+
+function fmtDate(ts){
+  if (!ts) return "";
+  try { return new Date(ts).toISOString().replace("T", " ").replace("Z","Z"); }
+  catch { return String(ts); }
+}
+
+async function loadBriefHistory(){
+  const campaignId = state.campaign.value;
+  if (!campaignId) return setBriefHistoryStatus("Select a campaign first.");
+
+  setBriefHistoryStatus("Loading history…");
+
+  const { data, error } = await sb
+    .from("campaign_qc_briefs")
+    .select("id,status,version,created_at,created_by")
+    .eq("campaign_id", campaignId)
+    .order("version", { ascending: false });
+
+  if (error) return setBriefHistoryStatus(`❌ Failed: ${error.message}`);
+
+  const tbody = document.getElementById("briefHistoryBody");
+  if (!tbody) return;
+
+  const rows = data || [];
+  if (!rows.length) {
+    tbody.innerHTML = `<tr><td colspan="5" style="padding:10px;color:var(--muted);">No versions found.</td></tr>`;
+    setBriefHistoryStatus("");
+    return;
+  }
+
+  tbody.innerHTML = rows.map(r => {
+    const badge =
+      r.status === "active" ? "✅ active" :
+      r.status === "draft" ? "📝 draft" :
+      r.status === "archived" ? "📦 archived" : r.status;
+
+    const highlight = (r.status === "active") ? `style="background:#ecfeff;"` : "";
+
+    return `
+      <tr ${highlight} style="border-bottom:1px solid #e5e7eb;">
+        <td style="padding:10px;">v${r.version}</td>
+        <td style="padding:10px;">${badge}</td>
+        <td style="padding:10px;">${fmtDate(r.created_at)}</td>
+        <td style="padding:10px;font-family:ui-monospace,Menlo,Consolas,monospace;font-size:12px;">${r.id}</td>
+        <td style="padding:10px;text-align:right;">
+          <button type="button" class="btn-secondary btn-sm" style="width:auto;" onclick="viewBriefVersion('${r.id}')">View</button>
+        </td>
+      </tr>
+    `;
+  }).join("");
+
+  setBriefHistoryStatus(`Loaded ${rows.length} version(s). Active is highlighted.`);
+}
+
+async function viewBriefVersion(briefId){
+  if (!briefId) return;
+
+  const w = window.open("", "_blank");
+  if (!w) return setBriefHistoryStatus("Popup blocked. Allow popups then try again.");
+
+  const { data, error } = await sb
+    .from("campaign_qc_briefs")
+    .select("id,campaign_id,status,version,created_at,qc_brief")
+    .eq("id", briefId)
+    .maybeSingle();
+
+  if (error || !data) {
+    w.close();
+    return setBriefHistoryStatus(`❌ Failed to load version: ${error?.message || "Not found"}`);
+  }
+
+  const clientId = state.client.value;
+  const campaignId = state.campaign.value;
+
+  const clientName = (cache.clients || []).find(c => c.client_id === clientId)?.name || "";
+  const campaignName = (cache.campaigns || []).find(c => c.campaign_id === campaignId)?.name || "";
+
+  // Reuse your existing HTML builder (already in your code)
+  const html = buildBriefRecordHtml({ clientName, campaignName, clientId, campaignId, record: data });
+
+  w.document.open();
+  w.document.write(html);
+  w.document.close();
+  w.focus();
 }
 
 async function saveBrief(status = "draft"){
@@ -1167,13 +1259,15 @@ setAdminStatus("Loading clients…");
         setAdminStatus("");
 
 // Wire buttons
-        $("createClientBtn").onclick = createClient;
-        $("createCampaignBtn").onclick = createCampaign;
-        $("createSourceBtn").onclick = createSource;
-        $("btnSaveBrief").onclick = () => saveBrief("draft");
-        $("btnActivateBrief").onclick = () => saveBrief("active");
-        $("btnPrintBrief").onclick = printBriefRecord;
-        $("btnDownloadBrief").onclick = downloadBriefHtml;
+$("createClientBtn").onclick = createClient;
+$("createCampaignBtn").onclick = createCampaign;
+$("createSourceBtn").onclick = createSource;
+$("btnSaveBrief").onclick = () => saveBrief("draft");
+$("btnActivateBrief").onclick = () => saveBrief("active");
+$("btnPrintBrief").onclick = printBriefRecord;
+$("btnDownloadBrief").onclick = downloadBriefHtml;
+$("btnLoadBriefHistory").onclick = loadBriefHistory;
+window.viewBriefVersion = viewBriefVersion; // needed because table buttons use onclick=""
 
        const importBtn = document.getElementById("btnImportAccountsCsv");
        if (importBtn) importBtn.onclick = importAccountsCsv;
