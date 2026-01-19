@@ -510,20 +510,102 @@ hr.divider {
   </div>
 
   <!-- Tabs -->
-  <div class="tabs">
-    <button class="tabBtn active" type="button" data-tab="setup">
-      Setup
-    </button>
-    <button class="tabBtn" type="button" data-tab="brief">
-      Campaign Brief
-    </button>
-    <button class="tabBtn" type="button" data-tab="activation">
-      Activation
-    </button>
-  </div>
+<div class="tabs">
+  <button class="tabBtn active" type="button" data-tab="setup">
+    Setup
+  </button>
+  <button class="tabBtn" type="button" data-tab="brief">
+    Campaign Brief
+  </button>
+  <button class="tabBtn" type="button" data-tab="activation">
+    Activation
+  </button>
+  <button class="tabBtn" type="button" data-tab="audience">
+    Audience
+  </button>
+</div>
 </div>
 
  <!-- TAB PANELS START -->
+
+<div class="tabPanel" data-panel="audience" id="panelAudience">
+  <div class="card stageCard">
+    <p class="panelTitle">Audience</p>
+    <p class="panelNote">
+      Upload an Apollo/partner CSV for the selected campaign. Validate first, then import.
+    </p>
+
+    <div style="margin-top:10px; padding:12px; border:1px solid var(--border); border-radius:12px; background:#fff;">
+      <div style="font-weight:700; color:var(--brand-navy); margin-bottom:6px;">Campaign context</div>
+      <div style="font-size:12.5px; color:var(--muted);">
+        This is campaign-scoped. Duplicates are only checked within the selected campaign.
+      </div>
+
+      <div class="row" style="margin-top:10px;">
+        <div>
+          <label>Campaign ID</label>
+          <input id="audCampaignId" readonly />
+        </div>
+        <div>
+          <label>Selected Campaign Name</label>
+          <input id="audCampaignName" readonly />
+        </div>
+      </div>
+    </div>
+
+    <hr class="divider" />
+
+    <p class="adminTitle">Import Contacts (CSV)</p>
+    <p class="adminNote">
+      Required header: <b>Email</b>. All other fields are optional. Unknown columns are ignored.
+    </p>
+
+    <div class="csvRow">
+      <input type="file" id="audience_csv_file" accept=".csv" />
+      <div class="csvActions">
+        <button id="btnAudienceValidate" type="button" class="btn btn-sm">Validate</button>
+        <button id="btnAudienceImport" type="button" class="btn-secondary btn-sm" disabled>Import</button>
+      </div>
+    </div>
+
+    <p class="helpText">
+      Validate shows totals, duplicates (in-file + vs DB for this campaign), and a 20-row preview.
+    </p>
+
+    <div id="audienceResultsBox" style="margin-top:10px; padding:12px; border:1px solid var(--border); border-radius:12px; background:#fff; display:none;">
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
+        <div style="font-weight:700; color:var(--brand-navy);">Validation Results</div>
+        <div id="audienceCounts" style="font-size:12px; color:var(--muted);"></div>
+      </div>
+      <pre id="audienceResultsOut" style="margin:10px 0 0; white-space:pre-wrap; font-size:12.5px;"></pre>
+    </div>
+
+    <div style="margin-top:12px; overflow:auto; border:1px solid var(--border); border-radius:12px; background:#fff;">
+      <table style="width:100%; border-collapse:collapse; font-size:13px;">
+        <thead>
+          <tr style="background:#f9fafb; border-bottom:1px solid var(--border);">
+            <th style="text-align:left;padding:10px;">Email</th>
+            <th style="text-align:left;padding:10px;">Name</th>
+            <th style="text-align:left;padding:10px;">Title</th>
+            <th style="text-align:left;padding:10px;">Company</th>
+            <th style="text-align:left;padding:10px;">Domain</th>
+            <th style="text-align:left;padding:10px;">LinkedIn</th>
+            <th style="text-align:left;padding:10px;">Phones</th>
+            <th style="text-align:left;padding:10px;">City</th>
+            <th style="text-align:left;padding:10px;">Country</th>
+          </tr>
+        </thead>
+        <tbody id="audiencePreviewBody">
+          <tr>
+            <td colspan="9" style="padding:10px;color:var(--muted);">Validate a CSV to see preview.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div id="audienceStatus" class="adminStatus" style="margin-top:10px;"></div>
+  </div>
+</div>
 
 <div class="tabPanel active" data-panel="setup" id="panelSetup">
   <div class="card stageCard">
@@ -879,4 +961,3 @@ hr.divider {
 
 </body>
 </html>
-
