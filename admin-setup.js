@@ -155,20 +155,21 @@ const BRIEF_OPTIONS = {
         container.classList.remove("open");
         renderDropdown(containerId, key, placeholder);
       
-        // If a client is selected, load campaigns for that client
-        if (key === "client") {
-          setAdminStatus("Loading campaigns…");
-          try {
-            await loadCampaignsForClient(it.value);
-            setAdminStatus("");
-           
-            syncSnippetPanel();
-          } catch (e) {
-            setAdminStatus(String(e?.message || e));
-          }
-        }
+// If a client is selected, load campaigns for that client
+if (key === "client") {
+  setAdminStatus("Loading campaigns…");
+  try {
+    await loadCampaignsForClient(it.value);
+    setAdminStatus("");
+
+    syncSnippetPanel();
+    syncAudiencePanel();   // ✅ ADD THIS LINE
+  } catch (e) {
+    setAdminStatus(String(e?.message || e));
+  }
+}
       
-  // If a campaign is selected, refresh snippet panel
+// If a campaign is selected, refresh snippet panel
   if (key === "campaign") {
    syncSnippetPanel();
    syncAudiencePanel();
