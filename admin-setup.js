@@ -1283,8 +1283,8 @@ async function validateAudienceCsv() {
   try {
     csvText = await readSelectedAudienceCsvText();
        // MVP safety limit: prevent huge Apollo files breaking browser/edge
-    if (csvText.length > 2_000_000) {
-      throw new Error("CSV too large for MVP (~2MB max). Split the file and try again.");
+    if (csvText.length > 10_000_000) {
+    throw new Error("CSV too large for MVP (~10MB max). Split the file and try again.");
     }
   } catch (e) {
     return setAudienceStatus(`❌ ${String(e?.message || e)}`);
