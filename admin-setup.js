@@ -171,6 +171,7 @@ const BRIEF_OPTIONS = {
   // If a campaign is selected, refresh snippet panel
   if (key === "campaign") {
    syncSnippetPanel();
+   syncAudiencePanel();
    await loadBrief();        // loads the brief into the form
    await loadBriefHistory(); // loads the history table under the form
    setActiveTab("brief");
@@ -259,7 +260,7 @@ window.__abmLeadFormBound = true;
 function currentTouchModel() {
   const campaignId = state.campaign.value;
   const c = (cache.campaigns || []).find(x => x.campaign_id === campaignId);
-  return (c && c.touch_model) ? c.touch_model : "single";
+  return c?.touch_model || "single";
 }
 
 function syncSnippetPanel() {
@@ -845,7 +846,6 @@ async function loadActiveBriefOnly(campaignId) {
      $("loginStatus").textContent = "";
      await showApp();
      
-
     }
 
     async function logout() {
@@ -1175,6 +1175,191 @@ function renderMultiSelectDropdown(containerId, options = [], initialValues = []
   draw();
 }
 
+// =========================
+// Audience (Slice A) — Validate + Preview (Import comes later)
+// =========================
+
+function setAudienceStatus(msg) {
+  const el = document.getElementById("audienceStatus");
+  if (el) el.textContent = msg || "";
+  // also mirror to global adminStatus so you see it
+  setAdminStatus(msg || "");
+}
+
+function showAudienceResults(text, countsText) {
+  const box = document.getElementById("audienceResultsBox");
+  const out = document.getElementById("audienceResultsOut");
+  const counts = document.getElementById("audienceCounts");
+  if (!box || !out || !counts) return;
+
+  out.textContent = text || "";
+  counts.textContent = countsText || "";
+  box.style.display = (text || countsText) ? "block" : "none";
+}
+
+function clearAudiencePreviewTable() {
+  const body = document.getElementById("audiencePreviewBody");
+  if (!body) return;
+  body.innerHTML = `<tr><td colspan="9" style="padding:10px;color:var(--muted);">Validate a CSV to see preview.</td></tr>`;
+}
+
+function renderAudiencePreviewRows(previewRows) {
+  const body = document.getElementById("audiencePreviewBody");
+  if (!body) return;
+
+  const rows = Array.isArray(previewRows) ? previewRows : [];
+
+  if (!rows.length) {
+    clearAudiencePreviewTable();
+    return;
+  }
+
+  body.innerHTML = rows.map(r => {
+    const name = `${r.first_name || ""} ${r.last_name || ""}`.trim();
+    const li = (r.linkedin_url || "").trim();
+
+    return `
+      <tr style="border-bottom:1px solid #e5e7eb;">
+        <td style="padding:10px;">${escapeHtml(r.email || "")}</td>
+        <td style="padding:10px;">${escapeHtml(name)}</td>
+        <td style="padding:10px;">${escapeHtml(r.title || "")}</td>
+        <td style="padding:10px;">${escapeHtml(r.company || "")}</td>
+        <td style="padding:10px;">${escapeHtml(r.domain || "")}</td>
+        <td style="padding:10px;">
+          ${li ? `<a href="${escapeHtml(li)}" target="_blank" rel="noopener">open</a>` : ""}
+        </td>
+        <td style="padding:10px;">${escapeHtml(r.phones || "")}</td>
+        <td style="padding:10px;">${escapeHtml(r.city || "")}</td>
+        <td style="padding:10px;">${escapeHtml(r.country || "")}</td>
+      </tr>
+    `;
+  }).join("");
+}
+
+// Keep the Audience panel context synced to selected campaign
+function syncAudiencePanel() {
+  const campaignId = state.campaign.value || "";
+  const campaign = (cache.campaigns || []).find(c => c.campaign_id === campaignId);
+
+  const idEl = document.getElementById("audCampaignId");
+  const nameEl = document.getElementById("audCampaignName");
+
+  if (idEl) idEl.value = campaignId;
+  if (nameEl) nameEl.value = campaign?.name || "";
+
+  // Reset panel output when campaign changes
+  showAudienceResults("", "");
+  clearAudiencePreviewTable();
+
+  const importBtn = document.getElementById("btnAudienceImport");
+  if (importBtn) importBtn.disabled = true;
+}
+
+// Read CSV file -> text
+async function readSelectedAudienceCsvText() {
+  const fileEl = document.getElementById("audience_csv_file");
+  if (!fileEl) throw new Error("CSV file input not found (audience_csv_file).");
+
+  const f = fileEl.files && fileEl.files[0];
+  if (!f) throw new Error("Select a CSV file first.");
+
+  const text = await f.text();
+  if (!text.trim()) throw new Error("CSV file looks empty.");
+
+  return text;
+}
+
+// Call edge function: audience_validate_csv
+async function validateAudienceCsv() {
+  const campaignId = state.campaign.value;
+  if (!campaignId) return setAudienceStatus("Select a campaign first (top right).");
+
+  setAudienceStatus("Validating CSV…");
+  showAudienceResults("", "");
+  clearAudiencePreviewTable();
+
+  let csvText = "";
+  try {
+    csvText = await readSelectedAudienceCsvText();
+       // MVP safety limit: prevent huge Apollo files breaking browser/edge
+    if (csvText.length > 2_000_000) {
+      throw new Error("CSV too large for MVP (~2MB max). Split the file and try again.");
+    }
+  } catch (e) {
+    return setAudienceStatus(`❌ ${String(e?.message || e)}`);
+  }
+
+  try {
+    const { data: sessionRes } = await sb.auth.getSession();
+    const accessToken = sessionRes?.session?.access_token;
+
+    const url = `${SUPABASE_URL}/functions/v1/audience_validate_csv`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        // IMPORTANT: your edge fn accepts anon, but we still pass JWT if present
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        apikey: window.ABM_SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({
+        campaign_id: campaignId,
+        csv_text: csvText,
+      }),
+    });
+
+    const out = await res.json().catch(() => ({}));
+
+    if (!res.ok || !out.ok) {
+      const msg = out?.error || `Validate failed (HTTP ${res.status})`;
+      setAudienceStatus(`❌ ${msg}`);
+      showAudienceResults(JSON.stringify(out, null, 2), "");
+      return;
+    }
+
+    // Build a human summary
+    const totals = out.totals || {};
+    const dups = out.duplicates || {};
+
+    const summaryLines = [];
+    summaryLines.push(`TOTAL ROWS: ${totals.total_rows ?? 0}`);
+    summaryLines.push(`VALID EMAIL ROWS: ${totals.valid_email_rows ?? 0}`);
+    summaryLines.push(`INVALID EMAIL ROWS: ${totals.invalid_email_rows ?? 0}`);
+    summaryLines.push("");
+    summaryLines.push(`DUPLICATES IN FILE: ${dups.duplicates_in_file ?? 0}`);
+    summaryLines.push(`DUPLICATES VS DB (THIS CAMPAIGN): ${dups.duplicates_vs_db ?? 0}`);
+
+    if ((dups.duplicates_vs_db_emails || []).length) {
+      summaryLines.push("");
+      summaryLines.push(`EXAMPLES ALREADY IN DB (max 50):`);
+      for (const e of dups.duplicates_vs_db_emails) summaryLines.push(`- ${e}`);
+    }
+
+    const countsText = `Rows: ${totals.total_rows ?? 0} • Valid emails: ${totals.valid_email_rows ?? 0} • Invalid: ${totals.invalid_email_rows ?? 0}`;
+
+    showAudienceResults(summaryLines.join("\n"), countsText);
+    renderAudiencePreviewRows(out.preview || []);
+
+    // Enable Import button only after a successful validation
+    const importBtn = document.getElementById("btnAudienceImport");
+    if (importBtn) importBtn.disabled = false;
+
+    // stash last validation for later import step
+    window.__lastAudienceValidation = out;
+
+    setAudienceStatus("✅ Validation complete. Preview updated.");
+  } catch (e) {
+    setAudienceStatus(`❌ Network/Fetch error: ${String(e?.message || e)}`);
+  }
+}
+
+// Import is NOT implemented yet (by your Slice A contract: validate first, import next)
+async function importAudienceCsvStub() {
+  setAudienceStatus("Import not built yet. Next step is audience_import_csv edge function + DB insert.");
+}
+
+
     async function showApp() {
       // Get user + set navbar identity
       const { data: userRes } = await sb.auth.getUser();
@@ -1277,6 +1462,13 @@ if (importBtn) importBtn.onclick = importAccountsCsv;
 const validateBtn = document.getElementById("btnValidateAccounts");
 if (validateBtn) validateBtn.onclick = validateAccountsFromTextarea;
 
+// Audience tab buttons
+const vBtn = document.getElementById("btnAudienceValidate");
+if (vBtn) vBtn.onclick = validateAudienceCsv;
+
+const iBtn = document.getElementById("btnAudienceImport");
+if (iBtn) iBtn.onclick = importAudienceCsvStub;
+
 // =========================
 // Landing Page Snippet Generator
 // =========================
@@ -1334,9 +1526,9 @@ $("snStatus1").textContent = (touchModel === "double")
         $("btnCopySn1").onclick = () => copyFieldToClipboard("snTouch1", "snStatus1");
         $("btnCopySn2").onclick = () => copyFieldToClipboard("snTouch2", "snStatus2");
         
-        // Keep the panel in sync on first load
-        syncSnippetPanel();
-
+// Keep the panel in sync on first load
+syncSnippetPanel();
+syncAudiencePanel();
 
       } catch (e) {
         setAdminStatus(String(e?.message || e));
