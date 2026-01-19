@@ -175,7 +175,7 @@ if (key === "client") {
    syncAudiencePanel();
    await loadBrief();        // loads the brief into the form
    await loadBriefHistory(); // loads the history table under the form
-   setActiveTab("brief");
+   // setActiveTab("brief");
  }
          
       });
@@ -1302,7 +1302,7 @@ async function validateAudienceCsv() {
         "Content-Type": "application/json",
         // IMPORTANT: your edge fn accepts anon, but we still pass JWT if present
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        apikey: window.ABM_SUPABASE_ANON_KEY,
+        "apikey": window.ABM_SUPABASE_ANON_KEY,
       },
       body: JSON.stringify({
         campaign_id: campaignId,
