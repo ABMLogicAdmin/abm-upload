@@ -1190,6 +1190,13 @@ function renderMultiSelectDropdown(containerId, options = [], initialValues = []
 // Audience (Slice A) — Validate + Preview (Import comes later)
 // =========================
 
+function getAudienceSourceSystemOrThrow() {
+  const el = document.getElementById("audienceSourceSystem");
+  const v = (el?.value || "").trim();
+  if (!v) throw new Error("❌ Vendor / Source system is required before Validate and Import.");
+  return v;
+}
+
 function setAudienceStatus(msg) {
   const el = document.getElementById("audienceStatus");
   if (el) el.textContent = msg || "";
@@ -1264,6 +1271,10 @@ function syncAudiencePanel() {
 
   const importBtn = document.getElementById("btnAudienceImport");
   if (importBtn) importBtn.disabled = true;
+
+ // Re-enable source system when campaign changes
+  const srcEl = document.getElementById("audienceSourceSystem");
+  if (srcEl) srcEl.removeAttribute("disabled");
 }
 
 // Read CSV file -> text
@@ -1285,6 +1296,15 @@ async function validateAudienceCsv() {
   const campaignId = state.campaign.value;
   if (!campaignId) return setAudienceStatus("Select a campaign first (top right).");
 
+  // Require Vendor / Source system before Validate
+  let sourceSystem = "";
+  try {
+    sourceSystem = getAudienceSourceSystemOrThrow();
+  } catch (e) {
+    setAudienceStatus(String(e?.message || e));
+    return;
+  }
+ 
   setAudienceStatus("Validating CSV…");
   showAudienceResults("", "");
   clearAudiencePreviewTable();
@@ -1393,8 +1413,13 @@ try {
     window.__lastAudienceValidation = {
       ...out,
       // include storage reference so Import step can reuse the exact same file:
+      _source_system: sourceSystem, // ✅ store it so Import uses the same value
       _storage: { bucket: BUCKET, path: storagePath, size: file.size, name: file.name },
     };
+
+    // Lock the source system after Validate
+     const srcEl = document.getElementById("audienceSourceSystem");
+     if (srcEl) srcEl.setAttribute("disabled", "disabled");
 
     // If the file was too big to send csv_text, warn you that v2 is required.
     if (!csvText) {
@@ -1414,9 +1439,21 @@ async function importAudienceCsv() {
   const campaignId = state.campaign.value;
   if (!campaignId) return setAudienceStatus("Select a campaign first (top right).");
 
-  // Prefer using the exact same file you validated (bucket+path)
+// Prefer using the exact same file you validated (bucket+path)
   const last = window.__lastAudienceValidation;
   const storage = last?._storage;
+ 
+// Require Vendor / Source system before Import
+  let sourceSystem = "";
+  try {
+    // Prefer the value used during Validate
+    sourceSystem = (window.__lastAudienceValidation?._source_system || "").trim();
+    if (!sourceSystem) sourceSystem = getAudienceSourceSystemOrThrow();
+  } catch (e) {
+    setAudienceStatus(String(e?.message || e));
+    return;
+  }
+
 
   // If user clicks Import without Validate, we can still upload+import
   // but for MVP we’ll enforce Validate-first, because you want preview & duplicate counts.
@@ -1438,12 +1475,13 @@ async function importAudienceCsv() {
         Authorization: `Bearer ${accessToken}`,
         apikey: window.ABM_SUPABASE_ANON_KEY,
       },
-      body: JSON.stringify({
-        campaign_id: campaignId,
-        bucket: storage.bucket,
-        storage_path: storage.path,
-      }),
-    });
+     body: JSON.stringify({
+      campaign_id: campaignId,
+      bucket: storage.bucket,
+      storage_path: storage.path,
+      source_system: sourceSystem,
+    }),
+   });
 
     const out = await res.json().catch(() => ({}));
 
