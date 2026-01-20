@@ -1635,6 +1635,22 @@ if (vBtn) vBtn.onclick = validateAudienceCsv;
 const iBtn = document.getElementById("btnAudienceImport");
 if (iBtn) iBtn.onclick = importAudienceCsv;
 
+const chooseBtn = document.getElementById("btnAudienceChooseFile");
+const fileInput = document.getElementById("audience_csv_file");
+const fileName = document.getElementById("audienceFileName");
+
+if (chooseBtn && fileInput) {
+  chooseBtn.onclick = () => fileInput.click();
+
+  fileInput.addEventListener("change", () => {
+    if (fileName) {
+      fileName.textContent = fileInput.files?.[0]?.name || "No file selected";
+    }
+  });
+}
+
+
+       
 // =========================
 // Landing Page Snippet Generator
 // =========================
