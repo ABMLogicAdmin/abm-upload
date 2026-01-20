@@ -572,7 +572,30 @@ hr.divider {
 </div>
 
     <div class="csvRow">
-      <input type="file" id="audience_csv_file" accept=".csv" />
+      <div class="file-input-row">
+  <input
+    type="file"
+    id="audience_csv_file"
+    accept=".csv"
+    hidden
+  />
+
+  <button
+    type="button"
+    class="btn-secondary"
+    id="btnAudienceChooseFile"
+  >
+    Choose file
+  </button>
+
+  <span
+    id="audienceFileName"
+    class="file-name"
+  >
+    No file selected
+  </span>
+</div>
+
       <div class="csvActions">
         <button id="btnAudienceValidate" type="button" class="btn btn-sm">Validate</button>
         <button id="btnAudienceImport" type="button" class="btn-secondary btn-sm" disabled>Import</button>
