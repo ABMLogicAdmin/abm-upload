@@ -27,6 +27,16 @@
   const cache = { clients: [], campaigns: [] };
   window.cache = cache;
 
+async function requireAccessToken() {
+  const { data, error } = await sb.auth.getSession();
+  if (error) throw new Error(`Session error: ${error.message}`);
+
+  const token = data?.session?.access_token;
+  if (!token) throw new Error("No access token. Logout + login again (session missing/expired).");
+
+  return token;
+}
+
 // Close dropdown when clicking outside
 document.addEventListener("click", (e) => {
   const ids = ["ddClient", "ddCampaign", "ms_primary_departments", "ms_primary_seniorities","ms_secondary_departments","ms_secondary_seniorities","ms_countries"];
@@ -1321,8 +1331,7 @@ try {
    }
 
     // ---- 4) Call Edge Function with bucket + storage_path ----
-    const { data: sessionRes } = await sb.auth.getSession();
-    const accessToken = sessionRes?.session?.access_token;
+   const accessToken = await requireAccessToken();
 
     const url = `${SUPABASE_URL}/functions/v1/audience_validate_csv`;
 
@@ -1332,7 +1341,7 @@ try {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        Authorization: `Bearer ${accessToken}`,
         apikey: window.ABM_SUPABASE_ANON_KEY,
       },
       body: JSON.stringify({
@@ -1418,8 +1427,7 @@ async function importAudienceCsv() {
   setAudienceStatus("Importing CSV into campaign_contacts…");
 
   try {
-    const { data: sessionRes } = await sb.auth.getSession();
-    const accessToken = sessionRes?.session?.access_token;
+   const accessToken = await requireAccessToken();
 
     const url = `${SUPABASE_URL}/functions/v1/audience_import_csv`;
 
@@ -1427,7 +1435,7 @@ async function importAudienceCsv() {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        Authorization: `Bearer ${accessToken}`,
         apikey: window.ABM_SUPABASE_ANON_KEY,
       },
       body: JSON.stringify({
