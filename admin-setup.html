@@ -560,6 +560,17 @@ hr.divider {
       Required header: <b>Email</b>. All other fields are optional. Unknown columns are ignored.
     </p>
 
+    <label for="audienceSourceSystem">Vendor / Source system <span style="color:#c00;">*</span></label>
+<input
+  id="audienceSourceSystem"
+  type="text"
+  placeholder="e.g. apollo, zoominfo, linkedin, first_party, client_upload"
+  autocomplete="off"
+/>
+<div class="helpText">
+  Required for audit, reporting, and compliance. We do not auto-detect this.
+</div>
+
     <div class="csvRow">
       <input type="file" id="audience_csv_file" accept=".csv" />
       <div class="csvActions">
