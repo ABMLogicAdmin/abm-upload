@@ -1270,7 +1270,7 @@ async function readSelectedAudienceCsvText() {
   return text;
 }
 
-// Call edge function: audience_validate_csv
+// Call edge function: audience_validate_csv (Storage-first)
 async function validateAudienceCsv() {
   const campaignId = state.campaign.value;
   if (!campaignId) return setAudienceStatus("Select a campaign first (top right).");
@@ -1279,34 +1279,69 @@ async function validateAudienceCsv() {
   showAudienceResults("", "");
   clearAudiencePreviewTable();
 
-  let csvText = "";
-  try {
-    csvText = await readSelectedAudienceCsvText();
-       // MVP safety limit: prevent huge Apollo files breaking browser/edge
-    if (csvText.length > 10_000_000) {
-    throw new Error("CSV too large for MVP (~10MB max). Split the file and try again.");
-    }
-  } catch (e) {
-    return setAudienceStatus(`❌ ${String(e?.message || e)}`);
+  // ---- 1) Get the selected CSV FILE (not text) ----
+  // NOTE: Update this ID if your file input uses a different id.
+const fileEl = document.getElementById("audience_csv_file");
+const file = fileEl?.files?.[0];
+if (!file) return setAudienceStatus("❌ Please choose a CSV file first.");
+
+  // ---- 2) Upload to Storage bucket: contact-uploads ----
+const BUCKET = "contact-uploads";
+const uuid = (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()));
+const storagePath = `contacts/${uuid}.csv`;
+
+try {
+  // Hard MVP guardrail (kept): prevents browser/edge issues while v2 is not deployed.
+  // Once Edge Function v2 reads from Storage, we can raise/remove this.
+  const MAX_BYTES = 10_000_000; // ~10MB
+  const isSmallEnoughToAlsoSendText = file.size <= MAX_BYTES;
+
+  setAudienceStatus("Uploading CSV to secure storage…");
+
+  const uploadRes = await sb.storage
+    .from(BUCKET)
+    .upload(storagePath, file, {
+      contentType: file.type || "text/csv",
+      upsert: false,
+    });
+
+  if (uploadRes.error) {
+    throw new Error(`Storage upload failed: ${uploadRes.error.message}`);
   }
 
-  try {
+   // ---- 3) OPTIONAL: read text only for small files (backward compatibility) ----
+   // This keeps validation working *right now* even before Edge Function v2 is deployed.
+   let csvText = null;
+   if (isSmallEnoughToAlsoSendText) {
+     try {
+       csvText = await file.text();
+     } catch {
+       csvText = null;
+     }
+   }
+
+    // ---- 4) Call Edge Function with bucket + storage_path ----
     const { data: sessionRes } = await sb.auth.getSession();
     const accessToken = sessionRes?.session?.access_token;
 
     const url = `${SUPABASE_URL}/functions/v1/audience_validate_csv`;
 
+    setAudienceStatus("Running validation (Edge Function)…");
+
     const res = await fetch(url, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
-        // IMPORTANT: your edge fn accepts anon, but we still pass JWT if present
         ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
-        "apikey": window.ABM_SUPABASE_ANON_KEY,
+        apikey: window.ABM_SUPABASE_ANON_KEY,
       },
       body: JSON.stringify({
         campaign_id: campaignId,
-        csv_text: csvText,
+        bucket: BUCKET,
+        storage_path: storagePath,
+
+        // Backward-compatible fallback (remove once v2 is live):
+        ...(csvText ? { csv_text: csvText } : {}),
       }),
     });
 
@@ -1319,7 +1354,7 @@ async function validateAudienceCsv() {
       return;
     }
 
-    // Build a human summary
+    // ---- 5) Render results (unchanged contract) ----
     const totals = out.totals || {};
     const dups = out.duplicates || {};
 
@@ -1342,16 +1377,26 @@ async function validateAudienceCsv() {
     showAudienceResults(summaryLines.join("\n"), countsText);
     renderAudiencePreviewRows(out.preview || []);
 
-    // Enable Import button only after a successful validation
     const importBtn = document.getElementById("btnAudienceImport");
     if (importBtn) importBtn.disabled = false;
 
     // stash last validation for later import step
-    window.__lastAudienceValidation = out;
+    window.__lastAudienceValidation = {
+      ...out,
+      // include storage reference so Import step can reuse the exact same file:
+      _storage: { bucket: BUCKET, path: storagePath, size: file.size, name: file.name },
+    };
 
-    setAudienceStatus("✅ Validation complete. Preview updated.");
+    // If the file was too big to send csv_text, warn you that v2 is required.
+    if (!csvText) {
+      setAudienceStatus(
+        "✅ Uploaded and validated. (If you test a >10MB file: deploy Edge Function v2 to validate from Storage only.)"
+      );
+    } else {
+      setAudienceStatus("✅ Validation complete. Preview updated.");
+    }
   } catch (e) {
-    setAudienceStatus(`❌ Network/Fetch error: ${String(e?.message || e)}`);
+    setAudienceStatus(`❌ ${String(e?.message || e)}`);
   }
 }
 
@@ -1359,7 +1404,6 @@ async function validateAudienceCsv() {
 async function importAudienceCsvStub() {
   setAudienceStatus("Import not built yet. Next step is audience_import_csv edge function + DB insert.");
 }
-
 
     async function showApp() {
       // Get user + set navbar identity
