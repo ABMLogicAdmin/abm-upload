@@ -1400,9 +1400,77 @@ try {
   }
 }
 
-// Import is NOT implemented yet (by your Slice A contract: validate first, import next)
-async function importAudienceCsvStub() {
-  setAudienceStatus("Import not built yet. Next step is audience_import_csv edge function + DB insert.");
+// Import
+async function importAudienceCsv() {
+  const campaignId = state.campaign.value;
+  if (!campaignId) return setAudienceStatus("Select a campaign first (top right).");
+
+  // Prefer using the exact same file you validated (bucket+path)
+  const last = window.__lastAudienceValidation;
+  const storage = last?._storage;
+
+  // If user clicks Import without Validate, we can still upload+import
+  // but for MVP we’ll enforce Validate-first, because you want preview & duplicate counts.
+  if (!storage?.bucket || !storage?.path) {
+    return setAudienceStatus("Please click Validate first (so we import the exact same validated file).");
+  }
+
+  setAudienceStatus("Importing CSV into campaign_contacts…");
+
+  try {
+    const { data: sessionRes } = await sb.auth.getSession();
+    const accessToken = sessionRes?.session?.access_token;
+
+    const url = `${SUPABASE_URL}/functions/v1/audience_import_csv`;
+
+    const res = await fetch(url, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        ...(accessToken ? { Authorization: `Bearer ${accessToken}` } : {}),
+        apikey: window.ABM_SUPABASE_ANON_KEY,
+      },
+      body: JSON.stringify({
+        campaign_id: campaignId,
+        bucket: storage.bucket,
+        storage_path: storage.path,
+      }),
+    });
+
+    const out = await res.json().catch(() => ({}));
+
+    if (!res.ok || !out.ok) {
+      const msg = out?.error || `Import failed (HTTP ${res.status})`;
+      setAudienceStatus(`❌ ${msg}`);
+      // show details if returned
+      if (out?.details) setAudienceStatus(`❌ ${msg}\n${out.details}`);
+      return;
+    }
+
+    // expected from your import TS:
+    // out.inserted_count, out.duplicates, out.totals, out.batch_id, etc.
+    const inserted = out.inserted_count ?? 0;
+    const d = out.duplicates || {};
+    const t = out.totals || {};
+
+    setAudienceStatus(
+      `✅ Import complete.\n` +
+      `Inserted: ${inserted}\n` +
+      `Total rows: ${t.total_rows ?? "?"}\n` +
+      `Valid emails: ${t.valid_email_rows ?? "?"}\n` +
+      `Skipped invalid: ${out.skipped_invalid_count ?? 0}\n` +
+      `Skipped dupes in file: ${out.skipped_duplicates_in_file_count ?? 0}\n` +
+      `Skipped already in DB: ${out.skipped_duplicates_vs_db_count ?? 0}\n` +
+      (out.batch_id ? `Batch ID: ${out.batch_id}` : "")
+    );
+
+    // Optional MVP UX: disable Import again until next Validate
+    const importBtn = document.getElementById("btnAudienceImport");
+    if (importBtn) importBtn.disabled = true;
+
+  } catch (e) {
+    setAudienceStatus(`❌ ${String(e?.message || e)}`);
+  }
 }
 
     async function showApp() {
@@ -1512,7 +1580,7 @@ const vBtn = document.getElementById("btnAudienceValidate");
 if (vBtn) vBtn.onclick = validateAudienceCsv;
 
 const iBtn = document.getElementById("btnAudienceImport");
-if (iBtn) iBtn.onclick = importAudienceCsvStub;
+if (iBtn) iBtn.onclick = importAudienceCsv;
 
 // =========================
 // Landing Page Snippet Generator
