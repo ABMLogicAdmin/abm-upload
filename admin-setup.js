@@ -37,13 +37,11 @@ async function requireAccessToken() {
   return token;
 }
 
-// Close dropdown when clicking outside
+// Close any open dropdown when clicking outside (works for ALL .dd and .msdd)
 document.addEventListener("click", (e) => {
-  const ids = ["ddClient", "ddCampaign", "ms_primary_departments", "ms_primary_seniorities","ms_secondary_departments","ms_secondary_seniorities","ms_countries"];
-  for (const id of ids) {
-    const el = $(id);
-    if (el && !el.contains(e.target)) el.classList.remove("open");
-  }
+  document.querySelectorAll(".dd.open, .msdd.open").forEach(el => {
+    if (!el.contains(e.target)) el.classList.remove("open");
+  });
 });
 
 const BRIEF_OPTIONS = {
@@ -230,8 +228,8 @@ if (key === "client") {
 
 <script>
 (function(){
-if (window.__abmLeadFormBound) return;
-window.__abmLeadFormBound = true;
+if (window.__abmLeadFormListenerAttached) return;
+window.__abmLeadFormListenerAttached = true;
   const ENDPOINT = "${endpoint}";
   function setMsg(form, text, ok){
     const el = form.querySelector(".abm-form-msg");
