@@ -39,10 +39,13 @@ async function requireAccessToken() {
 
 // Close any open dropdown when clicking outside (works for ALL .dd and .msdd)
 document.addEventListener("click", (e) => {
+  if (e.target.closest(".msdd-menu")) return;
+
   document.querySelectorAll(".dd.open, .msdd.open").forEach(el => {
     if (!el.contains(e.target)) el.classList.remove("open");
   });
 });
+
 
 const BRIEF_OPTIONS = {
   primary_departments: [
@@ -228,8 +231,8 @@ if (key === "client") {
 
 <script>
 (function(){
-if (window.__abmLeadFormListenerAttached) return;
-window.__abmLeadFormListenerAttached = true;
+if (document.__abmLeadFormListenerAttached) return;
+document.__abmLeadFormListenerAttached = true;
   const ENDPOINT = "${endpoint}";
   function setMsg(form, text, ok){
     const el = form.querySelector(".abm-form-msg");
@@ -1276,30 +1279,17 @@ function syncAudiencePanel() {
   if (idEl) idEl.value = campaignId;
   if (nameEl) nameEl.value = campaign?.name || "";
 
-  // Reset panel output when campaign changes
-  showAudienceResults("", "");
+  // ✅ reset both result boxes
+  showAudienceValidation("", "");
+  showAudienceImport("");
   clearAudiencePreviewTable();
+  window.__lastAudienceValidation = null;
 
   const importBtn = document.getElementById("btnAudienceImport");
   if (importBtn) importBtn.disabled = true;
 
- // Re-enable source system when campaign changes
   const srcEl = document.getElementById("audienceSourceSystem");
   if (srcEl) srcEl.removeAttribute("disabled");
-}
-
-// Read CSV file -> text
-async function readSelectedAudienceCsvText() {
-  const fileEl = document.getElementById("audience_csv_file");
-  if (!fileEl) throw new Error("CSV file input not found (audience_csv_file).");
-
-  const f = fileEl.files && fileEl.files[0];
-  if (!f) throw new Error("Select a CSV file first.");
-
-  const text = await f.text();
-  if (!text.trim()) throw new Error("CSV file looks empty.");
-
-  return text;
 }
 
 // Call edge function: audience_validate_csv (Storage-first)
@@ -1316,9 +1306,10 @@ async function validateAudienceCsv() {
     return;
   }
  
-  setAudienceStatus("Validating CSV…");
-  showAudienceResults("", "");
-  clearAudiencePreviewTable();
+ setAudienceStatus("Validating CSV…");
+ showAudienceValidation("", "");
+ showAudienceImport("");
+ clearAudiencePreviewTable();
 
   // ---- 1) Get the selected CSV FILE (not text) ----
   // NOTE: Update this ID if your file input uses a different id.
