@@ -1202,15 +1202,28 @@ function setAudienceStatus(msg) {
   setAdminStatus(msg || "");
 }
 
-function showAudienceResults(text, countsText) {
-  const box = document.getElementById("audienceResultsBox");
-  const out = document.getElementById("audienceResultsOut");
-  const counts = document.getElementById("audienceCounts");
+// LEFT box: Validation results
+function showAudienceValidation(text, countsText) {
+  const box = document.getElementById("audienceValidationBox");
+  const out = document.getElementById("audienceValidationOut");
+  const counts = document.getElementById("audienceValidationCounts");
+
   if (!box || !out || !counts) return;
 
   out.textContent = text || "";
   counts.textContent = countsText || "";
   box.style.display = (text || countsText) ? "block" : "none";
+}
+
+// RIGHT box: Import results
+function showAudienceImport(text) {
+  const box = document.getElementById("audienceImportBox");
+  const out = document.getElementById("audienceImportOut");
+
+  if (!box || !out) return;
+
+  out.textContent = text || "";
+  box.style.display = text ? "block" : "none";
 }
 
 function clearAudiencePreviewTable() {
@@ -1377,7 +1390,7 @@ try {
     if (!res.ok || !out.ok) {
       const msg = out?.error || `Validate failed (HTTP ${res.status})`;
       setAudienceStatus(`❌ ${msg}`);
-      showAudienceResults(JSON.stringify(out, null, 2), "");
+      JSON.stringify(out, null, 2), "");
       return;
     }
 
@@ -1401,7 +1414,7 @@ try {
 
     const countsText = `Rows: ${totals.total_rows ?? 0} • Valid emails: ${totals.valid_email_rows ?? 0} • Invalid: ${totals.invalid_email_rows ?? 0}`;
 
-    showAudienceResults(summaryLines.join("\n"), countsText);
+    showAudienceValidation(summaryLines.join("\n"), countsText);
     renderAudiencePreviewRows(out.preview || []);
 
     const importBtn = document.getElementById("btnAudienceImport");
@@ -1503,7 +1516,7 @@ const headline =
     ? "✅ Import complete."
     : "✅ Import complete — no new contacts added (all were duplicates in this campaign).";
 
-setAudienceStatus(
+showAudienceImport(
   `${headline}\n` +
   `Inserted: ${inserted}\n` +
   `Total rows: ${t.total_rows ?? "?"}\n` +
