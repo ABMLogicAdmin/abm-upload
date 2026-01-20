@@ -583,14 +583,34 @@ hr.divider {
       Validate shows totals, duplicates (in-file + vs DB for this campaign), and a 20-row preview.
     </p>
 
-    <div id="audienceResultsBox" style="margin-top:10px; padding:12px; border:1px solid var(--border); border-radius:12px; background:#fff; display:none;">
-      <div style="display:flex; align-items:center; justify-content:space-between; gap:10px;">
-        <div style="font-weight:700; color:var(--brand-navy);">Validation Results</div>
-        <div id="audienceCounts" style="font-size:12px; color:var(--muted);"></div>
-      </div>
-      <pre id="audienceResultsOut" style="margin:10px 0 0; white-space:pre-wrap; font-size:12.5px;"></pre>
-    </div>
+<!-- Validation + Import Results (side-by-side) -->
+<div class="row twoCol" style="margin-top:10px;">
 
+  <!-- LEFT: Validation Results -->
+  <div
+    id="audienceValidationBox"
+    style="display:none; padding:12px; border:1px solid var(--border); border-radius:12px; background:#fff;"
+  >
+    <div style="font-weight:700; color:var(--brand-navy); margin-bottom:6px;">
+      Validation Results
+    </div>
+    <div id="audienceValidationCounts" style="font-size:12px; color:var(--muted); margin-bottom:6px;"></div>
+    <pre id="audienceValidationOut" style="margin:0; white-space:pre-wrap; font-size:12.5px;"></pre>
+  </div>
+
+  <!-- RIGHT: Import Results -->
+  <div
+    id="audienceImportBox"
+    style="display:none; padding:12px; border:1px solid var(--border); border-radius:12px; background:#fff;"
+  >
+    <div style="font-weight:700; color:var(--brand-navy); margin-bottom:6px;">
+      Import Results
+    </div>
+    <pre id="audienceImportOut" style="margin:0; white-space:pre-wrap; font-size:12.5px;"></pre>
+  </div>
+
+</div>
+    
     <div style="margin-top:12px; overflow:auto; border:1px solid var(--border); border-radius:12px; background:#fff;">
       <table style="width:100%; border-collapse:collapse; font-size:13px;">
         <thead>
