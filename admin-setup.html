@@ -426,7 +426,7 @@ hr.divider {
   align-items:center;
   margin-top: 8px;
 }
-
+    
 .csvActions{
   display:flex;
   gap: 10px;
@@ -441,6 +441,34 @@ hr.divider {
   min-height: 36px;
 }
 
+ /* Audience file picker: keep it small + aligned */
+.file-input-row{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  min-width: 0; /* prevents overflow in flex */
+}
+
+/* Override the global button { width:100% } rule */
+.file-input-row .fileBtn{
+  width:auto !important;
+  flex:0 0 auto;
+  padding: 8px 12px !important;   /* matches btn-sm sizing */
+  min-height: 36px;
+}
+
+/* Filename sits next to the button and truncates nicely */
+.file-input-row .file-name{
+  flex:1 1 auto;
+  min-width:0;
+  font-size:13px;
+  color:var(--muted);
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+}
+   
+    
 .helpText{
   font-size: 12px;
   color: var(--muted);
@@ -580,13 +608,13 @@ hr.divider {
     hidden
   />
 
-  <button
-    type="button"
-    class="btn-secondary"
-    id="btnAudienceChooseFile"
-  >
-    Choose file
-  </button>
+<button
+  type="button"
+  class="btn-secondary btn-sm fileBtn"
+  id="btnAudienceChooseFile"
+>
+  Choose file
+</button>
 
   <span
     id="audienceFileName"
