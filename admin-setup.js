@@ -1387,12 +1387,11 @@ try {
 
     const out = await res.json().catch(() => ({}));
 
-    if (!res.ok || !out.ok) {
-      const msg = out?.error || `Validate failed (HTTP ${res.status})`;
-      setAudienceStatus(`❌ ${msg}`);
-      JSON.stringify(out, null, 2), "");
-      return;
-    }
+ if (!res.ok || !out.ok) {
+  const msg = out?.error || `Validate failed (HTTP ${res.status})`;
+  setAudienceStatus(`❌ ${msg}`);
+  return;
+}
 
     // ---- 5) Render results (unchanged contract) ----
     const totals = out.totals || {};
