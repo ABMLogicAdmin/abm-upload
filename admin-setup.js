@@ -1491,30 +1491,28 @@ async function importAudienceCsv() {
       return;
     }
 
-    // expected from your import TS:
-    // out.inserted_count, out.duplicates, out.totals, out.batch_id, etc.
-    const inserted = out.inserted_count ?? 0;
-    const d = out.duplicates || {};
-    const t = out.totals || {};
+// expected from your import TS:
+const d = out.duplicates || {};
+const t = out.totals || {};
 
-    const inserted = out.inserted_count ?? 0;
-    const skippedDb = out.skipped_duplicates_vs_db_count ?? 0;
-    
-    const headline =
-      inserted > 0
-        ? "✅ Import complete."
-        : "✅ Import complete — no new contacts added (all were duplicates in this campaign).";
-    
-    setAudienceStatus(
-      `${headline}\n` +
-      `Inserted: ${inserted}\n` +
-      `Total rows: ${t.total_rows ?? "?"}\n` +
-      `Valid emails: ${t.valid_email_rows ?? "?"}\n` +
-      `Skipped invalid: ${out.skipped_invalid_count ?? 0}\n` +
-      `Skipped dupes in file: ${out.skipped_duplicates_in_file_count ?? 0}\n` +
-      `Skipped already in DB: ${skippedDb}\n` +
-      (out.batch_id ? `Batch ID: ${out.batch_id}` : "")
-    );
+let inserted = out.inserted_count ?? 0;
+const skippedDb = out.skipped_duplicates_vs_db_count ?? 0;
+
+const headline =
+  inserted > 0
+    ? "✅ Import complete."
+    : "✅ Import complete — no new contacts added (all were duplicates in this campaign).";
+
+setAudienceStatus(
+  `${headline}\n` +
+  `Inserted: ${inserted}\n` +
+  `Total rows: ${t.total_rows ?? "?"}\n` +
+  `Valid emails: ${t.valid_email_rows ?? "?"}\n` +
+  `Skipped invalid: ${out.skipped_invalid_count ?? 0}\n` +
+  `Skipped dupes in file: ${out.skipped_duplicates_in_file_count ?? 0}\n` +
+  `Skipped already in DB: ${skippedDb}\n` +
+  (out.batch_id ? `Batch ID: ${out.batch_id}` : "")
+);
 
     // Optional MVP UX: disable Import again until next Validate
     const importBtn = document.getElementById("btnAudienceImport");
