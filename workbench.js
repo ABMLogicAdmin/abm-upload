@@ -323,20 +323,58 @@ async function loadClientCampaignOptions() {
     window.ABM.me = userRes.user;
     window.ABM_USER_EMAIL = window.ABM.me.email;
    
-    // Role lookup (UI-only; server enforcement still via RLS/Edge)
-    
-    try {
-  const { data: roleRow } = await sb
-    .from("app_users")
-    .select("role")
-    .eq("user_id", window.ABM.me.id)
-    .maybeSingle();
+// Role lookup (UI-only; server enforcement still via RLS/Edge)
+try {
+const { data: roleRow, error: roleErr } = await sb
+  .from("app_users")
+  .select("role")
+  .eq("user_id", window.ABM.me.id)
+  .single();
 
-  window.ABM.currentRole = roleRow?.role || null;
-  window.ABM_ROLE = window.ABM.currentRole || "user";
-} catch {
-  window.ABM.currentRole = null;
-  window.ABM_ROLE = "user";
+if (roleErr || !roleRow?.role) {
+  throw roleErr || new Error("No role found for this user in app_users.");
+}
+
+  // Canonical role + identity (used by nav.js)
+  window.ABM.currentRole = roleRow.role;
+  window.ABM_ROLE = roleRow.role;
+  
+// Workbench access rule: only ops + admin
+const allowed = ["ops", "admin"];
+const roleLower = String(window.ABM_ROLE || "").toLowerCase();
+
+if (!allowed.includes(roleLower)) {
+  document.body.innerHTML = `
+    <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
+      <div>
+        <h2 style="margin:0 0 8px;">Access denied</h2>
+        <div>You do not have permission to view this page.</div>
+        <div style="margin-top:10px;opacity:.7;font-size:13px;">(Your app_users.role is not allowed.)</div>
+      </div>
+    </div>`;
+  return;
+}
+
+  window.ABM_USER_EMAIL = window.ABM.me.email;
+
+  // Persist + refresh nav
+  localStorage.setItem("abm_role", roleRow.role);
+  window.dispatchEvent(new Event("abm:nav:refresh"));
+
+} catch (err) {
+  console.error("Role lookup failed", err);
+
+  document.body.innerHTML = `
+    <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
+      <div>
+        <h2 style="margin:0 0 8px;">Access denied</h2>
+        <div>Your account is not provisioned in <code>app_users</code>.</div>
+        <div style="margin-top:10px;opacity:.7;font-size:13px;">
+          Ask an admin to add your user_id + role.
+        </div>
+      </div>
+    </div>`;
+  return;
 }
 
 // ALWAYS refresh navbar after email + role are set
@@ -357,13 +395,7 @@ async function loadClientCampaignOptions() {
       showEmptyState(true);
 
    await loadClientCampaignOptions();
-  await loadQueue();
-
-
-// FINAL step: refresh navbar after login + role + UI are ready
-setTimeout(() => {
-  window.dispatchEvent(new Event("abm:nav:refresh"));
-}, 0);
+   await loadQueue();
 
   }
 
