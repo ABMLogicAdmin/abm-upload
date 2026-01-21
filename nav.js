@@ -9,7 +9,8 @@
     if (p.endsWith("/workbench.html")) return "Workbench";
     if (p.endsWith("/admin-setup.html")) return "Admin Setup";
     if (p.endsWith("/admin-export.html")) return "Delivery";
-    if (p.endsWith("/index.html") || p.endsWith("/")) return "CSV Upload";
+    if (p.endsWith("/supplier-leads-upload.html")) return "Supplier Leads Upload";
+    if (p.endsWith("/index.html") || p.endsWith("/")) return "ABM Upload";
     return "ABM Logic";
   }
 
@@ -91,7 +92,7 @@
 
     const brand = document.createElement("a");
     brand.className = "nav-brand";
-    brand.href = "/abm-upload/index.html";
+    brand.href = "/abm-upload/workbench.html";
     brand.setAttribute("aria-label", "ABM Logic Home");
 
     const logo = document.createElement("img");
@@ -157,7 +158,7 @@
     bottom.className = "navBottom";
 
     const tabs = [
-      { id: "upload", label: "Upload", href: "/abm-upload/index.html", match: "/index.html" },
+      { id: "upload", label: "Upload", href: "/abm-upload/supplier-leads-upload.html", match: "/supplier-leads-upload.html" },
       { id: "workbench", label: "Workbench", href: "/abm-upload/workbench.html", match: "/workbench.html" },
       { id: "admin_setup", label: "Admin Setup", href: "/abm-upload/admin-setup.html", match: "/admin-setup.html" },
       { id: "delivery", label: "Delivery", href: "/abm-upload/admin-export.html", match: "/admin-export.html" }
