@@ -157,7 +157,7 @@
 </head>
 
 <body
-  data-page-title="CSV Upload"
+  data-page-title="Supplier Leads Upload"
   data-page-badge="Partner / Batch Ingest"
   data-page-help="Uploads a CSV to Storage and creates an ingest_jobs record."
 >
@@ -374,7 +374,7 @@ async function logout() {
   } catch (e) {
     console.warn("Logout error:", e);
   }
-  location.href = "/abm-upload/index.html";
+  location.href = "/abm-upload/supplier-leads-upload.html";
 }
 
     $("logoutBtn")?.addEventListener("click", logout);
@@ -404,7 +404,22 @@ if (user?.email) {
 
   window.dispatchEvent(new Event("abm:nav:refresh"));
 }
+      
+// ---- ADMIN-ONLY GATE FOR THIS PAGE ----
+const role = String(window.ABM_ROLE || "").toLowerCase();
+if (role !== "admin") {
+  document.body.innerHTML = `
+    <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
+      <div>
+        <h2 style="margin:0 0 8px;">Access denied</h2>
+        <div>You do not have permission to view this page.</div>
+        <div style="margin-top:10px;opacity:.7;font-size:13px;">(Your app_users.role is not admin.)</div>
+      </div>
+    </div>`;
+  return;
+}
 
+      
       const appCard = $("appCard");
       const status = $("status");
 
@@ -545,3 +560,4 @@ if (user?.email) {
   
 </body>
 </html>
+
