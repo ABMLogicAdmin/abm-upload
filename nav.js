@@ -1,18 +1,12 @@
 // nav.js — injects a consistent global navbar into #siteNav on every page
 (function () {
-  /* =========================
-     Page + Role Helpers
-  ========================= */
-
   function getPageName() {
     const p = (location.pathname || "").toLowerCase();
 
-    // NEW pages
     if (p.endsWith("/admin-home.html")) return "Admin Home";
     if (p.endsWith("/ops-home.html")) return "Ops Home";
     if (p.endsWith("/contact-workbench.html")) return "Contact Workbench";
 
-    // Existing pages
     if (p.endsWith("/workbench.html")) return "Lead Workbench";
     if (p.endsWith("/admin-setup.html")) return "Admin Setup";
     if (p.endsWith("/admin-export.html")) return "Delivery";
@@ -60,6 +54,7 @@
     if (r === "admin") {
       return new Set([
         "admin_home",
+        "supplier_upload",
         "admin_setup",
         "contact_workbench",
         "lead_workbench",
@@ -73,7 +68,7 @@
       return s;
     }
 
-    if (r === "uploader") return new Set(["upload"]);
+    if (r === "uploader") return new Set(["supplier_upload"]);
 
     return new Set([]);
   }
@@ -98,10 +93,6 @@
     return "/abm-upload/index.html";
   }
 
-  /* =========================
-     Nav Builder
-  ========================= */
-
   function buildNav() {
     const host = document.getElementById("siteNav");
     if (!host) return;
@@ -122,7 +113,7 @@
 
     const brand = document.createElement("a");
     brand.className = "nav-brand";
-    brand.href = homeHref; // logo goes to Home for the role
+    brand.href = homeHref;
     brand.setAttribute("aria-label", "ABM Logic Home");
 
     const logo = document.createElement("img");
@@ -184,10 +175,11 @@
     const bottom = document.createElement("div");
     bottom.className = "navBottom";
 
-    // Order matters (matches your requirement)
+    // Order matters
     const tabs = [
       // Admin
       { id: "admin_home", label: "Home", href: "/abm-upload/admin-home.html", match: "/admin-home.html" },
+      { id: "supplier_upload", label: "Supplier Leads Upload", href: "/abm-upload/supplier-leads-upload.html", match: "/supplier-leads-upload.html" },
       { id: "admin_setup", label: "Admin Setup", href: "/abm-upload/admin-setup.html", match: "/admin-setup.html" },
       { id: "contact_workbench", label: "Contact Workbench", href: "/abm-upload/contact-workbench.html", match: "/contact-workbench.html" },
       { id: "lead_workbench", label: "Lead Workbench", href: "/abm-upload/workbench.html", match: "/workbench.html" },
@@ -195,9 +187,6 @@
 
       // Ops
       { id: "ops_home", label: "Home", href: "/abm-upload/ops-home.html", match: "/ops-home.html" },
-
-      // Uploader
-      { id: "upload", label: "Upload", href: "/abm-upload/supplier-leads-upload.html", match: "/supplier-leads-upload.html" },
     ];
 
     const path = (location.pathname || "").toLowerCase();
