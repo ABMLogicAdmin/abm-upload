@@ -11,15 +11,20 @@ const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBh
 function getSupabaseClient() {
   if (window.ABM_SB) return window.ABM_SB;
 
+  const SB_STORAGE_KEY = "abmlogic-auth";
+
   const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     auth: {
+      storageKey: SB_STORAGE_KEY,
       persistSession: true,
       autoRefreshToken: true,
       detectSessionInUrl: false
     }
   });
 
-  window.ABM_SB = client;
+  window.ABM_SB = client;            // shared
+  window.ABM = window.ABM || {};
+  window.ABM.sb = client;            // backwards compat
   return client;
 }
 
