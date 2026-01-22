@@ -1,29 +1,38 @@
 // nav.js — injects a consistent global navbar into #siteNav on every page
 (function () {
+  /* =========================
+     Page + Role Helpers
+  ========================= */
+
+  function getPath() {
+    return (location.pathname || "").toLowerCase();
+  }
+
   function getPageName() {
-    const p = (location.pathname || "").toLowerCase();
-
-    if (p.endsWith("/admin-home.html")) return "Admin Home";
-    if (p.endsWith("/ops-home.html")) return "Ops Home";
-    if (p.endsWith("/contact-workbench.html")) return "Contact Workbench";
-
+    const p = getPath();
+    if (p.endsWith("/home.html")) return "Home";
     if (p.endsWith("/workbench.html")) return "Lead Workbench";
+    if (p.endsWith("/contact-workbench.html")) return "Contact Workbench";
     if (p.endsWith("/admin-setup.html")) return "Admin Setup";
-    if (p.endsWith("/admin-export.html")) return "Delivery";
+    if (p.endsWith("/admin-export.html")) return "Lead Delivery";
     if (p.endsWith("/supplier-leads-upload.html")) return "Supplier Leads Upload";
-    if (p.endsWith("/index.html") || p.endsWith("/")) return "ABM Upload";
+    if (p.endsWith("/index.html") || p.endsWith("/")) return "ABM Logic";
     return "ABM Logic";
   }
 
   function getRoleRaw() {
+    // Prefer explicit global (recommended)
     if (window.ABM_ROLE) return String(window.ABM_ROLE);
 
+    // Fallback to localStorage if stored there by page scripts
     const ls =
       localStorage.getItem("abm_role") ||
       localStorage.getItem("role") ||
       localStorage.getItem("user_role");
 
     if (ls) return String(ls);
+
+    // Final fallback
     return "user";
   }
 
@@ -43,34 +52,45 @@
     return "USER";
   }
 
-  // Default OFF unless you explicitly enable it per-page
-  function opsCanSeeLeadWorkbench() {
-    return Boolean(window.ABM_OPS_LEADS === true);
-  }
-
   function allowedTabsFor(rawRole) {
     const r = normalizeRole(rawRole);
 
+    // Admin sees everything
     if (r === "admin") {
       return new Set([
-        "admin_home",
-        "supplier_upload",
+        "home",
         "admin_setup",
         "contact_workbench",
+        "supplier_upload",
         "lead_workbench",
         "delivery",
       ]);
     }
 
+    // Ops should only see operational work pages
     if (r === "ops") {
-      const s = new Set(["ops_home", "contact_workbench"]);
-      if (opsCanSeeLeadWorkbench()) s.add("lead_workbench");
-      return s;
+      return new Set([
+        "home",
+        "contact_workbench",
+        "lead_workbench",
+      ]);
     }
 
-    if (r === "uploader") return new Set(["supplier_upload"]);
+    // Uploader only uploads
+    if (r === "uploader") {
+      return new Set(["supplier_upload"]);
+    }
 
+    // safest default: show no tabs
     return new Set([]);
+  }
+
+  function homeHrefForRole(rawRole) {
+    const r = normalizeRole(rawRole);
+    if (r === "admin") return "/abm-upload/home.html";
+    if (r === "ops") return "/abm-upload/workbench.html"; // ops “home” = lead workbench for now
+    if (r === "uploader") return "/abm-upload/supplier-leads-upload.html";
+    return "/abm-upload/index.html";
   }
 
   function setActiveTab(a, isActive) {
@@ -85,35 +105,39 @@
     }
   }
 
-  function defaultHomeForRole(rawRole) {
-    const r = normalizeRole(rawRole);
-    if (r === "admin") return "/abm-upload/admin-home.html";
-    if (r === "ops") return "/abm-upload/ops-home.html";
-    if (r === "uploader") return "/abm-upload/supplier-leads-upload.html";
-    return "/abm-upload/index.html";
-  }
+  /* =========================
+     Nav Builder
+  ========================= */
 
   function buildNav() {
     const host = document.getElementById("siteNav");
     if (!host) return;
 
-    const pageTitle = (window.ABM_PAGE && window.ABM_PAGE.title) || getPageName();
-    const helpText = (window.ABM_PAGE && window.ABM_PAGE.help) || "";
+    const pageTitle =
+      (window.ABM_PAGE && window.ABM_PAGE.title) ||
+      document.body?.getAttribute("data-page-title") ||
+      getPageName();
+
+    const helpText =
+      (window.ABM_PAGE && window.ABM_PAGE.help) ||
+      document.body?.getAttribute("data-page-help") ||
+      "";
 
     const rawRole = getRoleRaw();
     const badgeText = roleLabel(rawRole);
     const allowed = allowedTabsFor(rawRole);
-    const homeHref = defaultHomeForRole(rawRole);
 
+    // Shell
     const shell = document.createElement("div");
     shell.className = "navShell";
 
+    // Top row
     const top = document.createElement("div");
     top.className = "navTop";
 
     const brand = document.createElement("a");
     brand.className = "nav-brand";
-    brand.href = homeHref;
+    brand.href = homeHrefForRole(rawRole);
     brand.setAttribute("aria-label", "ABM Logic Home");
 
     const logo = document.createElement("img");
@@ -149,6 +173,7 @@
       subRow.appendChild(help);
     }
 
+    // Optional: show current user email if page sets it
     if (window.ABM_USER_EMAIL) {
       const ident = document.createElement("div");
       ident.className = "navIdentity";
@@ -162,6 +187,7 @@
     const spacer = document.createElement("div");
     spacer.className = "navSpacer";
 
+    // Logout button (always on far right)
     const logoutBtn = document.createElement("button");
     logoutBtn.id = "navLogoutBtn";
     logoutBtn.type = "button";
@@ -172,24 +198,22 @@
     top.appendChild(spacer);
     top.appendChild(logoutBtn);
 
+    // Bottom row tabs
     const bottom = document.createElement("div");
     bottom.className = "navBottom";
 
-    // Order matters
-     const tabs = [
-      // Admin
-      { id: "admin_home", label: "Home", href: "/abm-upload/admin-home.html", match: "/admin-home.html" },
+    // REQUIRED ORDER:
+    // Home, Admin Setup, Contact Workbench, Supplier Leads Upload, Lead Workbench, Lead Delivery
+    const tabs = [
+      { id: "home", label: "Home", href: "/abm-upload/home.html", match: "/home.html" },
       { id: "admin_setup", label: "Admin Setup", href: "/abm-upload/admin-setup.html", match: "/admin-setup.html" },
       { id: "contact_workbench", label: "Contact Workbench", href: "/abm-upload/contact-workbench.html", match: "/contact-workbench.html" },
       { id: "supplier_upload", label: "Supplier Leads Upload", href: "/abm-upload/supplier-leads-upload.html", match: "/supplier-leads-upload.html" },
       { id: "lead_workbench", label: "Lead Workbench", href: "/abm-upload/workbench.html", match: "/workbench.html" },
-      { id: "delivery", label: "Lead Delivery", href: "/abm-upload/admin-export.html", match: "/admin-export.html" },
-    
-      // Ops
-      { id: "ops_home", label: "Home", href: "/abm-upload/ops-home.html", match: "/ops-home.html" }
+      { id: "delivery", label: "Lead Delivery", href: "/abm-upload/admin-export.html", match: "/admin-export.html" }
     ];
 
-    const path = (location.pathname || "").toLowerCase();
+    const path = getPath();
 
     tabs.forEach((t) => {
       if (!allowed.has(t.id)) return;
@@ -207,6 +231,9 @@
     host.innerHTML = "";
     host.appendChild(shell);
 
+    // Wire logout:
+    // If your existing pages already attach logout logic to #logoutBtn,
+    // we forward-click it. Otherwise emit an event.
     logoutBtn.addEventListener("click", () => {
       const existing = document.getElementById("logoutBtn");
       if (existing) return existing.click();
