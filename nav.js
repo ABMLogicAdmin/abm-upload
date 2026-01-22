@@ -176,17 +176,17 @@
     bottom.className = "navBottom";
 
     // Order matters
-    const tabs = [
+     const tabs = [
       // Admin
       { id: "admin_home", label: "Home", href: "/abm-upload/admin-home.html", match: "/admin-home.html" },
-      { id: "supplier_upload", label: "Supplier Leads Upload", href: "/abm-upload/supplier-leads-upload.html", match: "/supplier-leads-upload.html" },
       { id: "admin_setup", label: "Admin Setup", href: "/abm-upload/admin-setup.html", match: "/admin-setup.html" },
       { id: "contact_workbench", label: "Contact Workbench", href: "/abm-upload/contact-workbench.html", match: "/contact-workbench.html" },
+      { id: "supplier_upload", label: "Supplier Leads Upload", href: "/abm-upload/supplier-leads-upload.html", match: "/supplier-leads-upload.html" },
       { id: "lead_workbench", label: "Lead Workbench", href: "/abm-upload/workbench.html", match: "/workbench.html" },
-      { id: "delivery", label: "Delivery", href: "/abm-upload/admin-export.html", match: "/admin-export.html" },
-
+      { id: "delivery", label: "Lead Delivery", href: "/abm-upload/admin-export.html", match: "/admin-export.html" },
+    
       // Ops
-      { id: "ops_home", label: "Home", href: "/abm-upload/ops-home.html", match: "/ops-home.html" },
+      { id: "ops_home", label: "Home", href: "/abm-upload/ops-home.html", match: "/ops-home.html" }
     ];
 
     const path = (location.pathname || "").toLowerCase();
