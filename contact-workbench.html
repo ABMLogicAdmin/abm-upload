@@ -1,1 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ABM Logic — Contact Workbench</title>
 
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/abm-upload/base.css?v=1">
+  <link rel="stylesheet" href="/abm-upload/contact-workbench.css?v=1">
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+</head>
+
+<body>
+  <!-- Nav mounts here ONLY when logged in (nav.js rule) -->
+  <div id="siteNav"></div>
+
+  <main class="container">
+    <!-- LOGIN VIEW -->
+    <section id="loginView" class="card auth-card" style="display:none;">
+      <h1 class="h1">Contact Workbench</h1>
+      <p class="muted">Login to verify & enrich contacts. Contacts ≠ Leads.</p>
+
+      <div class="form-grid">
+        <div class="field">
+          <label for="loginEmail">Email</label>
+          <input id="loginEmail" type="email" placeholder="you@abmlogic.com" autocomplete="username" />
+        </div>
+        <div class="field">
+          <label for="loginPassword">Password</label>
+          <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
+        </div>
+      </div>
+
+      <div class="row gap">
+        <button id="loginBtn" class="btn primary">Login</button>
+        <span id="loginMsg" class="muted"></span>
+      </div>
+    </section>
+
+    <!-- APP VIEW -->
+    <section id="appView" style="display:none;">
+      <div class="row space-between align-center mb-12">
+        <div>
+          <h1 class="h1 mb-4">Contact Workbench</h1>
+          <p class="muted">Verify/enrich overlays only. Raw contact data stays immutable.</p>
+        </div>
+        <div class="row gap align-center">
+          <button id="refreshBtn" class="btn">Refresh</button>
+          <span id="appMsg" class="muted"></span>
+        </div>
+      </div>
+
+      <div class="wb-grid">
+        <!-- QUEUE -->
+        <aside class="card wb-queue">
+          <div class="row space-between align-center mb-10">
+            <div class="row gap align-center">
+              <strong>Queue</strong>
+              <span class="pill" id="queueCount">0</span>
+            </div>
+          </div>
+
+          <div class="tabs mb-10">
+            <button id="tabPending" class="tab active" data-tab="pending">Pending</button>
+            <button id="tabMine" class="tab" data-tab="mine">Mine</button>
+            <button id="tabDone" class="tab" data-tab="done">Done</button>
+            <button id="tabRejected" class="tab" data-tab="rejected">Rejected</button>
+          </div>
+
+          <div id="queueList" class="queue-list">
+            <!-- rows injected -->
+          </div>
+        </aside>
+
+        <!-- DETAIL -->
+        <section class="card wb-detail">
+          <div id="detailEmpty" class="empty">
+            <p class="muted">Select a contact from the queue to view details.</p>
+          </div>
+
+          <div id="detailView" style="display:none;">
+            <div class="row space-between align-start mb-10">
+              <div>
+                <div class="kicker muted">Selected Contact</div>
+                <h2 class="h2" id="detailTitle">—</h2>
+                <div class="muted" id="detailSubtitle">—</div>
+              </div>
+              <div class="row gap">
+                <button id="claimBtn" class="btn primary">Claim</button>
+                <button id="releaseBtn" class="btn">Release</button>
+              </div>
+            </div>
+
+            <hr class="sep"/>
+
+            <!-- RAW (read only) -->
+            <div class="section">
+              <div class="row space-between align-center mb-8">
+                <h3 class="h3">Raw Contact</h3>
+                <span class="pill subtle">Read-only</span>
+              </div>
+              <div id="rawBlock" class="kv-grid"></div>
+            </div>
+
+            <hr class="sep"/>
+
+            <!-- OVERLAY (editable) -->
+            <div class="section">
+              <div class="row space-between align-center mb-8">
+                <h3 class="h3">Verified / Enriched Overlay</h3>
+                <span class="pill subtle">Editable</span>
+              </div>
+
+              <div class="form-grid">
+                <div class="field">
+                  <label for="ovLinkedin">LinkedIn URL</label>
+                  <input id="ovLinkedin" type="url" placeholder="https://www.linkedin.com/in/…" />
+                </div>
+
+                <div class="field">
+                  <label for="ovPhone">Phone</label>
+                  <input id="ovPhone" type="text" placeholder="+44 …" />
+                </div>
+
+                <div class="field">
+                  <label for="ovCompleteness">Completeness Score</label>
+                  <input id="ovCompleteness" type="number" min="0" max="100" step="1" placeholder="0-100" />
+                </div>
+
+                <div class="field field-inline">
+                  <label for="ovActivationReady">Activation Ready</label>
+                  <input id="ovActivationReady" type="checkbox" />
+                </div>
+
+                <div class="field field-full">
+                  <label for="ovNotes">Ops Notes</label>
+                  <textarea id="ovNotes" rows="3" placeholder="What did you verify? What’s missing?"></textarea>
+                </div>
+
+                <div class="field field-full">
+                  <label for="ovVerifiedJson">Verified Fields (JSON)</label>
+                  <textarea id="ovVerifiedJson" rows="6" placeholder='{"email_verified": true, "title_verified": true}'></textarea>
+                  <div class="muted tiny">Keep this valid JSON. We store it as JSONB in the overlay table.</div>
+                </div>
+              </div>
+
+              <div class="row gap mt-10">
+                <button id="saveBtn" class="btn primary">Save Overlay</button>
+                <button id="doneBtn" class="btn">Mark Done</button>
+              </div>
+
+              <div class="reject-box mt-12">
+                <div class="field">
+                  <label for="rejectReason">Reject reason</label>
+                  <input id="rejectReason" type="text" placeholder="e.g., invalid email / duplicate / not GDPR usable" />
+                </div>
+                <button id="rejectBtn" class="btn danger">Reject</button>
+              </div>
+
+              <div class="muted tiny mt-10">
+                Reminder: raw/source fields are immutable. Overlay only.
+              </div>
+            </div>
+          </div>
+        </section>
+      </div>
+    </section>
+  </main>
+
+  <script src="/abm-upload/nav.js?v=1"></script>
+  <script src="/abm-upload/contact-workbench.js?v=1"></script>
+</body>
+</html>
