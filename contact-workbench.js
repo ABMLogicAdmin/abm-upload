@@ -35,9 +35,6 @@ const el = (id) => document.getElementById(id);
 const loginView = el("loginView");
 const appView   = el("appView");
 
-const loginEmail = el("loginEmail");
-const loginPassword = el("loginPassword");
-const loginBtn = el("loginBtn");
 const loginMsg = el("loginMsg");
 
 const appMsg = el("appMsg");
@@ -124,35 +121,46 @@ async function getSession(){
 }
 
 async function renderByAuth(){
-  const sess = await getSession();
+  let sess = null;
+
+  try {
+    const { data, error } = await sb.auth.getSession();
+    if (error) throw error;
+    sess = data.session || null;
+  } catch (e) {
+    if (!isAbortError(e)) console.error(e);
+    sess = null;
+  }
+
   sessionUser = sess?.user || null;
 
   if (!sessionUser){
     appView.style.display = "none";
     loginView.style.display = "block";
-    setMsg(loginMsg, "");
+    setMsg(loginMsg, "Please sign in via Home.", false);
     setMsg(appMsg, "");
-    // nav.js rule: do not render nav when not logged in
+
+    // nav must not render when logged out
     if (window.ABM_NAV && typeof window.ABM_NAV.destroy === "function") {
       window.ABM_NAV.destroy();
     } else {
-      // hard fallback
       const nav = document.getElementById("siteNav");
       if (nav) nav.innerHTML = "";
     }
     return;
   }
 
+  // signed in
   loginView.style.display = "none";
   appView.style.display = "block";
   setMsg(appMsg, "");
 
-  // nav.js should render when logged in; if it needs init, call it
   if (window.ABM_NAV && typeof window.ABM_NAV.init === "function") {
     window.ABM_NAV.init();
   }
 
-  await loadQueue(); // initial
+  // Now load data. If RLS blocks, show a clear message (Mode C)
+  await loadQueue();
 }
 
 /* ======= DATA LOAD ======= */
@@ -519,20 +527,6 @@ async function handleReject(){
 }
 
 /* ======= EVENTS ======= */
-loginBtn.addEventListener("click", async () => {
-  try{
-    setMsg(loginMsg, "Logging in…");
-    const email = loginEmail.value.trim();
-    const password = loginPassword.value;
-    const { error } = await sb.auth.signInWithPassword({ email, password });
-    if (error) throw error;
-    setMsg(loginMsg, "");
-    await renderByAuth();
-  }catch(e){
-    setMsg(loginMsg, e.message || String(e), true);
-  }
-});
-
 refreshBtn.addEventListener("click", async () => {
   await loadQueue();
 });
