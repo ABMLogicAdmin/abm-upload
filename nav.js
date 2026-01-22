@@ -1,216 +1,194 @@
-// nav.js — injects a consistent global navbar into #siteNav on every page
+/* nav.js — shared navbar for ABM Upload pages
+   Rule:
+   - If NOT logged in: DO NOT render nav at all.
+   - If logged in: render nav + Logout.
+*/
+
 (function () {
-  /* =========================
-     Page + Role Helpers
-  ========================= */
+  const siteNav = document.getElementById("siteNav");
+  if (!siteNav) return;
 
-  function getPageName() {
-    const p = (location.pathname || "").toLowerCase();
-    if (p.endsWith("/home.html")) return "Home";
-    if (p.endsWith("/workbench.html")) return "Lead Workbench";
-    if (p.endsWith("/contact-workbench.html")) return "Contact Workbench";
-    if (p.endsWith("/admin-setup.html")) return "Admin Setup";
-    if (p.endsWith("/admin-export.html")) return "Lead Delivery";
-    if (p.endsWith("/supplier-leads-upload.html")) return "Supplier Leads Upload";
-    if (p.endsWith("/index.html") || p.endsWith("/")) return "ABM Upload";
-    return "ABM Logic";
+  // ---- Config ----
+  // Prefer globals set by each page (supplier upload sets ABM_SUPABASE_ANON_KEY).
+  // Fallbacks are optional but safe.
+  const SUPABASE_URL =
+    window.ABM_SUPABASE_URL ||
+    "https://mwfnbmkjetriunsddupr.supabase.co";
+
+  const SUPABASE_ANON_KEY =
+    window.ABM_SUPABASE_ANON_KEY ||
+    window.ABM_SUPABASE_ANON ||
+    "";
+
+  // If we don't have a key, do nothing (avoid rendering broken nav)
+  if (!window.supabase || !SUPABASE_ANON_KEY) {
+    siteNav.innerHTML = "";
+    return;
   }
 
-  function getRoleRaw() {
-    if (window.ABM_ROLE) return String(window.ABM_ROLE);
+  // Create or reuse client
+  const sb =
+    (window.ABM && window.ABM.sb) ||
+    window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-    const ls =
-      localStorage.getItem("abm_role") ||
-      localStorage.getItem("role") ||
-      localStorage.getItem("user_role");
+  window.ABM = window.ABM || {};
+  window.ABM.sb = sb;
 
-    if (ls) return String(ls);
-    return "user";
+  // Pages + routing
+  const PAGES = [
+    { label: "Home", href: "/abm-upload/index.html" },
+    { label: "Admin Setup", href: "/abm-upload/admin-setup.html", role: "admin" },
+    { label: "Contact Workbench", href: "/abm-upload/contact-workbench.html" },
+    { label: "Supplier Leads Upload", href: "/abm-upload/supplier-leads-upload.html", role: "admin" },
+    { label: "Lead Workbench", href: "/abm-upload/workbench.html" },
+    { label: "Lead Delivery", href: "/abm-upload/admin-export.html", role: "admin" }
+  ];
+
+  function esc(s) {
+    return String(s || "").replace(/[&<>"']/g, (c) => ({
+      "&": "&amp;",
+      "<": "&lt;",
+      ">": "&gt;",
+      '"': "&quot;",
+      "'": "&#39;"
+    }[c]));
   }
 
-  function normalizeRole(raw) {
-    const r = String(raw || "").toLowerCase();
-    if (r.includes("admin")) return "admin";
-    if (r.includes("ops")) return "ops";
-    if (r.includes("upload")) return "uploader";
-    return "user";
+  function currentPath() {
+    return (location.pathname || "").toLowerCase();
   }
 
-  function roleLabel(raw) {
-    const r = normalizeRole(raw);
-    if (r === "admin") return "ADMIN";
-    if (r === "ops") return "OPS";
-    if (r === "uploader") return "UPLOADER";
-    return "USER";
+  function isActive(href) {
+    const p = currentPath();
+    return p.endsWith(href.toLowerCase());
   }
 
-  function allowedTabsFor(rawRole) {
-    const r = normalizeRole(rawRole);
-
-    // Admin sees everything
-    if (r === "admin")
-      return new Set([
-        "home",
-        "admin_setup",
-        "contact_workbench",
-        "supplier_upload",
-        "lead_workbench",
-        "lead_delivery",
-      ]);
-
-    // Ops: keep it simple (no admin setup, no supplier upload, no delivery)
-    if (r === "ops") return new Set(["home", "contact_workbench", "lead_workbench"]);
-
-    // Uploader: only upload + home
-    if (r === "uploader") return new Set(["home", "supplier_upload"]);
-
-    return new Set([]);
+  function getPageMeta() {
+    const title = document.body?.dataset?.pageTitle || "ABM Logic";
+    const badge = document.body?.dataset?.pageBadge || "";
+    const help  = document.body?.dataset?.pageHelp  || "";
+    return { title, badge, help };
   }
 
-  function setActiveTab(a, isActive) {
-    if (isActive) {
-      a.setAttribute("aria-current", "page");
-      a.style.borderColor = "rgba(48,173,247,.55)";
-      a.style.background = "rgba(48,173,247,.18)";
-    } else {
-      a.removeAttribute("aria-current");
-      a.style.borderColor = "";
-      a.style.background = "";
-    }
+  function clearNav() {
+    siteNav.innerHTML = "";
   }
 
-  /* =========================
-     Nav Builder
-  ========================= */
+  async function getUserAndRole() {
+    const { data: sess } = await sb.auth.getSession();
+    const session = sess?.session;
 
-  function buildNav() {
-    const host = document.getElementById("siteNav");
-    if (!host) return;
+    if (!session?.user) return { session: null, user: null, role: null };
 
-    const pageTitle =
-      (window.ABM_PAGE && window.ABM_PAGE.title) ||
-      document.body?.getAttribute("data-page-title") ||
-      getPageName();
+    const user = session.user;
 
-    const helpText =
-      (window.ABM_PAGE && window.ABM_PAGE.help) ||
-      document.body?.getAttribute("data-page-help") ||
-      "";
+    // Default role if app_users lookup fails
+    let role = "user";
 
-    const rawRole = getRoleRaw();
-    const badgeText = roleLabel(rawRole);
-    const allowed = allowedTabsFor(rawRole);
+    const { data: roleRow, error: roleErr } = await sb
+      .from("app_users")
+      .select("role")
+      .eq("user_id", user.id)
+      .maybeSingle();
 
-    // Shell
-    const shell = document.createElement("div");
-    shell.className = "navShell";
+    if (!roleErr && roleRow?.role) role = String(roleRow.role).toLowerCase();
 
-    // Top row
-    const top = document.createElement("div");
-    top.className = "navTop";
+    // cache on window for other pages
+    window.ABM_USER_EMAIL = user.email;
+    window.ABM_ROLE = role;
 
-    const brand = document.createElement("a");
-    brand.className = "nav-brand";
-    brand.href = "/abm-upload/home.html";
-    brand.setAttribute("aria-label", "ABM Logic Home");
+    return { session, user, role };
+  }
 
-    const logo = document.createElement("img");
-    logo.className = "nav-logo";
-    logo.src = "/abm-upload/abm-logic-logo.png";
-    logo.alt = "ABM Logic";
-    brand.appendChild(logo);
+  function renderNav({ email, role }) {
+    const { title, badge, help } = getPageMeta();
 
-    const meta = document.createElement("div");
-    meta.className = "navMeta";
-
-    const titleRow = document.createElement("div");
-    titleRow.className = "navTitleRow";
-
-    const h = document.createElement("h1");
-    h.className = "navTitle";
-    h.textContent = pageTitle;
-
-    const badge = document.createElement("span");
-    badge.className = "navBadge";
-    badge.textContent = badgeText;
-
-    titleRow.appendChild(h);
-    titleRow.appendChild(badge);
-
-    const subRow = document.createElement("div");
-    subRow.className = "navSubRow";
-
-    if (helpText) {
-      const help = document.createElement("div");
-      help.className = "navHelp";
-      help.textContent = helpText;
-      subRow.appendChild(help);
-    }
-
-    if (window.ABM_USER_EMAIL) {
-      const ident = document.createElement("div");
-      ident.className = "navIdentity";
-      ident.textContent = window.ABM_USER_EMAIL;
-      subRow.appendChild(ident);
-    }
-
-    meta.appendChild(titleRow);
-    meta.appendChild(subRow);
-
-    const spacer = document.createElement("div");
-    spacer.className = "navSpacer";
-
-    // Logout button (always on far right)
-    const logoutBtn = document.createElement("button");
-    logoutBtn.id = "navLogoutBtn";
-    logoutBtn.type = "button";
-    logoutBtn.textContent = "Logout";
-
-    top.appendChild(brand);
-    top.appendChild(meta);
-    top.appendChild(spacer);
-    top.appendChild(logoutBtn);
-
-    // Bottom row tabs — ORDER YOU REQUESTED:
-    // Home, Admin Setup, Contact Workbench, Supplier Leads Upload, Lead Workbench, Lead Delivery
-    const bottom = document.createElement("div");
-    bottom.className = "navBottom";
-
-    const tabs = [
-      { id: "home", label: "Home", href: "/abm-upload/home.html", match: "/home.html" },
-      { id: "admin_setup", label: "Admin Setup", href: "/abm-upload/admin-setup.html", match: "/admin-setup.html" },
-      { id: "contact_workbench", label: "Contact Workbench", href: "/abm-upload/contact-workbench.html", match: "/contact-workbench.html" },
-      { id: "supplier_upload", label: "Supplier Leads Upload", href: "/abm-upload/supplier-leads-upload.html", match: "/supplier-leads-upload.html" },
-      { id: "lead_workbench", label: "Lead Workbench", href: "/abm-upload/workbench.html", match: "/workbench.html" },
-      { id: "lead_delivery", label: "Lead Delivery", href: "/abm-upload/admin-export.html", match: "/admin-export.html" },
-    ];
-
-    const path = (location.pathname || "").toLowerCase();
-
-    tabs.forEach((t) => {
-      if (!allowed.has(t.id)) return;
-
-      const a = document.createElement("a");
-      a.href = t.href;
-      a.textContent = t.label;
-      setActiveTab(a, path.endsWith(t.match));
-      bottom.appendChild(a);
+    // Filter tabs by role (admin-only tabs hidden for ops)
+    const allowed = PAGES.filter(p => {
+      if (!p.role) return true;
+      return String(role || "").toLowerCase() === p.role;
     });
 
-    shell.appendChild(top);
-    shell.appendChild(bottom);
+    const tabsHtml = allowed.map(p => {
+      const active = isActive(p.href);
+      const style = active
+        ? 'style="border-color: rgba(48,173,247,.55); background: rgba(48,173,247,.12);"'
+        : "";
+      return `<a href="${p.href}" ${style}>${esc(p.label)}</a>`;
+    }).join("");
 
-    host.innerHTML = "";
-    host.appendChild(shell);
+    siteNav.innerHTML = `
+      <div class="navShell">
+        <div class="navTop">
+          <a class="nav-brand" href="/abm-upload/index.html" aria-label="ABM Logic Home">
+            <img class="nav-logo" src="/abm-upload/abm-logo.png" alt="ABM Logic" />
+          </a>
 
-    // Wire logout
-    logoutBtn.addEventListener("click", () => {
-      const existing = document.getElementById("logoutBtn");
-      if (existing) return existing.click();
-      window.dispatchEvent(new CustomEvent("abm:logout"));
-    });
+          <div class="navMeta">
+            <div class="navTitleRow">
+              <h1 class="navTitle">${esc(title)}</h1>
+              ${badge ? `<span class="navBadge">${esc(badge)}</span>` : ""}
+            </div>
+            <div class="navSubRow">
+              ${help ? `<div class="navHelp">${esc(help)}</div>` : ""}
+              ${email ? `<div class="navIdentity">${esc(email)}</div>` : ""}
+            </div>
+          </div>
+
+          <div class="navSpacer"></div>
+
+          <button id="navLogoutBtn" type="button">Logout</button>
+        </div>
+
+        <div class="navBottom">
+          ${tabsHtml}
+        </div>
+      </div>
+    `;
+
+    // Hook logout
+    const btn = document.getElementById("navLogoutBtn");
+    if (btn) {
+      btn.addEventListener("click", async () => {
+        try {
+          await sb.auth.signOut();
+        } catch (e) {
+          console.warn("Logout error:", e);
+        }
+
+        // Hard clear any cached identity
+        window.ABM_USER_EMAIL = "";
+        window.ABM_ROLE = "";
+
+        // Remove nav immediately
+        clearNav();
+
+        // Reload page so the login form is shown cleanly
+        location.reload();
+      });
+    }
   }
 
-  document.addEventListener("DOMContentLoaded", buildNav);
-  window.addEventListener("abm:nav:refresh", buildNav);
+  async function init() {
+    // If not logged in -> no nav, period.
+    const { session, user, role } = await getUserAndRole();
+    if (!session || !user) {
+      clearNav();
+      return;
+    }
+    renderNav({ email: user.email, role });
+  }
+
+  // If auth changes (sign in/out), re-run nav logic
+  sb.auth.onAuthStateChange(() => {
+    init().catch(() => clearNav());
+  });
+
+  // Some pages trigger this after they fetch role (your pattern)
+  window.addEventListener("abm:nav:refresh", () => {
+    init().catch(() => clearNav());
+  });
+
+  // Start
+  init().catch(() => clearNav());
 })();
