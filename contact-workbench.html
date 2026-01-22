@@ -20,27 +20,19 @@
   <div id="siteNav"></div>
 
   <main class="container">
-    <!-- LOGIN VIEW -->
-    <section id="loginView" class="card auth-card">
-      <h1 class="h1">Contact Workbench</h1>
-      <p class="muted">Login to verify & enrich contacts. Contacts ≠ Leads.</p>
+    
+  <!-- SIGNED OUT VIEW (global auth only, no local login form) -->
+<section id="loginView" class="card auth-card" style="display:none;">
+  <h1 class="h1">Contact Workbench</h1>
+  <p class="muted">
+    You’re signed out. Use the global login, then return to Contact Workbench.
+  </p>
 
-      <div class="form-grid">
-        <div class="field">
-          <label for="loginEmail">Email</label>
-          <input id="loginEmail" type="email" placeholder="you@abmlogic.com" autocomplete="username" />
-        </div>
-        <div class="field">
-          <label for="loginPassword">Password</label>
-          <input id="loginPassword" type="password" placeholder="••••••••" autocomplete="current-password" />
-        </div>
-      </div>
-
-      <div class="row gap">
-        <button id="loginBtn" class="btn primary">Login</button>
-        <span id="loginMsg" class="muted"></span>
-      </div>
-    </section>
+  <div class="row gap">
+    <a class="btn primary" href="/abm-upload/index.html">Go to Home / Login</a>
+    <span id="loginMsg" class="muted"></span>
+  </div>
+</section>
 
     <!-- APP VIEW -->
     <section id="appView" style="display:none;">
