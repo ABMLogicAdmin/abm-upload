@@ -12,27 +12,32 @@
   <link rel="stylesheet" href="/abm-upload/base.css?v=1">
   <link rel="stylesheet" href="/abm-upload/contact-workbench.css?v=1">
 
+  <!-- Must load before nav.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 </head>
 
-<body>
+<body
+  data-page-title="Contact Workbench"
+  data-page-badge="Slice B"
+  data-page-help="Verify/enrich overlays only. Raw contacts remain immutable."
+>
   <!-- Nav mounts here ONLY when logged in (nav.js rule) -->
   <div id="siteNav"></div>
 
   <main class="container">
-    
-  <!-- SIGNED OUT VIEW (global auth only, no local login form) -->
-<section id="loginView" class="card auth-card">
-  <h1 class="h1">Contact Workbench</h1>
-  <p class="muted">
-    You’re signed out. Use the global login, then return to Contact Workbench.
-  </p>
 
-  <div class="row gap">
-    <a class="btn primary" href="/abm-upload/index.html">Go to Home / Login</a>
-    <span id="loginMsg" class="muted"></span>
-  </div>
-</section>
+    <!-- SIGNED OUT VIEW -->
+    <section id="loginView" class="card auth-card" style="display:none;">
+      <h1 class="h1">Contact Workbench</h1>
+      <p class="muted">
+        You’re signed out. Use the global login, then return to Contact Workbench.
+      </p>
+
+      <div class="row gap">
+        <a class="btn primary" href="/abm-upload/index.html">Go to Home / Login</a>
+        <span id="loginMsg" class="muted"></span>
+      </div>
+    </section>
 
     <!-- APP VIEW -->
     <section id="appView" style="display:none;">
@@ -64,9 +69,7 @@
             <button id="tabRejected" class="tab" data-tab="rejected">Rejected</button>
           </div>
 
-          <div id="queueList" class="queue-list">
-            <!-- rows injected -->
-          </div>
+          <div id="queueList" class="queue-list"></div>
         </aside>
 
         <!-- DETAIL -->
@@ -90,7 +93,7 @@
 
             <hr class="sep"/>
 
-            <!-- RAW (read only) -->
+            <!-- RAW -->
             <div class="section">
               <div class="row space-between align-center mb-8">
                 <h3 class="h3">Raw Contact</h3>
@@ -101,7 +104,7 @@
 
             <hr class="sep"/>
 
-            <!-- OVERLAY (editable) -->
+            <!-- OVERLAY -->
             <div class="section">
               <div class="row space-between align-center mb-8">
                 <h3 class="h3">Verified / Enriched Overlay</h3>
@@ -164,6 +167,7 @@
     </section>
   </main>
 
+  <!-- Order matters: nav.js must run before contact-workbench.js -->
   <script src="/abm-upload/nav.js?v=23"></script>
   <script src="/abm-upload/contact-workbench.js?v=7"></script>
 </body>
