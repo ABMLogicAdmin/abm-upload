@@ -2,33 +2,21 @@
    Truth:
    - campaign_contacts = queue + raw snapshot + workflow state (claim/verify/reject live here)
    - campaign_contact_enrichment = verified/enriched overlay (editable fields live here)
-   - events table = audit log
+   - campaign_contact_enrichment_events = audit log
 */
 
-const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
-const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
+/* =========================
+   Supabase client (REUSE nav.js)
+   ========================= */
+const sb = window.ABM?.sb;
 
-function getSupabaseClient() {
-  if (window.ABM_SB) return window.ABM_SB;
-
-  const SB_STORAGE_KEY = "abmlogic-auth";
-
-  const client = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: {
-      storageKey: SB_STORAGE_KEY,
-      persistSession: true,
-      autoRefreshToken: true,
-      detectSessionInUrl: false
-    }
-  });
-
-  window.ABM_SB = client;            // shared
-  window.ABM = window.ABM || {};
-  window.ABM.sb = client;            // backwards compat
-  return client;
+if (!sb) {
+  // If this happens, nav.js did not load, or supabase-js CDN didn't load before nav.js.
+  throw new Error(
+    "Supabase client not found (window.ABM.sb). " +
+    "Check script order: supabase-js CDN -> nav.js -> contact-workbench.js"
+  );
 }
-
-const sb = getSupabaseClient();
 
 /* ======= DOM ======= */
 const el = (id) => document.getElementById(id);
@@ -71,11 +59,12 @@ const ovVerifiedJson = el("ovVerifiedJson");
 /* ======= STATE ======= */
 let sessionUser = null;
 let activeTab = "pending";
-let activeRow = null;
-let activeDetail = null;
+let activeRow = null;    // selected row from queue view
+let activeDetail = null; // selected row from detail view
 
 /* ======= UTIL ======= */
 function setMsg(target, text, isError=false){
+  if (!target) return;
   target.textContent = text || "";
   target.style.color = isError ? "crimson" : "";
 }
@@ -110,31 +99,43 @@ function isMine(row){
   return !!(row.enrichment_assigned_to && sessionUser && row.enrichment_assigned_to === sessionUser.id);
 }
 
-/* ======= AUTH ======= */
+function normalizeStatus(s){
+  return String(s || "").toLowerCase().trim();
+}
+
+/* =========================
+   AUTH (no local login form)
+   ========================= */
 async function renderByAuth(){
-  const { data } = await sb.auth.getSession();
-  sessionUser = data.session?.user || null;
+  const { data, error } = await sb.auth.getSession();
+  if (error) {
+    setMsg(appMsg, `Auth error: ${error.message}`, true);
+    sessionUser = null;
+  } else {
+    sessionUser = data.session?.user || null;
+  }
 
   if (!sessionUser){
+    // signed out
     appView.style.display = "none";
     loginView.style.display = "block";
-    setMsg(loginMsg, "Please sign in via Home.", false);
-
-    // nav must not render if signed out (nav.js rule)
-    if (window.ABM_NAV?.destroy) window.ABM_NAV.destroy();
-    else document.getElementById("siteNav").innerHTML = "";
-
+    setMsg(loginMsg, "You’re signed out. Use Home to login, then return here.");
+    setMsg(appMsg, "");
     return;
   }
 
+  // signed in
   loginView.style.display = "none";
   appView.style.display = "block";
+  setMsg(appMsg, "");
 
-  if (window.ABM_NAV?.init) window.ABM_NAV.init();
+  // nav.js already renders nav. No need to call init/destroy from here.
   await loadQueue();
 }
 
-/* ======= QUEUE LOAD ======= */
+/* =========================
+   QUEUE
+   ========================= */
 function setActiveTab(tab){
   activeTab = tab;
   [tabPending, tabMine, tabDone, tabRejected].forEach(b => b.classList.remove("active"));
@@ -152,19 +153,26 @@ async function loadQueue(){
   queueCount.textContent = "0";
   clearDetail();
 
+  // Your views (expected)
   let viewName = "v_contact_workbench_queue";
   if (activeTab === "mine") viewName = "v_contact_workbench_queue_mine";
   if (activeTab === "done") viewName = "v_contact_workbench_queue_done";
-  if (activeTab === "rejected") viewName = "v_contact_workbench_queue_rejected"; // may not exist yet
+  if (activeTab === "rejected") viewName = "v_contact_workbench_queue_rejected"; // may not exist
 
-  const { data, error } = await sb.from(viewName).select("*").limit(200);
+  const { data, error } = await sb
+    .from(viewName)
+    .select("*")
+    .limit(200);
 
   if (error){
+    // if rejected view doesn't exist, show a clean message
     if (activeTab === "rejected"){
-      setMsg(appMsg, "Rejected view not available yet (DB not ready).", true);
+      setMsg(appMsg, "Rejected queue view not available yet (DB view missing).", true);
+      queueList.innerHTML = `<div class="muted tiny">Rejected view not available yet.</div>`;
       return;
     }
     setMsg(appMsg, `Queue load failed: ${error.message}`, true);
+    queueList.innerHTML = `<div class="muted tiny">Queue load failed.</div>`;
     return;
   }
 
@@ -184,8 +192,11 @@ async function loadQueue(){
     const display = pickDisplayName(row);
     const subtitle = [row.email, row.company].filter(Boolean).join(" • ");
 
-    const assigned = row.enrichment_assigned_to ? (isMine(row) ? "mine" : "assigned") : "unassigned";
-    const st = (row.enrichment_status || activeTab || "").toLowerCase() || "unknown";
+    const assigned = row.enrichment_assigned_to
+      ? (isMine(row) ? "mine" : "assigned")
+      : "unassigned";
+
+    const st = normalizeStatus(row.enrichment_status || activeTab) || "unknown";
 
     item.innerHTML = `
       <div class="queue-top">
@@ -213,12 +224,19 @@ async function loadQueue(){
   setMsg(appMsg, "");
 }
 
-/* ======= DETAIL ======= */
+/* =========================
+   DETAIL
+   ========================= */
 function clearDetail(){
   activeRow = null;
   activeDetail = null;
+
   detailView.style.display = "none";
   detailEmpty.style.display = "block";
+
+  detailTitle.textContent = "—";
+  detailSubtitle.textContent = "—";
+
   rawBlock.innerHTML = "";
 
   ovLinkedin.value = "";
@@ -237,6 +255,11 @@ function clearDetail(){
 }
 
 async function loadDetail(campaignContactId){
+  if (!campaignContactId){
+    setMsg(appMsg, "Missing campaign_contact_id. Fix queue view to include it.", true);
+    return;
+  }
+
   setMsg(appMsg, "Loading detail…");
 
   const { data, error } = await sb
@@ -257,11 +280,14 @@ async function loadDetail(campaignContactId){
   }
 
   detailTitle.textContent = pickDisplayName(activeDetail);
-  detailSubtitle.textContent = [activeDetail.title, activeDetail.company, activeDetail.email].filter(Boolean).join(" • ") || "—";
+  detailSubtitle.textContent =
+    [activeDetail.title, activeDetail.company, activeDetail.email]
+      .filter(Boolean)
+      .join(" • ") || "—";
 
   renderRaw(activeDetail);
 
-  // overlay fields come from campaign_contact_enrichment (joined in view)
+  // overlay fields (joined from campaign_contact_enrichment)
   ovLinkedin.value = activeDetail.linkedin_url || "";
   ovPhone.value = activeDetail.phone || "";
   ovNotes.value = activeDetail.notes || "";
@@ -269,10 +295,13 @@ async function loadDetail(campaignContactId){
   ovCompleteness.value = activeDetail.completeness_score ?? "";
 
   const vf = activeDetail.verified_fields;
-  ovVerifiedJson.value = vf && typeof vf === "object" ? JSON.stringify(vf, null, 2) : (vf || "");
+  ovVerifiedJson.value = vf && typeof vf === "object"
+    ? JSON.stringify(vf, null, 2)
+    : (vf || "");
 
-  const st = (activeDetail.enrichment_status || "").toLowerCase();
-  const readOnly = (st === "verified" || st === "rejected" || st === "enriched");
+  // Read-only logic
+  const st = normalizeStatus(activeDetail.enrichment_status);
+  const readOnly = (st === "verified" || st === "rejected");
 
   detailEmpty.style.display = "none";
   detailView.style.display = "block";
@@ -301,6 +330,9 @@ function renderRaw(obj){
     ["Source system", obj.source_system],
     ["Batch ID", obj.batch_id],
     ["Campaign Contact ID", obj.campaign_contact_id],
+    ["Suppressed", obj.suppressed],
+    ["Suppressed reason", obj.suppressed_reason],
+    ["Created at", obj.created_at],
   ];
 
   rawBlock.innerHTML = "";
@@ -316,13 +348,18 @@ function renderRaw(obj){
   });
 }
 
-/* ======= WRITES ======= */
+/* =========================
+   WRITES
+   ========================= */
 async function writeEvent(campaignContactId, eventType, payload){
-  const { error } = await sb.from("campaign_contact_enrichment_events").insert([{
-    campaign_contact_id: campaignContactId,
-    event_type: eventType,
-    event_payload: payload ?? null
-  }]);
+  const { error } = await sb
+    .from("campaign_contact_enrichment_events")
+    .insert([{
+      campaign_contact_id: campaignContactId,
+      event_type: eventType,
+      event_payload: payload ?? null
+    }]);
+
   if (error) throw error;
 }
 
@@ -356,13 +393,15 @@ async function upsertOverlay(campaignContactId, patch){
   if (error) throw error;
 }
 
-/* ======= ACTIONS ======= */
 function getActiveId(){
   const id = activeDetail?.campaign_contact_id || activeRow?.campaign_contact_id;
   if (!id) throw new Error("No active campaign_contact_id selected.");
   return id;
 }
 
+/* =========================
+   ACTIONS
+   ========================= */
 async function handleClaim(){
   try{
     setMsg(appMsg, "Claiming…");
@@ -378,6 +417,7 @@ async function handleClaim(){
 
     setMsg(appMsg, "Claimed.");
     await loadQueue();
+    await loadDetail(id);
   }catch(e){
     setMsg(appMsg, e.message || String(e), true);
   }
@@ -397,6 +437,7 @@ async function handleRelease(){
 
     setMsg(appMsg, "Released.");
     await loadQueue();
+    clearDetail();
   }catch(e){
     setMsg(appMsg, e.message || String(e), true);
   }
@@ -408,8 +449,8 @@ async function handleSave(){
     const id = getActiveId();
 
     const vf = parseJsonOrNull(ovVerifiedJson.value);
-    const completeness = ovCompleteness.value === "" ? null : Number(ovCompleteness.value);
 
+    const completeness = ovCompleteness.value === "" ? null : Number(ovCompleteness.value);
     if (completeness !== null && (Number.isNaN(completeness) || completeness < 0 || completeness > 100)){
       throw new Error("Completeness Score must be 0–100.");
     }
@@ -447,6 +488,7 @@ async function handleDone(){
 
     setMsg(appMsg, "Verified.");
     await loadQueue();
+    clearDetail();
   }catch(e){
     setMsg(appMsg, e.message || String(e), true);
   }
@@ -460,7 +502,6 @@ async function handleReject(){
     setMsg(appMsg, "Rejecting…");
     const id = getActiveId();
 
-    // This will fail if your CHECK constraint doesn't allow 'rejected' yet.
     await updateContactState(id, {
       enrichment_status: "rejected",
       enrichment_locked_at: new Date().toISOString()
@@ -468,18 +509,22 @@ async function handleReject(){
 
     await writeEvent(id, "rejected", { by: sessionUser.id, reason });
 
-    // store reason in notes as well (optional but helpful)
+    // Optional: store reason in overlay notes too
     await upsertOverlay(id, { notes: `REJECTED: ${reason}` });
 
     setMsg(appMsg, "Rejected.");
     await loadQueue();
+    clearDetail();
   }catch(e){
     setMsg(appMsg, e.message || String(e), true);
   }
 }
 
-/* ======= EVENTS ======= */
+/* =========================
+   EVENTS
+   ========================= */
 refreshBtn.addEventListener("click", loadQueue);
+
 tabPending.addEventListener("click", async () => { setActiveTab("pending"); await loadQueue(); });
 tabMine.addEventListener("click", async () => { setActiveTab("mine"); await loadQueue(); });
 tabDone.addEventListener("click", async () => { setActiveTab("done"); await loadQueue(); });
@@ -491,11 +536,24 @@ saveBtn.addEventListener("click", handleSave);
 doneBtn.addEventListener("click", handleDone);
 rejectBtn.addEventListener("click", handleReject);
 
-sb.auth.onAuthStateChange(renderByAuth);
+// Keep UI in sync with global auth changes
+sb.auth.onAuthStateChange(() => {
+  renderByAuth().catch((e) => setMsg(appMsg, e.message || String(e), true));
+});
 
-/* ======= INIT ======= */
+/* =========================
+   INIT
+   ========================= */
 (async function init(){
-  clearDetail();
-  setActiveTab("pending");
-  await renderByAuth();
+  try{
+    clearDetail();
+    setActiveTab("pending");
+    await renderByAuth();
+  }catch(e){
+    console.error(e);
+    // If something goes wrong, show login view instead of blank
+    appView.style.display = "none";
+    loginView.style.display = "block";
+    setMsg(loginMsg, e.message || String(e), true);
+  }
 })();
