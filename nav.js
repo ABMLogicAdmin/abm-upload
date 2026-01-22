@@ -4,35 +4,27 @@
      Page + Role Helpers
   ========================= */
 
-  function getPath() {
-    return (location.pathname || "").toLowerCase();
-  }
-
   function getPageName() {
-    const p = getPath();
+    const p = (location.pathname || "").toLowerCase();
     if (p.endsWith("/home.html")) return "Home";
     if (p.endsWith("/workbench.html")) return "Lead Workbench";
     if (p.endsWith("/contact-workbench.html")) return "Contact Workbench";
     if (p.endsWith("/admin-setup.html")) return "Admin Setup";
     if (p.endsWith("/admin-export.html")) return "Lead Delivery";
     if (p.endsWith("/supplier-leads-upload.html")) return "Supplier Leads Upload";
-    if (p.endsWith("/index.html") || p.endsWith("/")) return "ABM Logic";
+    if (p.endsWith("/index.html") || p.endsWith("/")) return "ABM Upload";
     return "ABM Logic";
   }
 
   function getRoleRaw() {
-    // Prefer explicit global (recommended)
     if (window.ABM_ROLE) return String(window.ABM_ROLE);
 
-    // Fallback to localStorage if stored there by page scripts
     const ls =
       localStorage.getItem("abm_role") ||
       localStorage.getItem("role") ||
       localStorage.getItem("user_role");
 
     if (ls) return String(ls);
-
-    // Final fallback
     return "user";
   }
 
@@ -56,41 +48,23 @@
     const r = normalizeRole(rawRole);
 
     // Admin sees everything
-    if (r === "admin") {
+    if (r === "admin")
       return new Set([
         "home",
         "admin_setup",
         "contact_workbench",
         "supplier_upload",
         "lead_workbench",
-        "delivery",
+        "lead_delivery",
       ]);
-    }
 
-    // Ops should only see operational work pages
-    if (r === "ops") {
-      return new Set([
-        "home",
-        "contact_workbench",
-        "lead_workbench",
-      ]);
-    }
+    // Ops: keep it simple (no admin setup, no supplier upload, no delivery)
+    if (r === "ops") return new Set(["home", "contact_workbench", "lead_workbench"]);
 
-    // Uploader only uploads
-    if (r === "uploader") {
-      return new Set(["supplier_upload"]);
-    }
+    // Uploader: only upload + home
+    if (r === "uploader") return new Set(["home", "supplier_upload"]);
 
-    // safest default: show no tabs
     return new Set([]);
-  }
-
-  function homeHrefForRole(rawRole) {
-    const r = normalizeRole(rawRole);
-    if (r === "admin") return "/abm-upload/home.html";
-    if (r === "ops") return "/abm-upload/workbench.html"; // ops “home” = lead workbench for now
-    if (r === "uploader") return "/abm-upload/supplier-leads-upload.html";
-    return "/abm-upload/index.html";
   }
 
   function setActiveTab(a, isActive) {
@@ -137,7 +111,7 @@
 
     const brand = document.createElement("a");
     brand.className = "nav-brand";
-    brand.href = homeHrefForRole(rawRole);
+    brand.href = "/abm-upload/home.html";
     brand.setAttribute("aria-label", "ABM Logic Home");
 
     const logo = document.createElement("img");
@@ -173,7 +147,6 @@
       subRow.appendChild(help);
     }
 
-    // Optional: show current user email if page sets it
     if (window.ABM_USER_EMAIL) {
       const ident = document.createElement("div");
       ident.className = "navIdentity";
@@ -198,22 +171,21 @@
     top.appendChild(spacer);
     top.appendChild(logoutBtn);
 
-    // Bottom row tabs
+    // Bottom row tabs — ORDER YOU REQUESTED:
+    // Home, Admin Setup, Contact Workbench, Supplier Leads Upload, Lead Workbench, Lead Delivery
     const bottom = document.createElement("div");
     bottom.className = "navBottom";
 
-    // REQUIRED ORDER:
-    // Home, Admin Setup, Contact Workbench, Supplier Leads Upload, Lead Workbench, Lead Delivery
     const tabs = [
       { id: "home", label: "Home", href: "/abm-upload/home.html", match: "/home.html" },
       { id: "admin_setup", label: "Admin Setup", href: "/abm-upload/admin-setup.html", match: "/admin-setup.html" },
       { id: "contact_workbench", label: "Contact Workbench", href: "/abm-upload/contact-workbench.html", match: "/contact-workbench.html" },
       { id: "supplier_upload", label: "Supplier Leads Upload", href: "/abm-upload/supplier-leads-upload.html", match: "/supplier-leads-upload.html" },
       { id: "lead_workbench", label: "Lead Workbench", href: "/abm-upload/workbench.html", match: "/workbench.html" },
-      { id: "delivery", label: "Lead Delivery", href: "/abm-upload/admin-export.html", match: "/admin-export.html" }
+      { id: "lead_delivery", label: "Lead Delivery", href: "/abm-upload/admin-export.html", match: "/admin-export.html" },
     ];
 
-    const path = getPath();
+    const path = (location.pathname || "").toLowerCase();
 
     tabs.forEach((t) => {
       if (!allowed.has(t.id)) return;
@@ -231,9 +203,7 @@
     host.innerHTML = "";
     host.appendChild(shell);
 
-    // Wire logout:
-    // If your existing pages already attach logout logic to #logoutBtn,
-    // we forward-click it. Otherwise emit an event.
+    // Wire logout
     logoutBtn.addEventListener("click", () => {
       const existing = document.getElementById("logoutBtn");
       if (existing) return existing.click();
