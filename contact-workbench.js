@@ -1,14 +1,12 @@
 /* ABM Logic — Contact Workbench (Slice B)
-   Rules:
-   - Never update campaign_contacts (raw). Read only via views.
-   - All writes go to campaign_contact_enrichment (overlay) + campaign_contact_enrichment_events (audit).
-   - Uses Supabase JS v2 with anon key (RLS must permit ops/admin appropriately).
+   Truth:
+   - campaign_contacts = queue + raw snapshot + workflow state (claim/verify/reject live here)
+   - campaign_contact_enrichment = verified/enriched overlay (editable fields live here)
+   - events table = audit log
 */
 
-/* ======= CONFIG (match your other pages) ======= */
 const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
-// Reuse a single Supabase client per browser context to avoid GoTrue lock conflicts
 
 function getSupabaseClient() {
   if (window.ABM_SB) return window.ABM_SB;
@@ -32,31 +30,30 @@ const el = (id) => document.getElementById(id);
 
 const loginView = el("loginView");
 const appView   = el("appView");
-
-const loginMsg = el("loginMsg");
+const loginMsg  = el("loginMsg");
 
 const appMsg = el("appMsg");
 const refreshBtn = el("refreshBtn");
 
-const tabPending = el("tabPending");
-const tabMine = el("tabMine");
-const tabDone = el("tabDone");
+const tabPending  = el("tabPending");
+const tabMine     = el("tabMine");
+const tabDone     = el("tabDone");
 const tabRejected = el("tabRejected");
 
-const queueList = el("queueList");
+const queueList  = el("queueList");
 const queueCount = el("queueCount");
 
-const detailEmpty = el("detailEmpty");
-const detailView = el("detailView");
-const detailTitle = el("detailTitle");
+const detailEmpty    = el("detailEmpty");
+const detailView     = el("detailView");
+const detailTitle    = el("detailTitle");
 const detailSubtitle = el("detailSubtitle");
-const rawBlock = el("rawBlock");
+const rawBlock       = el("rawBlock");
 
-const claimBtn = el("claimBtn");
+const claimBtn   = el("claimBtn");
 const releaseBtn = el("releaseBtn");
-const saveBtn = el("saveBtn");
-const doneBtn = el("doneBtn");
-const rejectBtn = el("rejectBtn");
+const saveBtn    = el("saveBtn");
+const doneBtn    = el("doneBtn");
+const rejectBtn  = el("rejectBtn");
 const rejectReason = el("rejectReason");
 
 const ovLinkedin = el("ovLinkedin");
@@ -69,8 +66,8 @@ const ovVerifiedJson = el("ovVerifiedJson");
 /* ======= STATE ======= */
 let sessionUser = null;
 let activeTab = "pending";
-let activeRow = null; // queue row object
-let activeDetail = null; // detail object (from v_contact_workbench_detail)
+let activeRow = null;
+let activeDetail = null;
 
 /* ======= UTIL ======= */
 function setMsg(target, text, isError=false){
@@ -78,14 +75,18 @@ function setMsg(target, text, isError=false){
   target.style.color = isError ? "crimson" : "";
 }
 
+function escapeHtml(str){
+  return String(str ?? "")
+    .replaceAll("&","&amp;")
+    .replaceAll("<","&lt;")
+    .replaceAll(">","&gt;")
+    .replaceAll('"',"&quot;")
+    .replaceAll("'","&#039;");
+}
+
 function safeText(v){
   if (v === null || v === undefined || v === "") return "—";
   return String(v);
-}
-
-function isAbortError(err){
-  const msg = (err?.message || "").toLowerCase();
-  return err?.name === "AbortError" || msg.includes("signal is aborted");
 }
 
 function parseJsonOrNull(txt){
@@ -97,71 +98,38 @@ function parseJsonOrNull(txt){
 
 function pickDisplayName(row){
   const full = [row.first_name, row.last_name].filter(Boolean).join(" ").trim();
-  return full || row.full_name || row.email || `Contact ${row.campaign_contact_id || row.id || ""}`.trim();
+  return full || row.email || `Contact ${row.campaign_contact_id || ""}`;
 }
 
 function isMine(row){
-  // Many implementations store assigned_to as UUID of auth user
-  return !!(row.assigned_to && sessionUser && row.assigned_to === sessionUser.id);
+  return !!(row.enrichment_assigned_to && sessionUser && row.enrichment_assigned_to === sessionUser.id);
 }
 
-function statusPill(status){
-  const s = (status || "").toLowerCase();
-  if (!s) return "unknown";
-  return s;
-}
-
-/* ======= AUTH + NAV ======= */
-async function getSession(){
-  const { data, error } = await sb.auth.getSession();
-  if (error) throw error;
-  return data.session || null;
-}
-
+/* ======= AUTH ======= */
 async function renderByAuth(){
-  let sess = null;
-
-  try {
-    const { data, error } = await sb.auth.getSession();
-    if (error) throw error;
-    sess = data.session || null;
-  } catch (e) {
-    if (!isAbortError(e)) console.error(e);
-    sess = null;
-  }
-
-  sessionUser = sess?.user || null;
+  const { data } = await sb.auth.getSession();
+  sessionUser = data.session?.user || null;
 
   if (!sessionUser){
     appView.style.display = "none";
     loginView.style.display = "block";
     setMsg(loginMsg, "Please sign in via Home.", false);
-    setMsg(appMsg, "");
 
-    // nav must not render when logged out
-    if (window.ABM_NAV && typeof window.ABM_NAV.destroy === "function") {
-      window.ABM_NAV.destroy();
-    } else {
-      const nav = document.getElementById("siteNav");
-      if (nav) nav.innerHTML = "";
-    }
+    // nav must not render if signed out (nav.js rule)
+    if (window.ABM_NAV?.destroy) window.ABM_NAV.destroy();
+    else document.getElementById("siteNav").innerHTML = "";
+
     return;
   }
 
-  // signed in
   loginView.style.display = "none";
   appView.style.display = "block";
-  setMsg(appMsg, "");
 
-  if (window.ABM_NAV && typeof window.ABM_NAV.init === "function") {
-    window.ABM_NAV.init();
-  }
-
-  // Now load data. If RLS blocks, show a clear message (Mode C)
+  if (window.ABM_NAV?.init) window.ABM_NAV.init();
   await loadQueue();
 }
 
-/* ======= DATA LOAD ======= */
+/* ======= QUEUE LOAD ======= */
 function setActiveTab(tab){
   activeTab = tab;
   [tabPending, tabMine, tabDone, tabRejected].forEach(b => b.classList.remove("active"));
@@ -182,25 +150,14 @@ async function loadQueue(){
   let viewName = "v_contact_workbench_queue";
   if (activeTab === "mine") viewName = "v_contact_workbench_queue_mine";
   if (activeTab === "done") viewName = "v_contact_workbench_queue_done";
-  if (activeTab === "rejected") {
-    // If you don’t actually have rejected view yet, we’ll fall back gracefully
-    viewName = "v_contact_workbench_queue_rejected";
-  }
+  if (activeTab === "rejected") viewName = "v_contact_workbench_queue_rejected"; // may not exist yet
 
-  // We don’t know exact column names in your views.
-  // So we select * and rely on common-sense fields existing.
-  const { data, error } = await sb
-    .from(viewName)
-    .select("*")
-    .limit(200);
+  const { data, error } = await sb.from(viewName).select("*").limit(200);
 
   if (error){
-    // rejected view might not exist; fallback to done read-only
     if (activeTab === "rejected"){
-      setMsg(appMsg, "Rejected view not available. Showing Done instead.", true);
-      activeTab = "done";
-      setActiveTab("done");
-      return loadQueue();
+      setMsg(appMsg, "Rejected view not available yet (DB not ready).", true);
+      return;
     }
     setMsg(appMsg, `Queue load failed: ${error.message}`, true);
     return;
@@ -220,11 +177,10 @@ async function loadQueue(){
     item.className = "queue-item";
 
     const display = pickDisplayName(row);
-    const company = row.company_name || row.company || row.account_name || row.domain || "";
-    const subtitle = [row.email, company].filter(Boolean).join(" • ");
+    const subtitle = [row.email, row.company].filter(Boolean).join(" • ");
 
-    const assigned = row.assigned_to ? (isMine(row) ? "mine" : "assigned") : "unassigned";
-    const st = statusPill(row.status || activeTab);
+    const assigned = row.enrichment_assigned_to ? (isMine(row) ? "mine" : "assigned") : "unassigned";
+    const st = (row.enrichment_status || activeTab || "").toLowerCase() || "unknown";
 
     item.innerHTML = `
       <div class="queue-top">
@@ -236,8 +192,6 @@ async function loadQueue(){
       </div>
       <div class="queue-meta">
         <span class="pill subtle">${escapeHtml(assigned)}</span>
-        ${row.completeness_score !== undefined && row.completeness_score !== null ? `<span class="pill subtle">score ${escapeHtml(row.completeness_score)}</span>` : ``}
-        ${row.activation_ready !== undefined && row.activation_ready !== null ? `<span class="pill subtle">ready ${escapeHtml(String(row.activation_ready))}</span>` : ``}
       </div>
     `;
 
@@ -245,7 +199,7 @@ async function loadQueue(){
       document.querySelectorAll(".queue-item").forEach(x => x.classList.remove("active"));
       item.classList.add("active");
       activeRow = row;
-      await loadDetail(row);
+      await loadDetail(row.campaign_contact_id);
     });
 
     queueList.appendChild(item);
@@ -254,14 +208,14 @@ async function loadQueue(){
   setMsg(appMsg, "");
 }
 
+/* ======= DETAIL ======= */
 function clearDetail(){
   activeRow = null;
   activeDetail = null;
   detailView.style.display = "none";
   detailEmpty.style.display = "block";
-  detailTitle.textContent = "—";
-  detailSubtitle.textContent = "—";
   rawBlock.innerHTML = "";
+
   ovLinkedin.value = "";
   ovPhone.value = "";
   ovNotes.value = "";
@@ -270,7 +224,6 @@ function clearDetail(){
   ovVerifiedJson.value = "";
   rejectReason.value = "";
 
-  // Default buttons
   claimBtn.disabled = true;
   releaseBtn.disabled = true;
   saveBtn.disabled = true;
@@ -278,24 +231,13 @@ function clearDetail(){
   rejectBtn.disabled = true;
 }
 
-async function loadDetail(row){
-  if (!row) return;
-
+async function loadDetail(campaignContactId){
   setMsg(appMsg, "Loading detail…");
 
-  // We need a stable identifier. Prefer campaign_contact_id, otherwise id.
-  const contactId = row.campaign_contact_id || row.id;
-  if (!contactId){
-    setMsg(appMsg, "Row has no campaign_contact_id/id. Fix the view to expose it.", true);
-    return;
-  }
-
-  // Fetch detail from v_contact_workbench_detail
-  // Expectation: this view returns 1 row per campaign_contact_id with raw + overlay fields joined.
   const { data, error } = await sb
     .from("v_contact_workbench_detail")
     .select("*")
-    .eq("campaign_contact_id", contactId)
+    .eq("campaign_contact_id", campaignContactId)
     .maybeSingle();
 
   if (error){
@@ -303,40 +245,34 @@ async function loadDetail(row){
     return;
   }
 
-  activeDetail = data || row; // fallback to row if detail returns null
-  const display = pickDisplayName(activeDetail);
-  const company = activeDetail.company_name || activeDetail.company || activeDetail.account_name || activeDetail.domain || "—";
-  const title = activeDetail.title || activeDetail.job_title || "";
-  const email = activeDetail.email || "";
+  activeDetail = data;
+  if (!activeDetail){
+    setMsg(appMsg, "No detail row returned. Check v_contact_workbench_detail.", true);
+    return;
+  }
 
-  detailTitle.textContent = display;
-  detailSubtitle.textContent = [title, company, email].filter(Boolean).join(" • ") || "—";
+  detailTitle.textContent = pickDisplayName(activeDetail);
+  detailSubtitle.textContent = [activeDetail.title, activeDetail.company, activeDetail.email].filter(Boolean).join(" • ") || "—";
 
   renderRaw(activeDetail);
 
-  // Populate overlay fields (try common names)
-  ovLinkedin.value = activeDetail.linkedin_url || activeDetail.linkedin || "";
-  ovPhone.value = activeDetail.phone || activeDetail.phone_number || "";
-  ovNotes.value = activeDetail.ops_notes || activeDetail.notes || "";
-  ovActivationReady.checked = !!(activeDetail.activation_ready);
-  ovCompleteness.value = (activeDetail.completeness_score ?? activeDetail.overlay_completeness_score ?? "");
+  // overlay fields come from campaign_contact_enrichment (joined in view)
+  ovLinkedin.value = activeDetail.linkedin_url || "";
+  ovPhone.value = activeDetail.phone || "";
+  ovNotes.value = activeDetail.notes || "";
+  ovActivationReady.checked = !!activeDetail.activation_ready;
+  ovCompleteness.value = activeDetail.completeness_score ?? "";
 
-  const vf = activeDetail.verified_fields || activeDetail.verified_fields_json || activeDetail.verified || null;
-  if (vf && typeof vf === "object") ovVerifiedJson.value = JSON.stringify(vf, null, 2);
-  else if (typeof vf === "string") ovVerifiedJson.value = vf;
-  else ovVerifiedJson.value = "";
+  const vf = activeDetail.verified_fields;
+  ovVerifiedJson.value = vf && typeof vf === "object" ? JSON.stringify(vf, null, 2) : (vf || "");
 
-  // Button rules:
-  // - Pending: can claim (if unassigned), can save only after claim (enforced in backend ideally)
-  // - Mine: can save/done/reject/release
-  // - Done/Rejected: read-only (no writes)
-  const st = (activeDetail.status || row.status || activeTab || "").toLowerCase();
-  const readOnly = (st === "done" || st === "rejected" || activeTab === "done" || activeTab === "rejected");
+  const st = (activeDetail.enrichment_status || "").toLowerCase();
+  const readOnly = (st === "verified" || st === "rejected" || st === "enriched");
 
   detailEmpty.style.display = "none";
   detailView.style.display = "block";
 
-  claimBtn.disabled = readOnly || !!activeDetail.assigned_to; // if already assigned, claim disabled
+  claimBtn.disabled = readOnly || !!activeDetail.enrichment_assigned_to;
   releaseBtn.disabled = readOnly || !isMine(activeDetail);
   saveBtn.disabled = readOnly || !isMine(activeDetail);
   doneBtn.disabled = readOnly || !isMine(activeDetail);
@@ -346,27 +282,25 @@ async function loadDetail(row){
 }
 
 function renderRaw(obj){
-  // We render a curated list first, then (optionally) a couple extra if present.
   const candidates = [
+    ["Email", obj.email],
     ["First name", obj.first_name],
     ["Last name", obj.last_name],
-    ["Full name", obj.full_name],
-    ["Email", obj.email],
-    ["Title", obj.title || obj.job_title],
-    ["Company", obj.company_name || obj.company || obj.account_name],
+    ["Title", obj.title],
+    ["Company", obj.company],
     ["Domain", obj.domain],
+    ["Department", obj.department],
+    ["Seniority", obj.seniority],
     ["Country", obj.country],
-    ["Region", obj.region],
-    ["City", obj.city],
-    ["Source", obj.source],
-    ["Campaign", obj.campaign_name],
-    ["Ingested at", obj.ingested_at || obj.created_at],
-    ["Raw contact ID", obj.campaign_contact_id || obj.id],
+    ["Industry", obj.industry],
+    ["Source system", obj.source_system],
+    ["Batch ID", obj.batch_id],
+    ["Campaign Contact ID", obj.campaign_contact_id],
   ];
 
   rawBlock.innerHTML = "";
   candidates.forEach(([k,v]) => {
-    if (v === undefined) return; // hide truly unknown fields
+    if (v === undefined) return;
     const div = document.createElement("div");
     div.className = "kv";
     div.innerHTML = `
@@ -377,9 +311,8 @@ function renderRaw(obj){
   });
 }
 
-/* ======= WRITES (overlay + events) ======= */
+/* ======= WRITES ======= */
 async function writeEvent(campaignContactId, eventType, payload){
-  // Best-effort audit; if it fails, we still want to know and stop pretending it worked
   const { error } = await sb.from("campaign_contact_enrichment_events").insert([{
     campaign_contact_id: campaignContactId,
     event_type: eventType,
@@ -388,51 +321,55 @@ async function writeEvent(campaignContactId, eventType, payload){
   if (error) throw error;
 }
 
+async function updateContactState(campaignContactId, patch){
+  const { error } = await sb
+    .from("campaign_contacts")
+    .update(patch)
+    .eq("campaign_contact_id", campaignContactId);
+
+  if (error) throw error;
+}
+
 async function upsertOverlay(campaignContactId, patch){
-  // Assumption: campaign_contact_enrichment has a unique key on campaign_contact_id
-  // Adjust column names here if your schema differs.
   const row = {
     campaign_contact_id: campaignContactId,
     linkedin_url: patch.linkedin_url ?? null,
     phone: patch.phone ?? null,
-    ops_notes: patch.ops_notes ?? null,
+    company_size: patch.company_size ?? null,
+    notes: patch.notes ?? null,
     verified_fields: patch.verified_fields ?? null,
     completeness_score: patch.completeness_score ?? null,
     activation_ready: patch.activation_ready ?? null,
-    status: patch.status ?? null,
-    assigned_to: patch.assigned_to ?? undefined, // undefined = don't touch
-    rejected_reason: patch.rejected_reason ?? null,
-    updated_at: new Date().toISOString(),
+    enriched_by: sessionUser.id,
+    enriched_at: new Date().toISOString(),
   };
 
-  // Remove undefined fields (so we don't overwrite accidentally)
-  Object.keys(row).forEach((k) => row[k] === undefined && delete row[k]);
-
-  const { data, error } = await sb
+  const { error } = await sb
     .from("campaign_contact_enrichment")
-    .upsert(row, { onConflict: "campaign_contact_id" })
-    .select("*")
-    .maybeSingle();
+    .upsert(row, { onConflict: "campaign_contact_id" });
 
   if (error) throw error;
-  return data;
 }
 
-function getActiveContactId(){
-  const id = activeDetail?.campaign_contact_id || activeRow?.campaign_contact_id || activeDetail?.id || activeRow?.id;
-  if (!id) throw new Error("No active campaign_contact_id/id.");
+/* ======= ACTIONS ======= */
+function getActiveId(){
+  const id = activeDetail?.campaign_contact_id || activeRow?.campaign_contact_id;
+  if (!id) throw new Error("No active campaign_contact_id selected.");
   return id;
 }
 
-/* ======= ACTION HANDLERS ======= */
 async function handleClaim(){
   try{
     setMsg(appMsg, "Claiming…");
-    const id = getActiveContactId();
+    const id = getActiveId();
 
-    // Claim = set assigned_to + status in overlay table (not raw)
-    await upsertOverlay(id, { assigned_to: sessionUser.id, status: "in_progress" });
-    await writeEvent(id, "claim", { by: sessionUser.id });
+    await updateContactState(id, {
+      enrichment_assigned_to: sessionUser.id,
+      enrichment_assigned_at: new Date().toISOString(),
+      enrichment_status: "in_progress"
+    });
+
+    await writeEvent(id, "assigned", { by: sessionUser.id });
 
     setMsg(appMsg, "Claimed.");
     await loadQueue();
@@ -444,9 +381,14 @@ async function handleClaim(){
 async function handleRelease(){
   try{
     setMsg(appMsg, "Releasing…");
-    const id = getActiveContactId();
-    await upsertOverlay(id, { assigned_to: null, status: "pending" });
-    await writeEvent(id, "release", { by: sessionUser.id });
+    const id = getActiveId();
+
+    await updateContactState(id, {
+      enrichment_assigned_to: null,
+      enrichment_status: "pending"
+    });
+
+    await writeEvent(id, "unassigned", { by: sessionUser.id });
 
     setMsg(appMsg, "Released.");
     await loadQueue();
@@ -458,33 +400,28 @@ async function handleRelease(){
 async function handleSave(){
   try{
     setMsg(appMsg, "Saving overlay…");
-    const id = getActiveContactId();
+    const id = getActiveId();
 
     const vf = parseJsonOrNull(ovVerifiedJson.value);
-
     const completeness = ovCompleteness.value === "" ? null : Number(ovCompleteness.value);
+
     if (completeness !== null && (Number.isNaN(completeness) || completeness < 0 || completeness > 100)){
-      throw new Error("Completeness Score must be a number between 0 and 100.");
+      throw new Error("Completeness Score must be 0–100.");
     }
 
     await upsertOverlay(id, {
       linkedin_url: ovLinkedin.value.trim() || null,
       phone: ovPhone.value.trim() || null,
-      ops_notes: ovNotes.value.trim() || null,
+      notes: ovNotes.value.trim() || null,
       verified_fields: vf,
       completeness_score: completeness,
       activation_ready: !!ovActivationReady.checked
-      // status unchanged on save
     });
 
-    await writeEvent(id, "save_overlay", {
-      by: sessionUser.id,
-      fields: ["linkedin_url","phone","ops_notes","verified_fields","completeness_score","activation_ready"]
-    });
+    await writeEvent(id, "saved", { by: sessionUser.id });
 
     setMsg(appMsg, "Saved.");
-    // Reload detail to reflect actual stored values
-    await loadDetail({ campaign_contact_id: id });
+    await loadDetail(id);
     await loadQueue();
   }catch(e){
     setMsg(appMsg, e.message || String(e), true);
@@ -493,13 +430,17 @@ async function handleSave(){
 
 async function handleDone(){
   try{
-    setMsg(appMsg, "Marking done…");
-    const id = getActiveContactId();
+    setMsg(appMsg, "Marking verified…");
+    const id = getActiveId();
 
-    await upsertOverlay(id, { status: "done" });
-    await writeEvent(id, "mark_done", { by: sessionUser.id });
+    await updateContactState(id, {
+      enrichment_status: "verified",
+      enrichment_locked_at: new Date().toISOString()
+    });
 
-    setMsg(appMsg, "Done.");
+    await writeEvent(id, "verified", { by: sessionUser.id });
+
+    setMsg(appMsg, "Verified.");
     await loadQueue();
   }catch(e){
     setMsg(appMsg, e.message || String(e), true);
@@ -512,10 +453,18 @@ async function handleReject(){
     if (!reason) throw new Error("Reject reason is required.");
 
     setMsg(appMsg, "Rejecting…");
-    const id = getActiveContactId();
+    const id = getActiveId();
 
-    await upsertOverlay(id, { status: "rejected", rejected_reason: reason });
-    await writeEvent(id, "reject", { by: sessionUser.id, reason });
+    // This will fail if your CHECK constraint doesn't allow 'rejected' yet.
+    await updateContactState(id, {
+      enrichment_status: "rejected",
+      enrichment_locked_at: new Date().toISOString()
+    });
+
+    await writeEvent(id, "rejected", { by: sessionUser.id, reason });
+
+    // store reason in notes as well (optional but helpful)
+    await upsertOverlay(id, { notes: `REJECTED: ${reason}` });
 
     setMsg(appMsg, "Rejected.");
     await loadQueue();
@@ -525,10 +474,7 @@ async function handleReject(){
 }
 
 /* ======= EVENTS ======= */
-refreshBtn.addEventListener("click", async () => {
-  await loadQueue();
-});
-
+refreshBtn.addEventListener("click", loadQueue);
 tabPending.addEventListener("click", async () => { setActiveTab("pending"); await loadQueue(); });
 tabMine.addEventListener("click", async () => { setActiveTab("mine"); await loadQueue(); });
 tabDone.addEventListener("click", async () => { setActiveTab("done"); await loadQueue(); });
@@ -540,39 +486,11 @@ saveBtn.addEventListener("click", handleSave);
 doneBtn.addEventListener("click", handleDone);
 rejectBtn.addEventListener("click", handleReject);
 
-// React to auth changes (hard logout rule handled by nav.js; we still re-render)
-sb.auth.onAuthStateChange(async () => {
-  try {
-    await renderByAuth();
-  } catch (e) {
-    if (isAbortError(e)) return; // ignore benign Supabase aborts
-    console.error(e);
-    setMsg(appMsg, e.message || String(e), true);
-  }
-});
+sb.auth.onAuthStateChange(renderByAuth);
 
 /* ======= INIT ======= */
-function escapeHtml(str){
-  return String(str ?? "")
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
-}
-
 (async function init(){
-  try {
-    clearDetail();
-    setActiveTab("pending");
-    await renderByAuth();
-  } catch (e) {
-    if (isAbortError(e)) return;
-    console.error(e);
-    // make sure login is visible if anything fails
-    appView.style.display = "none";
-    loginView.style.display = "block";
-    setMsg(loginMsg, e.message || String(e), true);
-  }
+  clearDetail();
+  setActiveTab("pending");
+  await renderByAuth();
 })();
-
