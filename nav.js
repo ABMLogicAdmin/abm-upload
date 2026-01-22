@@ -21,13 +21,25 @@
     return;
   }
 
-  // Create or reuse client
-  const sb =
-    (window.ABM && window.ABM.sb) ||
-    window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// Create or reuse ONE shared client (prevents GoTrue lock conflicts)
+const SB_STORAGE_KEY = "abmlogic-auth";
 
-  window.ABM = window.ABM || {};
-  window.ABM.sb = sb;
+const sb =
+  window.ABM_SB ||
+  (window.ABM && window.ABM.sb) ||
+  window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+    auth: {
+      storageKey: SB_STORAGE_KEY,
+      persistSession: true,
+      autoRefreshToken: true,
+      detectSessionInUrl: false
+    }
+  });
+
+// Store it in BOTH places for backwards compatibility
+window.ABM_SB = sb;
+window.ABM = window.ABM || {};
+window.ABM.sb = sb;
 
   /* =========================
      Navigation config
