@@ -374,19 +374,3 @@ tr.selected-row td:last-child{
   color:var(--brand-navy);
   font-size:12.5px;
 }
-
-/* Raise Workbench content (override base.css) */
-body{
-  padding-top: 10px !important;  /* base.css is 28px */
-}
-
-/* Reduce gap between nav and the cards */
-#siteNav{
-  margin-bottom: 8px !important;
-}
-
-/* Reduce gap before the main grid */
-.grid{
-  margin-top: 6px !important;    /* was 16px */
-}
-
