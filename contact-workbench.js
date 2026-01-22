@@ -88,6 +88,11 @@ function safeText(v){
   return String(v);
 }
 
+function isAbortError(err){
+  const msg = (err?.message || "").toLowerCase();
+  return err?.name === "AbortError" || msg.includes("signal is aborted");
+}
+
 function parseJsonOrNull(txt){
   const t = (txt || "").trim();
   if (!t) return null;
@@ -545,7 +550,13 @@ rejectBtn.addEventListener("click", handleReject);
 
 // React to auth changes (hard logout rule handled by nav.js; we still re-render)
 sb.auth.onAuthStateChange(async () => {
-  await renderByAuth();
+  try {
+    await renderByAuth();
+  } catch (e) {
+    if (isAbortError(e)) return; // ignore benign Supabase aborts
+    console.error(e);
+    setMsg(appMsg, e.message || String(e), true);
+  }
 });
 
 /* ======= INIT ======= */
@@ -559,7 +570,17 @@ function escapeHtml(str){
 }
 
 (async function init(){
-  clearDetail();
-  setActiveTab("pending");
-  await renderByAuth();
+  try {
+    clearDetail();
+    setActiveTab("pending");
+    await renderByAuth();
+  } catch (e) {
+    if (isAbortError(e)) return;
+    console.error(e);
+    // make sure login is visible if anything fails
+    appView.style.display = "none";
+    loginView.style.display = "block";
+    setMsg(loginMsg, e.message || String(e), true);
+  }
 })();
+
