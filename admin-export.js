@@ -734,11 +734,11 @@ async function callGenerateDeliveryCsv(deliveryId) {
       _exportInited = true;
     
       // Hard guard: export bootstrap MUST have created the supabase client
-      if (!window.ABM?.sb) {
-        console.error("ABM.sb missing. Export bootstrap did not run or user not logged in.");
-        setStatus("ERROR: Export page is not initialised (missing session). Refresh and log in again.");
-        return;
-      }
+     if (!window.ABM?.callEdgeFunction) {
+      console.error("ABM.callEdgeFunction missing. Export bootstrap not loaded.");
+      setStatus("ERROR: Export helpers missing (callEdgeFunction). Refresh and log in again.");
+    return;
+    }
     
       init();
     }
