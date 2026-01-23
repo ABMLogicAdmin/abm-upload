@@ -510,30 +510,31 @@ if (role !== "admin") {
         .from("ingest_jobs")
         .update({ storage_path: path })
         .eq("id", job.id);
-
+      
       if (updErr) { if (status) status.textContent = `Upload ok but update failed: ${updErr.message}`; return; }
 
       if (status) status.textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}\n🚀 Starting ingestion…`;
 
-// Trigger process-ingest-job Edge Function (via app.shell.js)
-try {
-  const res = await window.ABM.callEdgeFunction("process-ingest-job", { ingest_job_id: job.id });
+      // Trigger process-ingest-job Edge Function (via app.shell.js)
+      try {
+        const res = await window.ABM.callEdgeFunction("process-ingest-job", { ingest_job_id: job.id });
 
-  if (!res.ok) {
-    if (status) status.textContent += `\n❌ Ingestion failed (${res.status})\n${res.text}`;
-    return;
-  }
+        if (!res.ok) {
+          if (status) status.textContent += `\n❌ Ingestion failed (${res.status})\n${res.text}`;
+          return;
+        }
 
-  if (status) status.textContent += `\n✅ Ingestion completed\n${res.text}`;
-} catch (e) {
-  if (status) status.textContent += `\n❌ Ingestion call failed\n${String(e?.message || e)}`;
-}
+        if (status) status.textContent += `\n✅ Ingestion completed\n${res.text}`;
+      } catch (e) {
+        if (status) status.textContent += `\n❌ Ingestion call failed\n${String(e?.message || e)}`;
+      }
+    }
 
-// Auto-show app if already logged in
+    // Auto-show app if already logged in (runs once on page load)
     window.ABM.getSessionSafe()
-  .then(sess => { if (sess) showApp(); })
-  .catch(()=>{});
+      .then(sess => { if (sess) showApp(); })
+      .catch(()=>{});
+
   </script>
-  
 </body>
 </html>
