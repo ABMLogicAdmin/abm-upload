@@ -1,7 +1,12 @@
+/* workbench.css — Workbench-only styles
+   IMPORTANT:
+   - DO NOT style body padding/background here
+   - base.css controls global layout + nav spacing
+*/
+
 :root{
   --brand-primary:#30ADF7;
   --brand-navy:#22233D;
-  --brand-bg:#E6F6FF;
   --text:#111827;
   --muted:#6b7280;
   --border:#e5e7eb;
@@ -12,21 +17,30 @@
 
 *{ box-sizing:border-box; }
 
-body{
-  font-family:Poppins,Arial,sans-serif;
-  background:linear-gradient(180deg,var(--brand-bg),#ffffff 55%);
-  color:var(--text);
-  margin:0;
-  padding:32px 16px 60px;
+/* Workbench can be wider than default wrap */
+.wrap{
+  max-width:1600px;
 }
 
-.wrap{ max-width:1600px; margin:0 auto; padding:0 12px; }
-.wrapSmall{ max-width:760px; margin:0 auto; }
+/* Make Workbench start closer under the nav (Workbench-only) */
+#siteNav .navShell{
+  margin-bottom: 12px;
+}
 
-/* =========================
-   Cards / Inputs
-========================= */
+/* Main layout */
+.grid{
+  margin-top: 0;               /* base.css already gives wrap padding */
+  display:grid;
+  grid-template-columns: minmax(560px, 70%) minmax(320px, 30%);
+  gap:14px;
+  align-items:start;
+}
 
+@media (max-width:900px){
+  .grid{ grid-template-columns:1fr; }
+}
+
+/* Card */
 .card{
   background:var(--card);
   border:1px solid var(--border);
@@ -35,6 +49,7 @@ body{
   box-shadow:var(--shadow);
 }
 
+/* Forms */
 label{
   display:block;
   margin-top:12px;
@@ -63,12 +78,6 @@ textarea{
   resize:vertical;
 }
 
-code{
-  background:rgba(17,24,39,.04);
-  padding:2px 6px;
-  border-radius:8px;
-}
-
 .statusText{
   margin-top:12px;
   font-size:12.5px;
@@ -81,10 +90,7 @@ code{
   font-size:12px;
 }
 
-/* =========================
-   Buttons
-========================= */
-
+/* Buttons */
 .btn{
   border:none;
   background:var(--brand-primary);
@@ -118,30 +124,7 @@ code{
   cursor:pointer;
 }
 
-/* =========================
-   MAIN LAYOUT (75 / 25)
-========================= */
-
-.grid{
-  margin-top:16px;
-  display:grid;
-
-  /* 25% queue | 75% detail */
-  grid-template-columns: minmax(560px, 70%) minmax(320px, 30%);
-
-  gap:14px;
-  align-items:start;
-}
-
-/* Stack on smaller screens */
-@media (max-width:900px){
-  .grid{ grid-template-columns:1fr; }
-}
-
-/* =========================
-   Queue
-========================= */
-
+/* Queue header */
 .queueHead{
   display:flex;
   align-items:center;
@@ -185,10 +168,7 @@ code{
   font-weight:900;
 }
 
-/* =========================
-   Table
-========================= */
-
+/* Table */
 .tableWrap{
   overflow-x:auto;
   overflow-y:auto;
@@ -252,10 +232,7 @@ tr.selected-row td:last-child{
   border-bottom-right-radius:10px;
 }
 
-/* =========================
-   Lead Detail
-========================= */
-
+/* Detail */
 .detailHead{
   display:flex;
   align-items:center;
@@ -302,11 +279,6 @@ tr.selected-row td:last-child{
   .leadContext .row{ grid-template-columns:1fr; }
 }
 
-.ctxItem strong{
-  color:var(--brand-navy);
-  font-weight:900;
-}
-
 .detailGrid{
   display:grid;
   grid-template-columns:1fr 1fr;
@@ -350,10 +322,7 @@ tr.selected-row td:last-child{
   color:#991b1b;
 }
 
-/* =========================
-   Boxes
-========================= */
-
+/* Boxes */
 .box{
   margin-top:12px;
   padding:12px;
@@ -374,17 +343,3 @@ tr.selected-row td:last-child{
   color:var(--brand-navy);
   font-size:12.5px;
 }
-
-/* =========================
-   Workbench layout fix
-   Align with other pages
-========================= */
-
-body{
-  padding-top: 0;
-}
-
-.grid{
-  margin-top: 0;
-}
-
