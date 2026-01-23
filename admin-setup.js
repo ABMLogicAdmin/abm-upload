@@ -1,41 +1,21 @@
- // ===== CONFIG =====
-    // Keep anon public key here (safe to be public). Security comes from RLS + auth.
-    window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
-    const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
-    // ==================
+// Use shared Supabase client from app.shell.js
+const sb = window.ABM?.sb;
 
-    if (!window.supabase) {
-      alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
-      throw new Error("Supabase SDK not loaded");
-    }
-
-    const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
-
-    window.ABM = window.ABM || {};
-    window.ABM.sb = sb;
-    window.ABM.SUPABASE_URL = SUPABASE_URL;
-    window.ABM.SUPABASE_ANON_KEY = window.ABM_SUPABASE_ANON_KEY;
-
-    const $ = (id) => document.getElementById(id);
-
-    const state = {
-    client: { value: "", label: "Select client...", items: [] },
-    campaign: { value: "", label: "Select campaign...", items: [] }
-  };
-  window.state = state;
-  
-  const cache = { clients: [], campaigns: [] };
-  window.cache = cache;
-
-async function requireAccessToken() {
-  const { data, error } = await sb.auth.getSession();
-  if (error) throw new Error(`Session error: ${error.message}`);
-
-  const token = data?.session?.access_token;
-  if (!token) throw new Error("No access token. Logout + login again (session missing/expired).");
-
-  return token;
+if (!sb) {
+  alert("Supabase shell not ready. Check script order (app.shell.js must load before this file).");
+  throw new Error("ABM shell missing");
 }
+
+const $ = (id) => document.getElementById(id);
+
+const state = {
+  client: { value: "", label: "Select client...", items: [] },
+  campaign: { value: "", label: "Select campaign...", items: [] }
+};
+window.state = state;
+
+const cache = { clients: [], campaigns: [] };
+window.cache = cache;
 
 // Close any open dropdown when clicking outside (works for ALL .dd and .msdd)
 document.addEventListener("click", (e) => {
@@ -45,7 +25,6 @@ document.addEventListener("click", (e) => {
     if (!el.contains(e.target)) el.classList.remove("open");
   });
 });
-
 
 const BRIEF_OPTIONS = {
   primary_departments: [
@@ -861,7 +840,7 @@ async function loadActiveBriefOnly(campaignId) {
     }
 
     async function logout() {
-      try { await window.ABM.sb.auth.signOut(); } catch (e) { console.warn("Logout error:", e); }
+      try { await sb.auth.signOut(); } catch (e) { console.warn("Logout error:", e); }
       location.href = "/abm-upload/admin-setup.html";
     }
 
@@ -1317,7 +1296,7 @@ const fileEl = document.getElementById("audience_csv_file");
 const file = fileEl?.files?.[0];
 if (!file) return setAudienceStatus("❌ Please choose a CSV file first.");
 
-  // ---- 2) Upload to Storage bucket: contact-uploads ----
+  // ---- 2) Upload to Storage bucket: Contact-uploads ----
 const BUCKET = "contact-uploads";
 const uuid = (crypto?.randomUUID ? crypto.randomUUID() : String(Date.now()));
 const storagePath = `contacts/${uuid}.csv`;
@@ -1352,35 +1331,27 @@ try {
      }
    }
 
-    // ---- 4) Call Edge Function with bucket + storage_path ----
-   const accessToken = await requireAccessToken();
+  setAudienceStatus("Running validation (Edge Function)…");
 
-    const url = `${SUPABASE_URL}/functions/v1/audience_validate_csv`;
+const res = await window.ABM.callEdgeFunction(
+  "audience_validate_csv",
+  {
+    campaign_id: campaignId,
+    bucket: BUCKET,
+    storage_path: storagePath,
+    ...(csvText ? { csv_text: csvText } : {}),
+  }
+);
 
-    setAudienceStatus("Running validation (Edge Function)…");
+if (!res.ok) {
+  setAudienceStatus(`❌ ${res.text || "Validate failed"}`);
+  return;
+}
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-        apikey: window.ABM_SUPABASE_ANON_KEY,
-      },
-      body: JSON.stringify({
-        campaign_id: campaignId,
-        bucket: BUCKET,
-        storage_path: storagePath,
+const out = JSON.parse(res.text || "{}");
 
-        // Backward-compatible fallback (remove once v2 is live):
-        ...(csvText ? { csv_text: csvText } : {}),
-      }),
-    });
-
-    const out = await res.json().catch(() => ({}));
-
- if (!res.ok || !out.ok) {
-  const msg = out?.error || `Validate failed (HTTP ${res.status})`;
-  setAudienceStatus(`❌ ${msg}`);
+if (!out.ok) {
+  setAudienceStatus(`❌ ${out.error || "Validate failed"}`);
   return;
 }
 
@@ -1462,37 +1433,28 @@ async function importAudienceCsv() {
     return setAudienceStatus("Please click Validate first (so we import the exact same validated file).");
   }
 
-  setAudienceStatus("Importing CSV into campaign_contacts…");
-
   try {
-   const accessToken = await requireAccessToken();
-
-    const url = `${SUPABASE_URL}/functions/v1/audience_import_csv`;
-
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${accessToken}`,
-        apikey: window.ABM_SUPABASE_ANON_KEY,
-      },
-     body: JSON.stringify({
+  const res = await window.ABM.callEdgeFunction(
+    "audience_import_csv",
+    {
       campaign_id: campaignId,
       bucket: storage.bucket,
       storage_path: storage.path,
       source_system: sourceSystem,
-    }),
-   });
-
-    const out = await res.json().catch(() => ({}));
-
-    if (!res.ok || !out.ok) {
-      const msg = out?.error || `Import failed (HTTP ${res.status})`;
-      setAudienceStatus(`❌ ${msg}`);
-      // show details if returned
-      if (out?.details) setAudienceStatus(`❌ ${msg}\n${out.details}`);
-      return;
     }
+  );
+
+  if (!res.ok) {
+    setAudienceStatus(`❌ ${res.text || "Import failed"}`);
+    return;
+  }
+
+  const out = JSON.parse(res.text || "{}");
+
+  if (!out.ok) {
+    setAudienceStatus(`❌ ${out.error || "Import failed"}`);
+    return;
+  }
 
 // expected from your import TS:
 const d = out.duplicates || {};
