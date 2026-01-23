@@ -203,7 +203,9 @@ function setBusy(isBusy) {
         const b = document.createElement("button");
         b.type = "button";
         b.className = "dd-item";
-        b.textContent = it.label;
+        const label = document.createElement("div");
+        label.textContent = it.label;
+        b.appendChild(label);
 
         b.addEventListener("click", () => {
           containerEl.classList.remove("open");
@@ -225,56 +227,40 @@ function setBusy(isBusy) {
     renderList("");
   }
 
-  // -----------------------------
-  // Supabase helpers
-  // -----------------------------
-  async function getFreshAccessToken() {
-    if (!window.ABM?.sb) throw new Error("Supabase client not initialised (window.ABM.sb).");
+// Close dropdowns when clicking anywhere else on the page
+document.addEventListener("click", (e) => {
+  if (e.target.closest(".dd")) return;
+  closeAllDropdowns();
+});
 
-    try {
-      await window.ABM.sb.auth.refreshSession();
-    } catch {
-      // ignore
-    }
+// -----------------------------
+// Supabase helpers
+// -----------------------------
 
-    const { data, error } = await window.ABM.sb.auth.getSession();
-    if (error) throw new Error("Could not read session: " + error.message);
-
-    const token = data?.session?.access_token;
-    if (!token) throw new Error("No active session token. Log out and log back in.");
-    return token;
+async function callGenerateDeliveryCsv(deliveryId) {
+  if (!window.ABM?.callEdgeFunction) {
+    throw new Error("Missing window.ABM.callEdgeFunction(). Check admin-export.html bootstrap.");
   }
 
-  async function callGenerateDeliveryCsv(deliveryId, accessToken) {
-    const url = `${window.ABM.SUPABASE_URL}/functions/v1/generate-delivery-csv`;
+  const res = await window.ABM.callEdgeFunction(
+    "generate-delivery-csv",
+    { delivery_id: deliveryId }
+  );
 
-    const res = await fetch(url, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        apikey: window.ABM.SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify({ delivery_id: deliveryId }),
-    });
-
-    const text = await res.text();
-    let json = null;
-    try { json = JSON.parse(text); } catch {}
-
-    if (!res.ok) {
-      const msg = json ? JSON.stringify(json, null, 2) : text;
-      throw new Error(`HTTP ${res.status}\n${msg}`);
-    }
-
-    if (!json?.ok || !json?.signed_url) {
-      throw new Error("Unexpected response:\n" + (json ? JSON.stringify(json, null, 2) : text));
-    }
-
-    return json.signed_url;
+  if (!res.ok) {
+    throw new Error(res.text || "Edge function failed");
   }
 
-    // Counts how many leads have already been delivered for a given export_type
+  const json = JSON.parse(res.text || "{}");
+
+  if (!json?.ok || !json?.signed_url) {
+    throw new Error("Unexpected response: " + res.text);
+  }
+
+  return json.signed_url;
+}
+  
+  // Counts how many leads have already been delivered for a given export_type
   async function countAlreadyDelivered(clientId, campaignId, exportType) {
     const { count, error } = await window.ABM.sb
       .from("delivery_items")
@@ -610,12 +596,10 @@ function setBusy(isBusy) {
     setStatus("Preparing session…");
 
     try {
-      const accessToken = await getFreshAccessToken();
-
       const edgeUrl = `${window.ABM.SUPABASE_URL}/functions/v1/generate-delivery-csv`;
       setStatus("Calling Edge Function…\n" + edgeUrl);
 
-      const signedUrl = await callGenerateDeliveryCsv(deliveryId, accessToken);
+     const signedUrl = await callGenerateDeliveryCsv(deliveryId);
 
       setStatus("SUCCESS");
       showResult(signedUrl);
