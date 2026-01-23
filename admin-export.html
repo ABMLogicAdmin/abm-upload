@@ -11,6 +11,8 @@
 
   <link rel="stylesheet" href="/abm-upload/base.css?v=21">
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/abm-upload/app-shell.js?v=1"></script>
+
 
   <style>
     :root{
@@ -285,38 +287,16 @@
 
 <!-- Shared nav -->
 <script src="/abm-upload/nav.js?v=23" defer></script>
-  <script src="/abm-upload/admin-export.js?v=10" defer></script>
+<script src="/abm-upload/admin-export.js?v=10" defer></script>
 
- <script>
-  // ===== CONFIG (keep key here) =====
-  window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
-  const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
-  // ================================
-
-  if (!window.supabase) {
-    alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
-    throw new Error("Supabase SDK not loaded");
-  }
-
-  // Create client once for this page
-  const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
-
-  // Expose for nav.js + admin-export.js
-  window.ABM = window.ABM || {};
-  window.ABM.sb = sb;
-  window.ABM_USER_EMAIL = window.ABM_USER_EMAIL || "";
-  window.ABM_ROLE = window.ABM_ROLE || "";
-
+<script>
   const $ = (id) => document.getElementById(id);
 
-  // Close EXPORT dropdowns when clicking outside (only export IDs)
-  document.addEventListener("click", (e) => {
-    const ids = ["ddExportClient","ddExportCampaign","ddExportDelivery","ddLogClient","ddLogCampaign"];
-    for (const id of ids) {
-      const el = $(id);
-      if (el && !el.contains(e.target)) el.classList.remove("open");
-    }
-  });
+  const sb = window.ABM?.sb;
+  if (!sb) {
+    alert("ABM App Shell not loaded. window.ABM.sb is missing.");
+    throw new Error("Missing Supabase client from app-shell.js");
+  }
 
   async function isAdmin() {
     const { data: userRes, error: userErr } = await sb.auth.getUser();
@@ -355,7 +335,6 @@
   }
 
   async function showApp() {
-    // Nav identity
     const { data: userRes } = await sb.auth.getUser();
     const user = userRes?.user;
 
@@ -363,7 +342,6 @@
     window.ABM_ROLE = "admin";
     window.dispatchEvent(new Event("abm:nav:refresh"));
 
-    // HARD ADMIN GATE
     const admin = await isAdmin();
     if (!admin) {
       document.body.innerHTML = `
@@ -376,27 +354,411 @@
       return;
     }
 
-    // Show export UI only
+    // Show UI
     const loginCard = $("loginCard");
     const grid = $("adminGrid");
     const exportCard = $("adminDeliveryExport");
+    const logoutBtn = $("logoutBtn");
+
+    if (loginCard) loginCard.style.display = "none";
+    if (grid) grid.style.display = "grid";
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ABM Logic – Admin Export</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="/abm-upload/base.css?v=21">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/abm-upload/app-shell.js?v=1"></script>
+
+
+  <style>
+    :root{
+      --brand-primary:#30ADF7;
+      --brand-navy:#22233D;
+      --brand-bg:#E6F6FF;
+      --text:#111827;
+      --muted:#6b7280;
+      --border:#e5e7eb;
+      --card:#ffffff;
+      --radius:14px;
+    }
+    html, body { color-scheme: light; }
+    select, option { background-color:#ffffff !important; color:#111827 !important; }
+
+    *{box-sizing:border-box}
+    body{
+      font-family:Poppins,Arial,sans-serif;
+      background:linear-gradient(180deg,var(--brand-bg),#ffffff 55%);
+      color:var(--text);
+      margin:0;
+      padding:32px 16px 60px;
+    }
+    .wrap{ max-width:1600px; margin:0 auto; padding:0 12px; }
+
+      .grid2{
+        display:grid;
+        grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+        gap:18px;
+        align-items:start;
+      }
+      @media (max-width: 980px){
+        .grid2{ grid-template-columns: 1fr; }
+      }
+    
+    .card{
+      margin-top:18px;
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:var(--radius);
+      padding:18px;
+      box-shadow:0 8px 30px rgba(17,24,39,.06);
+    }
+    label{display:block;margin-top:14px;font-size:12.5px;color:var(--brand-navy);font-weight:600}
+
+    input,button,select{
+      width:100%;
+      padding:11px 12px;
+      margin-top:7px;
+      font-size:14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      font-family:inherit;
+      background:#fff;
+      color:var(--text);
+    }
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    @media (max-width:640px){.row{grid-template-columns:1fr}}
+
+    .btn{
+      border:none;
+      background:var(--brand-primary);
+      color:#fff;
+      font-weight:700;
+      cursor:pointer;
+      margin-top:18px;
+      text-align:center;
+    }
+    .btn:hover{filter:brightness(.98)}
+    .btn:active{transform:translateY(1px)}
+    .status{margin-top:14px;font-size:12.5px;white-space:pre-wrap}
+    .hint{ font-size:12px;color:var(--muted);margin-top:10px; }
+
+    /* Custom dropdown */
+    .dd { position: relative; margin-top: 7px; }
+    .dd-btn{
+      width:100%;
+      padding:11px 12px;
+      font-size:14px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--text);
+      text-align:left;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      cursor:pointer;
+    }
+    .dd-btn:focus{
+      outline:none;
+      border-color:rgba(48,173,247,.8);
+      box-shadow:0 0 0 4px rgba(48,173,247,.18);
+    }
+    .dd-caret{ color: var(--muted); font-size: 12px; }
+    .dd-menu{
+      position:absolute;
+      top:calc(100% + 6px);
+      left:0;
+      right:0;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:12px;
+      box-shadow:0 18px 45px rgba(17,24,39,.12);
+      max-height:240px;
+      overflow:auto;
+      padding:6px;
+      z-index:9999;
+      display:none;
+    }
+    .dd.open .dd-menu{ display:block; }
+    .dd-item{
+      width:100%;
+      border:none;
+      background:transparent;
+      padding:10px 10px;
+      border-radius:10px;
+      text-align:left;
+      cursor:pointer;
+      color:var(--text);
+      font-size:14px;
+    }
+    .dd-item:hover{ background:rgba(48,173,247,.10); }
+    .dd-meta{ font-size:11px; color:var(--muted); margin-top:2px; }
+    .dd-search{
+      width:100%;
+      padding:10px 10px;
+      margin:6px 0 8px;
+      border-radius:10px;
+      border:1px solid var(--border);
+      font-size:13px;
+    }
+
+    /* Admin panel */
+    .adminTitle{
+      margin:0 0 6px;
+      font-size:13px;
+      font-weight:800;
+      color:var(--brand-navy);
+    }
+    .adminNote{
+      font-size:12px;
+      color:var(--muted);
+      margin:0 0 10px;
+    }
+    .btn-secondary{
+      border:none;
+      background:var(--brand-navy);
+      color:#fff;
+      font-weight:800;
+      cursor:pointer;
+      margin-top:10px;
+    }
+
+    .adminStatus{
+      margin-top:10px;
+      font-size:12.5px;
+      white-space:pre-wrap;
+      color:var(--brand-navy);
+    }
+    .divider{
+      margin:16px 0;
+      border:none;
+      border-top:1px solid rgba(34,35,61,.12);
+    }
+  </style>
+</head>
+
+<body
+  data-page-title="Admin Export"
+  data-page-badge="Delivery / Export"
+  data-page-help="Admin-only export page. Generate deliveries + view delivery log."
+>
+ 
+  <div id="siteNav"></div>
+  
+  <div class="wrap">
+    
+    <button id="logoutBtn" type="button" style="display:none;">Logout</button>
+
+    <!-- LOGIN -->
+    <div class="card" id="loginCard">
+      <div class="row">
+        <div>
+          <label>Email</label>
+          <input id="email" type="email" autocomplete="username" />
+        </div>
+        <div>
+          <label>Password</label>
+          <input id="password" type="password" autocomplete="current-password" />
+        </div>
+      </div>
+      <button class="btn" id="loginBtn" type="button">Sign in</button>
+      <div class="status" id="loginStatus"></div>
+      <div class="hint">If login works but Admin page blocks you, your app_users.role is not admin.</div>
+    </div>
+      
+<div class="grid2" id="adminGrid" style="display:none;">
+ 
+    <!-- DELIVERY EXPORT CARD (separate window) -->
+    <div class="card" id="adminDeliveryExport" style="display:none;">
+      <p class="adminTitle">Delivery Export</p>
+      <p class="adminNote">Generate a delivery-ready CSV server-side and return a signed download link.</p>
+
+      <label>Client</label>
+      <div class="dd" id="ddExportClient"></div>
+      
+      <label>Campaign</label>
+      <div class="dd" id="ddExportCampaign"></div>
+      
+      <label>Delivery batch</label>
+      <div class="dd" id="ddExportDelivery"></div>
+      <button id="btnCreateDeliveryBatch" class="btn-secondary" type="button" style="margin-top:10px;">
+        Create Delivery Batch
+      </button>
+      <div class="adminStatus" id="createBatchStatus" style="margin-top:8px;"></div>
+
+
+      <button id="btnGenerateDeliveryCsv" class="btn-secondary" type="button">Generate CSV</button>
+
+      <div class="adminStatus" id="deliveryExportStatus"></div>
+
+      <div id="deliveryExportResult" style="display:none; margin-top:12px;">
+        <a id="deliverySignedUrl" href="#" target="_blank" rel="noopener">Open signed download link</a>
+        <button id="btnCopySignedUrl" class="btn-ghost" type="button" style="width:auto; margin-left:10px;">Copy link</button>
+      </div>
+      <hr class="divider" />
+
+<!-- DELIVERY LOG (Slice 6.5) -->
+<p class="adminTitle" style="margin-top:0;">Delivery Log</p>
+<p class="adminNote">Read-only audit trail of prior deliveries (who, when, how many rows).</p>
+
+<div class="row">
+  <div>
+    <label>Client</label>
+    <div class="dd" id="ddLogClient"></div>
+  </div>
+  <div>
+    <label>Campaign</label>
+    <div class="dd" id="ddLogCampaign"></div>
+  </div>
+</div>
+
+<button id="btnRefreshDeliveryLog" class="btn-secondary" type="button">Refresh log</button>
+
+<div class="adminStatus" id="deliveryLogStatus"></div>
+
+<div style="margin-top:10px; overflow:auto;">
+  <table style="width:100%; border-collapse:collapse; font-size:13px;">
+    <thead>
+      <tr style="text-align:left; opacity:0.9;">
+        <th style="padding:10px 8px;">Client</th>
+        <th style="padding:10px 8px;">Campaign</th>
+        <th style="padding:10px 8px;">Created by</th>
+        <th style="padding:10px 8px;">Created</th>
+        <th style="padding:10px 8px;">Rows</th>
+        <th style="padding:10px 8px;">Delivery ID</th>
+      </tr>
+    </thead>
+    <tbody id="deliveryLogTbody">
+      <tr>
+        <td colspan="6" style="padding:12px 8px; opacity:0.7;">Click “Refresh log” to load results.</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+<!-- /DELIVERY LOG -->
+
+</div>   <!-- closes adminDeliveryExport -->
+</div>   <!-- closes adminGrid -->
+
+<!-- Shared nav -->
+<script src="/abm-upload/nav.js?v=23" defer></script>
+<script src="/abm-upload/admin-export.js?v=10" defer></script>
+
+<script>
+  const $ = (id) => document.getElementById(id);
+
+  const sb = window.ABM?.sb;
+  if (!sb) {
+    alert("ABM App Shell not loaded. window.ABM.sb is missing.");
+    throw new Error("Missing Supabase client from app-shell.js");
+  }
+
+  async function isAdmin() {
+    const { data: userRes, error: userErr } = await sb.auth.getUser();
+    if (userErr || !userRes?.user) return false;
+
+    const { data, error } = await sb
+      .from("app_users")
+      .select("role")
+      .eq("user_id", userRes.user.id)
+      .single();
+
+    if (error) return false;
+    return data?.role === "admin";
+  }
+
+  async function login() {
+    $("loginStatus").textContent = "Signing in…";
+
+    const { error } = await sb.auth.signInWithPassword({
+      email: $("email").value.trim(),
+      password: $("password").value
+    });
+
+    if (error) {
+      $("loginStatus").textContent = error.message;
+      return;
+    }
+
+    $("loginStatus").textContent = "";
+    await showApp();
+  }
+
+  async function logout() {
+    try { await sb.auth.signOut(); } catch (e) {}
+    location.href = "/abm-upload/admin-setup.html";
+  }
+
+  async function showApp() {
+    const { data: userRes } = await sb.auth.getUser();
+    const user = userRes?.user;
+
+    if (user?.email) window.ABM_USER_EMAIL = user.email;
+    window.ABM_ROLE = "admin";
+    window.dispatchEvent(new Event("abm:nav:refresh"));
+
+    const admin = await isAdmin();
+    if (!admin) {
+      document.body.innerHTML = `
+        <div style="max-width:600px;margin:80px auto;text-align:center;font-family:Poppins,Arial,sans-serif;">
+          <h2>Access denied</h2>
+          <p>You do not have permission to view this page.</p>
+          <p style="color:#6b7280;font-size:13px;">(Your app_users.role is not admin.)</p>
+        </div>
+      `;
+      return;
+    }
+
+    // Show UI
+    const loginCard = $("loginCard");
+    const grid = $("adminGrid");
+    const exportCard = $("adminDeliveryExport");
+    const logoutBtn = $("logoutBtn");
 
     if (loginCard) loginCard.style.display = "none";
     if (grid) grid.style.display = "grid";
     if (exportCard) exportCard.style.display = "block";
+    if (logoutBtn) logoutBtn.style.display = "block";
 
-    // Tell admin-export.js it can now wire up export UI
     window.dispatchEvent(new Event("abm:export:ready"));
   }
 
-  // Wire login/logout
   $("loginBtn").onclick = login;
+
   document.addEventListener("DOMContentLoaded", () => {
     const btn = $("logoutBtn");
     if (btn) btn.addEventListener("click", logout);
   });
 
-  // Auto-show if already logged in
+  sb.auth.getSession()
+    .then(async (r) => { if (r.data.session) await showApp(); })
+    .catch(()=>{});
+</script>
+
+</body>
+</html>
+
+    if (logoutBtn) logoutBtn.style.display = "block";
+
+    window.dispatchEvent(new Event("abm:export:ready"));
+  }
+
+  $("loginBtn").onclick = login;
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const btn = $("logoutBtn");
+    if (btn) btn.addEventListener("click", logout);
+  });
+
   sb.auth.getSession()
     .then(async (r) => { if (r.data.session) await showApp(); })
     .catch(()=>{});
