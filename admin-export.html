@@ -11,17 +11,17 @@
 
   <link rel="stylesheet" href="/abm-upload/base.css?v=21">
 
-  <!-- 1) Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+<!-- 1) Supabase SDK (NOT defer) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- 2) App Shell (creates window.ABM.sb ONCE) -->
-  <script src="/abm-upload/app.shell.js?v=1" defer></script>
+<!-- 2) App Shell (creates window.ABM.sb ONCE) -->
+<script src="/abm-upload/app.shell.js?v=1" defer></script>
 
-  <!-- 3) Shared nav -->
-  <script src="/abm-upload/nav.js?v=23" defer></script>
+<!-- 3) Shared nav -->
+<script src="/abm-upload/nav.js?v=23" defer></script>
 
-  <!-- 4) Page JS (uses window.ABM.sb, never createClient) -->
-  <script src="/abm-upload/admin-export.js?v=10" defer></script>
+<!-- 4) Page JS -->
+<script src="/abm-upload/admin-export.js?v=10" defer></script>
 
   <style>
     :root{
@@ -200,8 +200,6 @@
 
   <div class="wrap">
 
-    <button id="logoutBtn" type="button" style="display:none;">Logout</button>
-
     <!-- LOGIN -->
     <div class="card" id="loginCard">
       <div class="row">
@@ -299,89 +297,82 @@
   <!-- /wrap -->
 
   <!-- Inline bootstrap for login/admin gate -->
-  <script>
-    const $ = (id) => document.getElementById(id);
+ <script>
+  const $ = (id) => document.getElementById(id);
 
-    // wait until deferred scripts loaded
-    window.addEventListener("DOMContentLoaded", () => {
-      const sb = window.ABM?.sb;
-      if (!sb) {
-        alert("ABM App Shell not loaded. window.ABM.sb is missing.");
+  window.addEventListener("DOMContentLoaded", () => {
+    const sb = window.ABM?.sb;
+    if (!sb) {
+      alert("ABM App Shell not loaded. window.ABM.sb is missing.");
+      return;
+    }
+
+    async function isAdmin() {
+      const { data: userRes, error: userErr } = await sb.auth.getUser();
+      if (userErr || !userRes?.user) return false;
+
+      const { data, error } = await sb
+        .from("app_users")
+        .select("role")
+        .eq("user_id", userRes.user.id)
+        .single();
+
+      if (error) return false;
+      return data?.role === "admin";
+    }
+
+    async function showApp() {
+      const { data: userRes } = await sb.auth.getUser();
+      const user = userRes?.user;
+
+      if (user?.email) window.ABM_USER_EMAIL = user.email;
+      window.ABM_ROLE = "admin";
+      window.dispatchEvent(new Event("abm:nav:refresh"));
+
+      const admin = await isAdmin();
+      if (!admin) {
+        document.body.innerHTML = `
+          <div style="max-width:600px;margin:80px auto;text-align:center;font-family:Poppins,Arial,sans-serif;">
+            <h2>Access denied</h2>
+            <p>You do not have permission to view this page.</p>
+            <p style="color:#6b7280;font-size:13px;">(Your app_users.role is not admin.)</p>
+          </div>
+        `;
         return;
       }
 
-      async function isAdmin() {
-        const { data: userRes, error: userErr } = await sb.auth.getUser();
-        if (userErr || !userRes?.user) return false;
+      $("loginCard").style.display = "none";
+      $("adminGrid").style.display = "grid";
+      $("adminDeliveryExport").style.display = "block";
 
-        const { data, error } = await sb
-          .from("app_users")
-          .select("role")
-          .eq("user_id", userRes.user.id)
-          .single();
+      // Tell admin-export.js it can wire up now
+      window.dispatchEvent(new Event("abm:export:ready"));
+    }
 
-        if (error) return false;
-        return data?.role === "admin";
+    async function login() {
+      $("loginStatus").textContent = "Signing in…";
+
+      const { error } = await sb.auth.signInWithPassword({
+        email: $("email").value.trim(),
+        password: $("password").value
+      });
+
+      if (error) {
+        $("loginStatus").textContent = error.message;
+        return;
       }
 
-      async function showApp() {
-        const { data: userRes } = await sb.auth.getUser();
-        const user = userRes?.user;
+      $("loginStatus").textContent = "";
+      await showApp();
+    }
 
-        if (user?.email) window.ABM_USER_EMAIL = user.email;
-        window.ABM_ROLE = "admin";
-        window.dispatchEvent(new Event("abm:nav:refresh"));
+    $("loginBtn").onclick = login;
 
-        const admin = await isAdmin();
-        if (!admin) {
-          document.body.innerHTML = `
-            <div style="max-width:600px;margin:80px auto;text-align:center;font-family:Poppins,Arial,sans-serif;">
-              <h2>Access denied</h2>
-              <p>You do not have permission to view this page.</p>
-              <p style="color:#6b7280;font-size:13px;">(Your app_users.role is not admin.)</p>
-            </div>
-          `;
-          return;
-        }
+    sb.auth.getSession()
+      .then(async (r) => { if (r.data.session) await showApp(); })
+      .catch(()=>{});
+  });
+</script>
 
-        $("loginCard").style.display = "none";
-        $("adminGrid").style.display = "grid";
-        $("adminDeliveryExport").style.display = "block";
-        $("logoutBtn").style.display = "block";
-
-        // Tell admin-export.js it can wire up now
-        window.dispatchEvent(new Event("abm:export:ready"));
-      }
-
-      async function login() {
-        $("loginStatus").textContent = "Signing in…";
-
-        const { error } = await sb.auth.signInWithPassword({
-          email: $("email").value.trim(),
-          password: $("password").value
-        });
-
-        if (error) {
-          $("loginStatus").textContent = error.message;
-          return;
-        }
-
-        $("loginStatus").textContent = "";
-        await showApp();
-      }
-
-      async function logout() {
-        try { await sb.auth.signOut(); } catch (e) {}
-        location.href = "/abm-upload/admin-setup.html";
-      }
-
-      $("loginBtn").onclick = login;
-      $("logoutBtn").addEventListener("click", logout);
-
-      sb.auth.getSession()
-        .then(async (r) => { if (r.data.session) await showApp(); })
-        .catch(()=>{});
-    });
-  </script>
 </body>
 </html>
