@@ -211,27 +211,19 @@
     </div>
   </div>
 
-  <!-- Shared Nav -->
-  <script src="/abm-upload/nav.js?v=23" defer></script>
+<!-- Shared shell + nav (order matters) -->
+<script src="/abm-upload/app.shell.js?v=1"></script>
+<script src="/abm-upload/nav.js?v=23"></script>
 
-  <script>
-    // ===== CONFIG =====
-    // Supabase anon public key (OK to be in frontend)
-    window.ABM_SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13Zm5ibWtqZXRyaXVuc2RkdXByIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjY0NzY0MDcsImV4cCI6MjA4MjA1MjQwN30._mPr3cn9Dse-oOB44AlFTDq8zjgUkIhCZG31gzeYmHU";
-    const SUPABASE_URL = "https://mwfnbmkjetriunsddupr.supabase.co";
-    // ==================
+<script>
 
-    if (!window.supabase) {
-      alert("Supabase SDK failed to load (cdn.jsdelivr). Check network / extensions.");
-      throw new Error("Supabase SDK not loaded");
-    }
+  // Use shared Supabase client from app.shell.js
+const sb = window.ABM_SB;
 
-    // Create client
-    const sb = window.supabase.createClient(SUPABASE_URL, window.ABM_SUPABASE_ANON_KEY);
-
-    // Make it available for nav.js logout if you want it later
-    window.ABM = window.ABM || {};
-    window.ABM.sb = sb;
+if (!sb) {
+  alert("Supabase shell not ready. Check script order.");
+  throw new Error("ABM shell missing");
+}
 
     const $ = (id) => document.getElementById(id);
 
@@ -418,7 +410,6 @@ if (role !== "admin") {
     </div>`;
   return;
 }
-
       
       const appCard = $("appCard");
       const status = $("status");
@@ -560,15 +551,4 @@ if (role !== "admin") {
   
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
 
