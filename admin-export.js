@@ -729,19 +729,25 @@ async function callGenerateDeliveryCsv(deliveryId) {
    
     let _exportInited = false;
     
-    function initOnce() {
-      if (_exportInited) return;
-      _exportInited = true;
-    
-      // Hard guard: export bootstrap MUST have created the supabase client
-     if (!window.ABM?.callEdgeFunction) {
-      console.error("ABM.callEdgeFunction missing. Export bootstrap not loaded.");
-      setStatus("ERROR: Export helpers missing (callEdgeFunction). Refresh and log in again.");
+function initOnce() {
+  if (_exportInited) return;
+  _exportInited = true;
+
+  // Hard guards: export bootstrap MUST exist
+  if (!window.ABM?.sb) {
+    console.error("ABM.sb missing. Export bootstrap did not run or user not logged in.");
+    setStatus("ERROR: Export page is not initialised (missing session). Refresh and log in again.");
     return;
-    }
-    
-      init();
-    }
+  }
+
+  if (!window.ABM?.callEdgeFunction) {
+    console.error("ABM.callEdgeFunction missing. Export bootstrap not loaded.");
+    setStatus("ERROR: Export helpers missing (callEdgeFunction). Refresh and log in again.");
+    return;
+  }
+
+  init();
+}
     
     // Preferred: wait for export bootstrap (admin-export.html) to say "ready"
     window.addEventListener("abm:export:ready", initOnce);
