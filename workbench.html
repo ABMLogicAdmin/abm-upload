@@ -9,13 +9,21 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
- <link rel="stylesheet" href="/abm-upload/base.css?v=21">
+<link rel="stylesheet" href="/abm-upload/base.css?v=21">
+<link rel="stylesheet" href="/abm-upload/workbench.css?v=10">
   
-  <!-- Supabase SDK -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- 1) Supabase SDK -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
 
-  <!-- Your CSS (bump v= when you change CSS) -->
-  <link rel="stylesheet" href="/abm-upload/workbench.css?v10">
+<!-- 2) App Shell (creates window.ABM.sb ONCE) -->
+<script src="/abm-upload/app.shell.js?v=1" defer></script>
+
+<!-- 3) Shared nav -->
+<script src="/abm-upload/nav.js?v=23" defer></script>
+
+<!-- 4) Page JS -->
+<script src="/abm-upload/workbench.js?v=32" defer></script>
+
 </head>
 
 <body
@@ -42,7 +50,7 @@
           </div>
         </div>
 
-        <button class="btn" id="loginBtn">Sign in</button>
+        <button class="btn" id="loginBtn" type="button">Sign in</button>
         <div class="statusText" id="loginStatus"></div>
       </div>
     </div>
@@ -56,8 +64,7 @@
             <p class="queueTitle">Enrichment Queue</p>
             <div class="muted">Pending + in progress</div>
           </div>
-          <button id="refreshBtn" class="btn-ghost smallBtn" style="width:auto;">Refresh</button>
-    
+          <button id="refreshBtn" class="btn-ghost smallBtn" type="button" style="width:auto;">Refresh</button>    
         </div>
         
 <div class="queueControls">
@@ -92,7 +99,7 @@
   </div>
 
   <div class="clearWrap">
-    <button id="clearBtn" class="btn-ghost smallBtn" style="width:100%;">Clear</button>
+    <button id="clearBtn" class="btn-ghost smallBtn" type="button" style="width:100%;">Clear</button>
   </div>
 </div>
 
@@ -252,7 +259,7 @@
             </div>
           </div>
 
-          <button id="saveOutcomeBtn" class="btn" style="margin-top:10px;">Save Outcome</button>
+          <button id="saveOutcomeBtn" class="btn" type="button" style="margin-top:10px;">Save Outcome</button>
           <div class="muted" id="outcomeStatus" style="margin-top:8px;"></div>
         </div>
 
@@ -271,20 +278,14 @@
         </details>
 
         <div class="footerBtns">
-          <button id="saveBtn" class="btn-secondary">Save</button>
-          <button id="releaseBtn" class="btn-ghost">Release</button>
-          <button id="doneBtn" class="btn">Enrichment Done</button>
-          <button id="rejectBtn" class="btn-danger">Reject</button>
+          <button id="saveBtn" class="btn-secondary" type="button">Save</button>
+          <button id="releaseBtn" class="btn-ghost" type="button">Release</button>
+          <button id="doneBtn" class="btn" type="button">Enrichment Done</button>
+          <button id="rejectBtn" class="btn-danger" type="button">Reject</button>
         </div>
 
         <div class="statusText" id="detailStatus"></div>
       </div>
     </div>
-
-  <!-- Load your logic -->
-  <script src="/abm-upload/nav.js?v=23" defer></script>
-  <script src="/abm-upload/workbench.js?v=32" defer></script>
-<button id="logoutBtn" type="button" style="display:none;">Logout</button>
-
 </body>
 </html>
