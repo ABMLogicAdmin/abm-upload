@@ -374,3 +374,17 @@ tr.selected-row td:last-child{
   color:var(--brand-navy);
   font-size:12.5px;
 }
+
+/* =========================
+   Workbench layout fix
+   Align with other pages
+========================= */
+
+body{
+  padding-top: 0;
+}
+
+.grid{
+  margin-top: 0;
+}
+
