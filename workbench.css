@@ -1,35 +1,14 @@
-/* workbench.css — Workbench-only styles
+/* workbench.css — page-specific only
    IMPORTANT:
-   - DO NOT style body padding/background here
-   - base.css controls global layout + nav spacing
+   - Do NOT redefine: body, .wrap, .card, input/select/textarea/button
+   - Those are owned by base.css so all pages align.
 */
 
-:root{
-  --brand-primary:#30ADF7;
-  --brand-navy:#22233D;
-  --text:#111827;
-  --muted:#6b7280;
-  --border:#e5e7eb;
-  --card:#ffffff;
-  --radius:14px;
-  --shadow:0 10px 35px rgba(17,24,39,.12);
-}
+/* =========================
+   Workbench grid layout
+========================= */
 
-*{ box-sizing:border-box; }
-
-/* Workbench can be wider than default wrap */
-.wrap{
-  max-width:1600px;
-}
-
-/* Make Workbench start closer under the nav (Workbench-only) */
-#siteNav .navShell{
-  margin-bottom: 12px;
-}
-
-/* Main layout */
 .grid{
-  margin-top: 0;               /* base.css already gives wrap padding */
   display:grid;
   grid-template-columns: minmax(560px, 70%) minmax(320px, 30%);
   gap:14px;
@@ -40,91 +19,10 @@
   .grid{ grid-template-columns:1fr; }
 }
 
-/* Card */
-.card{
-  background:var(--card);
-  border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:18px;
-  box-shadow:var(--shadow);
-}
+/* =========================
+   Queue header + controls
+========================= */
 
-/* Forms */
-label{
-  display:block;
-  margin-top:12px;
-  font-size:12.5px;
-  color:var(--brand-navy);
-  font-weight:700;
-}
-
-input,
-button,
-select,
-textarea{
-  width:100%;
-  padding:11px 12px;
-  margin-top:7px;
-  font-size:14px;
-  border-radius:10px;
-  border:1px solid var(--border);
-  font-family:inherit;
-  background:#fff;
-  color:var(--text);
-}
-
-textarea{
-  min-height:90px;
-  resize:vertical;
-}
-
-.statusText{
-  margin-top:12px;
-  font-size:12.5px;
-  white-space:pre-wrap;
-  color:var(--brand-navy);
-}
-
-.muted{
-  color:var(--muted);
-  font-size:12px;
-}
-
-/* Buttons */
-.btn{
-  border:none;
-  background:var(--brand-primary);
-  color:#fff;
-  font-weight:800;
-  cursor:pointer;
-  margin-top:14px;
-}
-
-.btn-secondary{
-  border:none;
-  background:var(--brand-navy);
-  color:#fff;
-  font-weight:800;
-  cursor:pointer;
-}
-
-.btn-ghost{
-  background:#fff;
-  color:var(--brand-navy);
-  border:1px solid rgba(34,35,61,.18);
-  font-weight:800;
-  cursor:pointer;
-}
-
-.btn-danger{
-  border:none;
-  background:#ef4444;
-  color:#fff;
-  font-weight:900;
-  cursor:pointer;
-}
-
-/* Queue header */
 .queueHead{
   display:flex;
   align-items:center;
@@ -135,7 +33,6 @@ textarea{
 
 .queueTitle{
   font-weight:900;
-  color:var(--brand-navy);
   font-size:13px;
   margin:0;
 }
@@ -168,7 +65,10 @@ textarea{
   font-weight:900;
 }
 
-/* Table */
+/* =========================
+   Table styling (scoped)
+========================= */
+
 .tableWrap{
   overflow-x:auto;
   overflow-y:auto;
@@ -187,7 +87,7 @@ table{
 thead th{
   text-align:left;
   font-size:12px;
-  color:var(--muted);
+  color: rgba(17,24,39,.65);
   font-weight:900;
   padding:10px;
   border-bottom:1px solid rgba(34,35,61,.12);
@@ -232,7 +132,10 @@ tr.selected-row td:last-child{
   border-bottom-right-radius:10px;
 }
 
-/* Detail */
+/* =========================
+   Detail area
+========================= */
+
 .detailHead{
   display:flex;
   align-items:center;
@@ -243,7 +146,6 @@ tr.selected-row td:last-child{
 
 .detailTitle{
   font-weight:900;
-  color:var(--brand-navy);
   font-size:13px;
   margin:0;
 }
@@ -256,7 +158,6 @@ tr.selected-row td:last-child{
   border-radius:999px;
   border:1px solid rgba(34,35,61,.12);
   background:#fff;
-  color:var(--brand-navy);
   white-space:nowrap;
 }
 
@@ -308,7 +209,7 @@ tr.selected-row td:last-child{
 .helpLine{
   margin-top:10px;
   font-size:11.5px;
-  color:var(--muted);
+  color: rgba(17,24,39,.65);
   line-height:1.35;
 }
 
@@ -322,7 +223,6 @@ tr.selected-row td:last-child{
   color:#991b1b;
 }
 
-/* Boxes */
 .box{
   margin-top:12px;
   padding:12px;
@@ -340,6 +240,5 @@ tr.selected-row td:last-child{
 
 .boxTitle{
   font-weight:900;
-  color:var(--brand-navy);
   font-size:12.5px;
 }
