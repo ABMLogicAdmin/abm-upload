@@ -384,3 +384,16 @@ tr.selected-row td:last-child{
   padding:0 !important;
   margin:0 !important;
 }
+
+/* =========================
+   Workbench: reduce gap under nav
+   (base.css already adds spacing)
+========================= */
+.wrap{
+  padding-top: 0 !important;
+}
+
+.grid{
+  margin-top: 0 !important;
+}
+
