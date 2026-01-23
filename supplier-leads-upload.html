@@ -515,40 +515,25 @@ if (role !== "admin") {
 
       if (status) status.textContent = `✅ Upload complete\nJob ID: ${job.id}\nPath: ${path}\n🚀 Starting ingestion…`;
 
-      // Trigger process-ingest-job Edge Function with JWT + apikey
-      try {
-        const { data: sess } = await sb.auth.getSession();
-        const jwt = sess?.session?.access_token;
+// Trigger process-ingest-job Edge Function (via app.shell.js)
+try {
+  const res = await window.ABM.callEdgeFunction("process-ingest-job", { ingest_job_id: job.id });
 
-        const resp = await fetch(`${SUPABASE_URL}/functions/v1/process-ingest-job`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "apikey": window.ABM_SUPABASE_ANON_KEY,
-            ...(jwt ? { "Authorization": "Bearer " + jwt } : {})
-          },
-          body: JSON.stringify({ ingest_job_id: job.id })
-        });
+  if (!res.ok) {
+    if (status) status.textContent += `\n❌ Ingestion failed (${res.status})\n${res.text}`;
+    return;
+  }
 
-        const text = await resp.text();
+  if (status) status.textContent += `\n✅ Ingestion completed\n${res.text}`;
+} catch (e) {
+  if (status) status.textContent += `\n❌ Ingestion call failed\n${String(e?.message || e)}`;
+}
 
-        if (!resp.ok) {
-          if (status) status.textContent += `\n❌ Ingestion failed (${resp.status})\n${text}`;
-          return;
-        }
-
-        if (status) status.textContent += `\n✅ Ingestion completed\n${text}`;
-      } catch (e) {
-        if (status) status.textContent += `\n❌ Ingestion call failed\n${String(e?.message || e)}`;
-      }
-    }
-
-    // Auto-show app if already logged in
-    sb.auth.getSession()
-      .then(r => { if (r?.data?.session) showApp(); })
-      .catch(()=>{});
+// Auto-show app if already logged in
+    window.ABM.getSessionSafe()
+  .then(sess => { if (sess) showApp(); })
+  .catch(()=>{});
   </script>
   
 </body>
 </html>
-
