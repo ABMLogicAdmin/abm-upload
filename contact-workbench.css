@@ -192,3 +192,6 @@ textarea{ min-height:110px; resize:vertical; }
   grid-template-columns: 160px 1fr;
   gap:6px 10px;
 }
+
+/* Hide role/me pills (nav already shows this) */
+#wbRole, #wbMe { display: none; }
