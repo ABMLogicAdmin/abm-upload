@@ -508,7 +508,65 @@ hr.divider {
   padding: 0 12px !important;
   line-height: 40px !important;
 }
-   
+
+/* ====== Admin Setup: single-scroll layout ====== */
+html, body { height: 100%; }
+
+body{
+  margin: 0;
+  padding: 0;                 /* kills page padding */
+  overflow: hidden;           /* kills page scrollbar */
+  display: flex;
+  flex-direction: column;
+}
+
+/* nav sits on top; content takes remaining height */
+#siteNav{ flex: 0 0 auto; }
+
+.wrap{
+  flex: 1 1 auto;
+  overflow: hidden;           /* prevents second scrollbar */
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 0 12px 18px;       /* 18px from bottom of screen */
+}
+
+/* admin container fills available height */
+#adminGrid{
+  height: 100%;
+  overflow: hidden;
+}
+
+/* appCard becomes a vertical layout */
+#appCard{
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+/* context bar stays visible (NOT inside the scroll area) */
+.contextBar{
+  position: static;           /* remove sticky behaviour */
+  flex: 0 0 auto;
+}
+
+/* the tab panel area fills remaining space */
+.tabPanel.active{
+  flex: 1 1 auto;
+  overflow: hidden;
+}
+
+/* THIS is the only scroller */
+.tabPanel.active .stageCard{
+  flex: 1 1 auto;
+  height: 100%;
+  max-height: none;           /* stop the old max-height calc */
+  overflow-y: auto;
+  margin-top: 14px;
+}
+
+    
   </style>
 </head>
 
