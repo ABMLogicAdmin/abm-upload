@@ -196,18 +196,17 @@
     // =========================
     async function login() {
       setLoginStatus("Signing in…");
-
+    
       const email = ($("email")?.value || "").trim();
       const password = $("password")?.value || "";
-
+    
       const { error } = await sb.auth.signInWithPassword({ email, password });
       if (error) {
         setLoginStatus(error.message);
         return;
       }
+    
       setLoginStatus("Signed in. Loading…");
-
-      setLoginStatus("");
       await afterLogin();
     }
 
