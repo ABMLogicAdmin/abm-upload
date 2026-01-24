@@ -167,6 +167,7 @@
       
   <div class="wrap">
 
+   <div id="loginWrap">
     <div class="card" id="loginCard">
       <div class="row">
         <div>
@@ -182,34 +183,37 @@
       <div class="status" id="loginStatus"></div>
       <div class="hint">If login works but dropdowns don’t load, it’s usually RLS.</div>
     </div>
-
-    <div class="card" id="appCard" style="display:none;">
-      <div class="row">
-        <div>
-          <label>Client</label>
-          <div class="dd" id="ddClient"></div>
-        </div>
-        <div>
-          <label>Campaign</label>
-          <div class="dd" id="ddCampaign"></div>
-        </div>
-      </div>
-
-      <label>Source</label>
-      <div class="dd" id="ddSource"></div>
-
-      <a class="btn-link" href="./abm-logic-lead-upload-template.csv" download>
-        Download CSV Template
-      </a>
-
-      <label>CSV File</label>
-      <input id="file" type="file" accept=".csv" />
-
-      <button class="btn" id="uploadBtn">Upload CSV</button>
-      <div class="status" id="status"></div>
-      <div class="hint">Storage path: <code>client_{id}/campaign_{id}/ingest_{job_id}.csv</code></div>
-    </div>
   </div>
+
+     <div id="appGrid" style="display:none;">
+      <div class="card" id="appCard">
+        <div class="row">
+          <div>
+            <label>Client</label>
+            <div class="dd" id="ddClient"></div>
+          </div>
+          <div>
+            <label>Campaign</label>
+            <div class="dd" id="ddCampaign"></div>
+          </div>
+        </div>
+    
+        <label>Source</label>
+        <div class="dd" id="ddSource"></div>
+    
+        <a class="btn-link" href="./abm-logic-lead-upload-template.csv" download>
+          Download CSV Template
+        </a>
+    
+        <label>CSV File</label>
+        <input id="file" type="file" accept=".csv" />
+    
+        <button class="btn" id="uploadBtn">Upload CSV</button>
+        <div class="status" id="status"></div>
+        <div class="hint">Storage path: <code>client_{id}/campaign_{id}/ingest_{job_id}.csv</code></div>
+         </div> <!-- closes #appCard -->
+    </div>   <!-- closes #appGrid -->
+  </div>     <!-- closes .wrap -->
 
 <!-- Shared shell + nav (order matters) -->
 <script src="/abm-upload/app.shell.js?v=1"></script>
@@ -225,141 +229,153 @@ if (!sb) {
   throw new Error("ABM shell missing");
 }
 
-    const $ = (id) => document.getElementById(id);
+  const $ = (id) => document.getElementById(id);
+  function setAuthedUI(isAuthed) {
+  const loginWrap = $("loginWrap");
+  const appGrid = $("appGrid");
 
-    // Dropdown state
-    const state = {
-      client:   { value: "", label: "Select client…", items: [] },
-      campaign: { value: "", label: "Select campaign…", items: [] },
-      source:   { value: "", label: "Select source…", items: [] }
-    };
+  if (isAuthed) {
+    if (loginWrap) loginWrap.style.display = "none";
+    if (appGrid) appGrid.style.display = "block";
+  } else {
+    if (loginWrap) loginWrap.style.display = "";
+    if (appGrid) appGrid.style.display = "none";
+  }
+}
 
-    // Raw caches (used for filtering campaigns by selected client)
-    const cache = { clients: [], campaigns: [], sources: [] };
+  // Dropdown state
+  const state = {
+    client:   { value: "", label: "Select client…", items: [] },
+    campaign: { value: "", label: "Select campaign…", items: [] },
+    source:   { value: "", label: "Select source…", items: [] }
+  };
 
-    $("loginBtn").addEventListener("click", login);
-    $("uploadBtn").addEventListener("click", uploadCsv);
+  // Raw caches (used for filtering campaigns by selected client)
+  const cache = { clients: [], campaigns: [], sources: [] };
 
-    // Close dropdowns when clicking outside
-    document.addEventListener("click", (e) => {
-      ["ddClient","ddCampaign","ddSource"].forEach(id => {
-        const el = $(id);
-        if (!el) return;
-        if (!el.contains(e.target)) el.classList.remove("open");
-      });
+  $("loginBtn").addEventListener("click", login);
+  $("uploadBtn").addEventListener("click", uploadCsv);
+
+  // Close dropdowns when clicking outside
+  document.addEventListener("click", (e) => {
+    ["ddClient","ddCampaign","ddSource"].forEach(id => {
+      const el = $(id);
+      if (!el) return;
+      if (!el.contains(e.target)) el.classList.remove("open");
+    });
+  });
+
+  function renderDropdown(containerId, key, placeholder) {
+    const container = $(containerId);
+    container.innerHTML = "";
+
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "dd-btn";
+    btn.innerHTML = `<span>${state[key].label || placeholder}</span><span class="dd-caret">▾</span>`;
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      container.classList.toggle("open");
+      const search = container.querySelector(".dd-search");
+      if (search) {
+        search.value = "";
+        search.focus();
+        filterMenu(containerId, key, "");
+      }
     });
 
-    function renderDropdown(containerId, key, placeholder) {
-      const container = $(containerId);
-      container.innerHTML = "";
+    const menu = document.createElement("div");
+    menu.className = "dd-menu";
 
-      const btn = document.createElement("button");
-      btn.type = "button";
-      btn.className = "dd-btn";
-      btn.innerHTML = `<span>${state[key].label || placeholder}</span><span class="dd-caret">▾</span>`;
-      btn.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        container.classList.toggle("open");
-        const search = container.querySelector(".dd-search");
-        if (search) {
-          search.value = "";
-          search.focus();
-          filterMenu(containerId, key, "");
+    const search = document.createElement("input");
+    search.className = "dd-search";
+    search.placeholder = "Type to filter…";
+    search.addEventListener("input", () => filterMenu(containerId, key, search.value));
+    menu.appendChild(search);
+
+    const list = document.createElement("div");
+    list.className = "dd-list";
+    menu.appendChild(list);
+
+    container.appendChild(btn);
+    container.appendChild(menu);
+
+    filterMenu(containerId, key, "");
+  }
+
+  function filterMenu(containerId, key, query) {
+    const container = $(containerId);
+    const list = container.querySelector(".dd-list");
+    if (!list) return;
+
+    const q = (query || "").toLowerCase().trim();
+    list.innerHTML = "";
+
+    const items = (state[key].items || []).filter(it =>
+      !q || (it.label || "").toLowerCase().includes(q)
+    );
+
+    if (!items.length) {
+      const empty = document.createElement("div");
+      empty.className = "dd-meta";
+      empty.style.padding = "10px";
+      empty.textContent = "No matches.";
+      list.appendChild(empty);
+      return;
+    }
+
+    for (const it of items) {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "dd-item";
+      b.textContent = it.label;
+
+      b.addEventListener("click", () => {
+        state[key].value = it.value;
+        state[key].label = it.label;
+        container.classList.remove("open");
+
+        if (key === "client") {
+          applyCampaignFilterForSelectedClient();
+          renderDropdown("ddCampaign", "campaign", "Select campaign…");
         }
+
+        renderDropdown(containerId, key, "");
       });
 
-      const menu = document.createElement("div");
-      menu.className = "dd-menu";
+      list.appendChild(b);
+    }
+  }
 
-      const search = document.createElement("input");
-      search.className = "dd-search";
-      search.placeholder = "Type to filter…";
-      search.addEventListener("input", () => filterMenu(containerId, key, search.value));
-      menu.appendChild(search);
+  function applyCampaignFilterForSelectedClient() {
+    const clientId = state.client.value;
 
-      const list = document.createElement("div");
-      list.className = "dd-list";
-      menu.appendChild(list);
+    state.campaign.label = "Select campaign…";
+    state.campaign.value = "";
 
-      container.appendChild(btn);
-      container.appendChild(menu);
-
-      filterMenu(containerId, key, "");
+    if (!clientId) {
+      state.campaign.items = [];
+      return;
     }
 
-    function filterMenu(containerId, key, query) {
-      const container = $(containerId);
-      const list = container.querySelector(".dd-list");
-      if (!list) return;
+    const filtered = (cache.campaigns || []).filter(c => c.client_id === clientId);
+    state.campaign.items = filtered.map(r => ({ value: r.campaign_id, label: r.name }));
+  }
 
-      const q = (query || "").toLowerCase().trim();
-      list.innerHTML = "";
-
-      const items = (state[key].items || []).filter(it =>
-        !q || (it.label || "").toLowerCase().includes(q)
-      );
-
-      if (!items.length) {
-        const empty = document.createElement("div");
-        empty.className = "dd-meta";
-        empty.style.padding = "10px";
-        empty.textContent = "No matches.";
-        list.appendChild(empty);
-        return;
-      }
-
-      for (const it of items) {
-        const b = document.createElement("button");
-        b.type = "button";
-        b.className = "dd-item";
-        b.textContent = it.label;
-
-        b.addEventListener("click", () => {
-          state[key].value = it.value;
-          state[key].label = it.label;
-          container.classList.remove("open");
-
-          if (key === "client") {
-            applyCampaignFilterForSelectedClient();
-            renderDropdown("ddCampaign", "campaign", "Select campaign…");
-          }
-
-          renderDropdown(containerId, key, "");
-        });
-
-        list.appendChild(b);
-      }
+  async function login() {
+    $("loginStatus").textContent = "Signing in…";
+    const { error } = await sb.auth.signInWithPassword({
+      email: $("email").value.trim(),
+      password: $("password").value
+    });
+    if (error) {
+      $("loginStatus").textContent = error.message;
+      return;
     }
-
-    function applyCampaignFilterForSelectedClient() {
-      const clientId = state.client.value;
-
-      state.campaign.label = "Select campaign…";
-      state.campaign.value = "";
-
-      if (!clientId) {
-        state.campaign.items = [];
-        return;
-      }
-
-      const filtered = (cache.campaigns || []).filter(c => c.client_id === clientId);
-      state.campaign.items = filtered.map(r => ({ value: r.campaign_id, label: r.name }));
-    }
-
-    async function login() {
-      $("loginStatus").textContent = "Signing in…";
-      const { error } = await sb.auth.signInWithPassword({
-        email: $("email").value.trim(),
-        password: $("password").value
-      });
-      if (error) {
-        $("loginStatus").textContent = error.message;
-        return;
-      }
-      $("loginStatus").textContent = "";
-      showApp();
-    }
+    $("loginStatus").textContent = "";
+    showApp();
+  }
 async function logout() {
   try {
     await sb.auth.signOut();
@@ -372,8 +388,6 @@ async function logout() {
     $("logoutBtn")?.addEventListener("click", logout);
     
     async function showApp() {
-      const loginCard = $("loginCard");
-        // Set navbar identity AFTER login, then refresh navbar
       
 // Set navbar identity AFTER login, then refresh navbar
 const { data: userRes } = await sb.auth.getUser();
@@ -410,12 +424,9 @@ if (role !== "admin") {
     </div>`;
   return;
 }
-      
-      const appCard = $("appCard");
       const status = $("status");
 
-      if (loginCard) loginCard.style.display = "none";
-      if (appCard) appCard.style.display = "block";
+      setAuthedUI(true);
       if (status) status.textContent = "Loading dropdowns…";
 
       try {
@@ -531,10 +542,19 @@ if (role !== "admin") {
     }
 
     // Auto-show app if already logged in (runs once on page load)
-    window.ABM.getSessionSafe()
-      .then(sess => { if (sess) showApp(); })
-      .catch(()=>{});
+   window.ABM.getSessionSafe()
+  .then(sess => {
+    if (sess) {
+      showApp();
+    } else {
+      setAuthedUI(false);
+    }
+  })
+  .catch(() => {
+    setAuthedUI(false);
+  });
 
   </script>
 </body>
 </html>
+
