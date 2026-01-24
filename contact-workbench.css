@@ -156,3 +156,39 @@ textarea{ min-height:110px; resize:vertical; }
   border-color:rgba(239,68,68,.45);
   background:rgba(239,68,68,.10);
 }
+
+.split{
+  display:flex;
+  justify-content:space-between;
+  gap:10px;
+  flex-wrap:wrap;
+  align-items:baseline;
+}
+
+.title{
+  margin:0;
+  font-size:16px;
+  font-weight:800;
+  color:var(--brand-navy);
+}
+
+.subtle{
+  font-size:12px;
+  color:var(--muted);
+}
+
+.row{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+}
+
+@media (max-width: 980px){
+  .row{ grid-template-columns: 1fr; }
+}
+
+.kv{
+  display:grid;
+  grid-template-columns: 160px 1fr;
+  gap:6px 10px;
+}
