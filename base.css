@@ -36,7 +36,7 @@ body{
 .wrap{
   max-width: 1200px;
   margin: 0 auto;
-  padding: 18px 18px 40px;
+  padding: 0px 18px 40px;
 }
 
 .wrapSmall{
