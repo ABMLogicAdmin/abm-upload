@@ -10,165 +10,213 @@
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="/abm-upload/base.css?v=1">
-  <link rel="stylesheet" href="/abm-upload/contact-workbench.css?v=1">
 
-  <!-- Must load before nav.js -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/abm-upload/app.shell.js?v=1"></script>
+  <script src="/abm-upload/nav.js?v=1"></script>
+
+  <style>
+    .wbWrap { max-width: 1400px; margin: 0 auto; padding: 14px; }
+    .wbGrid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 12px; }
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    label { display:block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
+    input, select, textarea {
+      width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 10px;
+      font-family: inherit; font-size: 14px; background: #fff;
+    }
+    textarea { min-height: 100px; resize: vertical; }
+    .toolbar { display:flex; gap: 8px; flex-wrap: wrap; align-items:center; }
+    .btn { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background:#fff; cursor:pointer; font-weight:600; }
+    .btnPrimary { border-color: rgba(48,173,247,.5); background: rgba(48,173,247,.10); }
+    .btnDanger { border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.10); }
+    .btn:disabled { opacity: .45; cursor:not-allowed; }
+    .metaLine { display:flex; gap:10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
+    .pill { display:inline-flex; align-items:center; gap:6px; padding: 6px 10px; border-radius: 999px; border:1px solid var(--border); background:#fff; font-size:12px; }
+    .queueTable { width: 100%; border-collapse: collapse; }
+    .queueTable th, .queueTable td { border-bottom: 1px solid var(--border); padding: 10px 8px; font-size: 13px; vertical-align: top; }
+    .queueTable th { text-align:left; font-size: 12px; color: var(--muted); font-weight: 700; }
+    .queueRow { cursor: pointer; }
+    .queueRow:hover { background: rgba(48,173,247,.06); }
+    .queueRow.active { background: rgba(48,173,247,.10); outline: 1px solid rgba(48,173,247,.20); }
+    .small { font-size: 12px; color: var(--muted); }
+    .split { display:flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; }
+    .title { font-size: 16px; font-weight: 800; margin: 0; }
+    .subtle { font-size: 12px; color: var(--muted); }
+    .hr { height:1px; background: var(--border); margin: 10px 0; }
+    .kv { display:grid; grid-template-columns: 160px 1fr; gap: 6px 10px; }
+    .kv div { font-size: 13px; }
+    .kv .k { color: var(--muted); }
+    .statusDot { width:8px; height:8px; border-radius:99px; display:inline-block; background:#9ca3af; }
+    .status-pending { background:#f59e0b; }
+    .status-in_progress { background:#3b82f6; }
+    .status-enriched { background:#10b981; }
+    .status-verified { background:#16a34a; }
+    .status-rejected { background:#ef4444; }
+
+    @media (max-width: 980px){
+      .wbGrid{ grid-template-columns: 1fr; }
+    }
+  </style>
 </head>
 
-<body
-  data-page-title="Contact Workbench"
-  data-page-badge="Slice B"
-  data-page-help="Verify/enrich overlays only. Raw contacts remain immutable."
->
-  <!-- Nav mounts here ONLY when logged in (nav.js rule) -->
+<body data-page-title="Contact Workbench" data-page-badge="Slice B" data-page-help="Verify + enrich activation contacts (raw is read-only).">
   <div id="siteNav"></div>
 
-  <main class="container">
-
-    <!-- SIGNED OUT VIEW -->
-    <section id="loginView" class="card auth-card" style="display:none;">
-      <h1 class="h1">Contact Workbench</h1>
-      <p class="muted">
-        You’re signed out. Use the global login, then return to Contact Workbench.
-      </p>
-
-      <div class="row gap">
-        <a class="btn primary" href="/abm-upload/index.html">Go to Home / Login</a>
-        <span id="loginMsg" class="muted"></span>
-      </div>
-    </section>
-
-    <!-- APP VIEW -->
-    <section id="appView" style="display:none;">
-      <div class="row space-between align-center mb-12">
-        <div>
-          <h1 class="h1 mb-4">Contact Workbench</h1>
-          <p class="muted">Verify/enrich overlays only. Raw contact data stays immutable.</p>
+  <div class="wbWrap">
+    <div class="wbGrid">
+      <!-- LEFT: QUEUE -->
+      <div class="card">
+        <div class="split">
+          <h2 class="title">Queue</h2>
+          <div class="metaLine">
+            <span class="pill">Role: <b id="wbRole">—</b></span>
+            <span class="pill">Me: <b id="wbMe">—</b></span>
+          </div>
         </div>
-        <div class="row gap align-center">
-          <button id="refreshBtn" class="btn">Refresh</button>
-          <span id="appMsg" class="muted"></span>
+
+        <div class="hr"></div>
+
+        <div class="row3">
+          <div>
+            <label>Campaign</label>
+            <select id="filterCampaign">
+              <option value="">All active campaigns</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Queue</label>
+            <select id="filterQueue">
+              <option value="all">All (pending + in progress)</option>
+              <option value="mine">Mine (assigned to me)</option>
+              <option value="done">Done (enriched/verified/rejected)</option>
+              <option value="pending">Pending only</option>
+              <option value="in_progress">In progress only</option>
+              <option value="verified">Verified only</option>
+              <option value="rejected">Rejected only</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Search (email/company)</label>
+            <input id="filterSearch" type="text" placeholder="e.g. jane@acme.com or Acme" />
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="subtle" id="queueStatus">Loading…</div>
+        <div style="overflow:auto; max-height: 70vh; margin-top: 8px;">
+          <table class="queueTable">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Contact</th>
+                <th>Company</th>
+                <th>Campaign</th>
+                <th>Ready</th>
+              </tr>
+            </thead>
+            <tbody id="queueBody"></tbody>
+          </table>
         </div>
       </div>
 
-      <div class="wb-grid">
-        <!-- QUEUE -->
-        <aside class="card wb-queue">
-          <div class="row space-between align-center mb-10">
-            <div class="row gap align-center">
-              <strong>Queue</strong>
-              <span class="pill" id="queueCount">0</span>
+      <!-- RIGHT: DETAIL -->
+      <div class="card">
+        <div class="split">
+          <h2 class="title">Detail</h2>
+          <div class="toolbar">
+            <button class="btn" id="btnRefresh" type="button">Refresh</button>
+            <button class="btn btnPrimary" id="btnClaim" type="button" disabled>Claim</button>
+            <button class="btn btnPrimary" id="btnSave" type="button" disabled>Save</button>
+            <button class="btn btnPrimary" id="btnVerify" type="button" disabled>Mark Verified</button>
+            <button class="btn btnDanger" id="btnReject" type="button" disabled>Reject</button>
+          </div>
+        </div>
+
+        <div class="metaLine" style="margin-top:8px;">
+          <span class="pill">Status: <b id="dStatus">—</b></span>
+          <span class="pill">Priority: <b id="dPriority">—</b></span>
+          <span class="pill">Assigned: <b id="dAssigned">—</b></span>
+          <span class="pill">Completeness: <b id="dScore">—</b></span>
+          <span class="pill">Activation Ready: <b id="dReady">—</b></span>
+        </div>
+
+        <div class="hr"></div>
+
+        <div id="detailEmpty" class="subtle">Select a row in the queue.</div>
+
+        <div id="detailForm" style="display:none;">
+          <h3 style="margin:0 0 8px 0;">Raw Snapshot (read-only)</h3>
+          <div class="kv" id="rawKv"></div>
+
+          <div class="hr"></div>
+
+          <h3 style="margin:0 0 8px 0;">Verified Layer (editable)</h3>
+
+          <div class="row">
+            <div>
+              <label>LinkedIn URL</label>
+              <input id="fLinkedIn" type="text" placeholder="https://www.linkedin.com/in/…" />
+            </div>
+            <div>
+              <label>Phone</label>
+              <input id="fPhone" type="text" placeholder="+44…" />
             </div>
           </div>
 
-          <div class="tabs mb-10">
-            <button id="tabPending" class="tab active" data-tab="pending">Pending</button>
-            <button id="tabMine" class="tab" data-tab="mine">Mine</button>
-            <button id="tabDone" class="tab" data-tab="done">Done</button>
-            <button id="tabRejected" class="tab" data-tab="rejected">Rejected</button>
-          </div>
-
-          <div id="queueList" class="queue-list"></div>
-        </aside>
-
-        <!-- DETAIL -->
-        <section class="card wb-detail">
-          <div id="detailEmpty" class="empty">
-            <p class="muted">Select a contact from the queue to view details.</p>
-          </div>
-
-          <div id="detailView" style="display:none;">
-            <div class="row space-between align-start mb-10">
-              <div>
-                <div class="kicker muted">Selected Contact</div>
-                <h2 class="h2" id="detailTitle">—</h2>
-                <div class="muted" id="detailSubtitle">—</div>
-              </div>
-              <div class="row gap">
-                <button id="claimBtn" class="btn primary">Claim</button>
-                <button id="releaseBtn" class="btn">Release</button>
-              </div>
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <label>Company Size</label>
+              <input id="fCompanySize" type="text" placeholder="e.g. 201-500" />
             </div>
-
-            <hr class="sep"/>
-
-            <!-- RAW -->
-            <div class="section">
-              <div class="row space-between align-center mb-8">
-                <h3 class="h3">Raw Contact</h3>
-                <span class="pill subtle">Read-only</span>
-              </div>
-              <div id="rawBlock" class="kv-grid"></div>
-            </div>
-
-            <hr class="sep"/>
-
-            <!-- OVERLAY -->
-            <div class="section">
-              <div class="row space-between align-center mb-8">
-                <h3 class="h3">Verified / Enriched Overlay</h3>
-                <span class="pill subtle">Editable</span>
-              </div>
-
-              <div class="form-grid">
-                <div class="field">
-                  <label for="ovLinkedin">LinkedIn URL</label>
-                  <input id="ovLinkedin" type="url" placeholder="https://www.linkedin.com/in/…" />
-                </div>
-
-                <div class="field">
-                  <label for="ovPhone">Phone</label>
-                  <input id="ovPhone" type="text" placeholder="+44 …" />
-                </div>
-
-                <div class="field">
-                  <label for="ovCompleteness">Completeness Score</label>
-                  <input id="ovCompleteness" type="number" min="0" max="100" step="1" placeholder="0-100" />
-                </div>
-
-                <div class="field field-inline">
-                  <label for="ovActivationReady">Activation Ready</label>
-                  <input id="ovActivationReady" type="checkbox" />
-                </div>
-
-                <div class="field field-full">
-                  <label for="ovNotes">Ops Notes</label>
-                  <textarea id="ovNotes" rows="3" placeholder="What did you verify? What’s missing?"></textarea>
-                </div>
-
-                <div class="field field-full">
-                  <label for="ovVerifiedJson">Verified Fields (JSON)</label>
-                  <textarea id="ovVerifiedJson" rows="6" placeholder='{"email_verified": true, "title_verified": true}'></textarea>
-                  <div class="muted tiny">Keep this valid JSON. We store it as JSONB in the overlay table.</div>
-                </div>
-              </div>
-
-              <div class="row gap mt-10">
-                <button id="saveBtn" class="btn primary">Save Overlay</button>
-                <button id="doneBtn" class="btn">Mark Done</button>
-              </div>
-
-              <div class="reject-box mt-12">
-                <div class="field">
-                  <label for="rejectReason">Reject reason</label>
-                  <input id="rejectReason" type="text" placeholder="e.g., invalid email / duplicate / not GDPR usable" />
-                </div>
-                <button id="rejectBtn" class="btn danger">Reject</button>
-              </div>
-
-              <div class="muted tiny mt-10">
-                Reminder: raw/source fields are immutable. Overlay only.
-              </div>
+            <div>
+              <label>Email Verification</label>
+              <select id="vfEmail">
+                <option value="">—</option>
+                <option value="verified">verified</option>
+                <option value="unverified">unverified</option>
+                <option value="inconclusive">inconclusive</option>
+              </select>
             </div>
           </div>
-        </section>
+
+          <div class="row" style="margin-top:10px;">
+            <div>
+              <label>LinkedIn Verification</label>
+              <select id="vfLinkedIn">
+                <option value="">—</option>
+                <option value="verified">verified</option>
+                <option value="unverified">unverified</option>
+                <option value="inconclusive">inconclusive</option>
+              </select>
+            </div>
+            <div>
+              <label>Phone Verification</label>
+              <select id="vfPhone">
+                <option value="">—</option>
+                <option value="verified">verified</option>
+                <option value="unverified">unverified</option>
+                <option value="inconclusive">inconclusive</option>
+              </select>
+            </div>
+          </div>
+
+          <div style="margin-top:10px;">
+            <label>Notes</label>
+            <textarea id="fNotes" placeholder="Rationale / corrections / rejection reason…"></textarea>
+          </div>
+
+          <div class="hr"></div>
+          <div class="subtle" id="detailMsg"></div>
+        </div>
       </div>
-    </section>
-  </main>
+    </div>
+  </div>
 
-  <!-- Order matters: nav.js must run before contact-workbench.js -->
-  <script src="/abm-upload/nav.js?v=23"></script>
-  <script src="/abm-upload/contact-workbench.js?v=7"></script>
+  <script src="/abm-upload/contact-workbench.js?v=1"></script>
 </body>
 </html>
