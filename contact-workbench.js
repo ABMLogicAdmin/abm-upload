@@ -583,6 +583,6 @@
   }
 
   // ---------- boot ----------
-  window.addEventListener("abm:shell:ready", () => init().catch(console.error));
-  init().catch(console.error);
+window.addEventListener("abm:shell:ready", () => init().catch(console.error));
+
 })();
