@@ -111,6 +111,19 @@
       if (ctx) ctx.style.display = show ? "none" : "block";
     }
 
+    function setAuthedUI(isAuthed) {
+  const loginWrap = $("loginWrap");
+  const appGrid = $("appGrid");
+
+    if (isAuthed) {
+      if (loginWrap) loginWrap.style.display = "none";
+      if (appGrid) appGrid.style.display = "grid";
+    } else {
+      if (loginWrap) loginWrap.style.display = "";
+      if (appGrid) appGrid.style.display = "none";
+    }
+  }
+    
     function mapViewToStatuses(view) {
       if (view === "pending_in_progress") return ["pending", "in_progress"];
       if (view === "pending") return ["pending"];
@@ -192,6 +205,7 @@
         setLoginStatus(error.message);
         return;
       }
+      setLoginStatus("Signed in. Loading…");
 
       setLoginStatus("");
       await afterLogin();
@@ -249,12 +263,8 @@
         return;
       }
 
-      const loginCard = $("loginCard");
-      if (loginCard) loginCard.style.display = "none";
-
-      const appGrid = $("appGrid");
-      if (appGrid) appGrid.style.display = "grid";
-
+      setAuthedUI(true);
+      setLoginStatus("");
       showEmptyState(true);
 
       await loadClientCampaignOptions();
@@ -811,10 +821,12 @@
     (async function init() {
       setupPhoneCountryDropdown();
 
-      const { data } = await sb.auth.getSession();
-      if (data?.session?.user) {
-        await afterLogin();
-      }
+    const { data } = await sb.auth.getSession();
+    if (data?.session?.user) {
+      await afterLogin();
+    } else {
+      setAuthedUI(false);
+    }     
     })();
   }
 
