@@ -536,9 +536,18 @@ body{
 
 /* 5) Context bar stays visible (NOT inside the scroll area) */
 .contextBar{
-  position: static;           /* remove sticky behaviour */
+  position: static;           /* NOT sticky */
   flex: 0 0 auto;
+
+  /* ✅ restore "panel/card" look */
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: 0 8px 22px rgba(17,24,39,.08);
 }
+
 
 /* 6) Tab panels: MUST be flex columns when active */
 .tabPanel{
@@ -603,7 +612,8 @@ body{
       <div class="hint">If login works but Admin page blocks you, your app_users.role is not admin.</div>
     </div>
       
-<div id="adminGrid" style="display:none;">
+<div class="grid1" id="adminGrid" style="display:none;">
+
     <!-- ADMIN SETUP CARD -->
     <div class="card" id="appCard" style="display:none;">
 
