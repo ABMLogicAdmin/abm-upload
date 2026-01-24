@@ -28,15 +28,13 @@
 
     *{box-sizing:border-box}
     
-      body{
+     body{
       font-family:Poppins,Arial,sans-serif;
       background:linear-gradient(180deg,var(--brand-bg),#ffffff 55%);
       color:var(--text);
       margin:0;
-      padding:0 16px 60px; /* ✅ top = 0 */
+      padding:0;
     }
-
-    .wrap{ max-width:1600px; margin:0 auto; padding:0 12px; }
     
     .card{
       margin-top:0px;
@@ -183,17 +181,6 @@
 /* =========================
    Admin layout: sticky context + tabs
    ========================= */
-.contextBar{
-  position: sticky;
-  top: 92px;
-  z-index: 50;
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px;
-  box-shadow: 0 8px 30px rgba(17,24,39,.06);
-}
 
 /* 3-col inline form row */
   .row.threeCol {
@@ -250,13 +237,9 @@ min-height: 40px;
   border-color: transparent;
 }
 
-.tabPanel{ display:none; margin-top:14px; }
-.tabPanel.active{ display:block; }
-
 /* Give space so content never hides behind sticky context bar */
-.tabPanel {
-  padding-top: 8px;
-}
+
+
 
 /* Optional: nicer scrollbar */
 .tabPanel .stageCard::-webkit-scrollbar {
@@ -285,9 +268,6 @@ min-height: 40px;
   border: none;
   box-shadow: none;
   padding: 0;
-}
-.stageCard{
-  margin-top: 14px;
 }
 
     /* =========================
@@ -504,6 +484,11 @@ hr.divider {
 
 /* ====== Admin Setup: single-scroll layout (FIXED) ====== */
 
+/* Make padding not increase height in flex layouts (prevents cutoff) */
+.wrap, #adminGrid, #appCard, .tabPanel, .stageCard {
+  box-sizing: border-box;
+}
+
 /* 1) Lock viewport & kill page scroll */
 html, body { height: 100%; }
 
@@ -559,9 +544,11 @@ body{
 .tabPanel{
   display: none;
   flex: 1 1 auto;
-  min-height: 0;              /* CRITICAL */
+  min-height: 0;
   overflow: hidden;
-  margin-top: 14px;           /* replaces .stageCard margin-top */
+  margin-top: 14px;
+  padding-top: 8px;  
+  padding-bottom: 18px;
 }
 
 .tabPanel.active{
@@ -572,12 +559,16 @@ body{
 /* 7) The ONLY vertical scroller */
 .tabPanel.active .stageCard{
   flex: 1 1 auto;
-  min-height: 0;              /* CRITICAL */
+  min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
 
-  margin-top: 0;              /* moved to .tabPanel margin-top */
-  padding-bottom: 18px;       /* keeps content off bottom INSIDE scroller */
+  margin-top: 0;
+  margin-bottom: 0;       /* ✅ add */
+  padding-bottom: 18px;
+
+  box-shadow: 0 10px 26px rgba(17,24,39,.10);
+  border: 1px solid rgba(229,231,235,1);
 }
     
   </style>
@@ -612,7 +603,7 @@ body{
       <div class="hint">If login works but Admin page blocks you, your app_users.role is not admin.</div>
     </div>
       
-<div class="grid1" id="adminGrid" style="display:none;">
+<div id="adminGrid" style="display:none;">
     <!-- ADMIN SETUP CARD -->
     <div class="card" id="appCard" style="display:none;">
 
