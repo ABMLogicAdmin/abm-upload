@@ -209,8 +209,5 @@ textarea{ min-height:110px; resize:vertical; }
   gap:6px 10px;
 }
 
-/* Hide Role/Me pills container if still present */
-.metaLine .pill:has(#wbRole),
-.metaLine .pill:has(#wbMe){
-  display:none;
-}
+#wbRole, #wbMe { display:none; }
+
