@@ -163,11 +163,11 @@
 >
 
 <div id="siteNav"></div>
-  <button id="logoutBtn" type="button" style="display:none;">Logout</button>
-      
-  <div class="wrap">
+<button id="logoutBtn" type="button" style="display:none;">Logout</button>
 
-   <div id="loginWrap">
+<div class="wrap">
+
+  <div id="loginWrap">
     <div class="card" id="loginCard">
       <div class="row">
         <div>
@@ -185,35 +185,36 @@
     </div>
   </div>
 
-     <div id="appGrid" style="display:none;">
-      <div class="card" id="appCard">
-        <div class="row">
-          <div>
-            <label>Client</label>
-            <div class="dd" id="ddClient"></div>
-          </div>
-          <div>
-            <label>Campaign</label>
-            <div class="dd" id="ddCampaign"></div>
-          </div>
+  <div id="appGrid" style="display:none;">
+    <div class="card" id="appCard">
+      <div class="row">
+        <div>
+          <label>Client</label>
+          <div class="dd" id="ddClient"></div>
         </div>
-    
-        <label>Source</label>
-        <div class="dd" id="ddSource"></div>
-    
-        <a class="btn-link" href="./abm-logic-lead-upload-template.csv" download>
-          Download CSV Template
-        </a>
-    
-        <label>CSV File</label>
-        <input id="file" type="file" accept=".csv" />
-    
-        <button class="btn" id="uploadBtn">Upload CSV</button>
-        <div class="status" id="status"></div>
-        <div class="hint">Storage path: <code>client_{id}/campaign_{id}/ingest_{job_id}.csv</code></div>
-         </div> <!-- closes #appCard -->
-    </div>   <!-- closes #appGrid -->
-  </div>     <!-- closes .wrap -->
+        <div>
+          <label>Campaign</label>
+          <div class="dd" id="ddCampaign"></div>
+        </div>
+      </div>
+
+      <label>Source</label>
+      <div class="dd" id="ddSource"></div>
+
+      <a class="btn-link" href="./abm-logic-lead-upload-template.csv" download>
+        Download CSV Template
+      </a>
+
+      <label>CSV File</label>
+      <input id="file" type="file" accept=".csv" />
+
+      <button class="btn" id="uploadBtn">Upload CSV</button>
+      <div class="status" id="status"></div>
+      <div class="hint">Storage path: <code>client_{id}/campaign_{id}/ingest_{job_id}.csv</code></div>
+    </div>
+  </div>
+
+</div>
 
 <!-- Shared shell + nav (order matters) -->
 <script src="/abm-upload/app.shell.js?v=1"></script>
@@ -557,4 +558,5 @@ if (role !== "admin") {
   </script>
 </body>
 </html>
+
 
