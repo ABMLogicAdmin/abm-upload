@@ -489,28 +489,103 @@ hr.divider {
   box-sizing: border-box;
 }
 
-/* ===== Admin Setup: match standard pages (normal flow + normal scroll) ===== */
+/* ====== Admin Setup: single-scroll layout (RESTORED) ====== */
 
-/* Allow normal document flow + scrolling like other pages */
-html, body { height: auto; }
-body { overflow: auto; display: block; }
-
-/* Keep consistent frame spacing like other pages */
-.wrap{
-  max-width: 1600px;
-  margin: 0 auto;
-  padding: 0 12px 18px;   /* keep your 18px bottom breathing room */
+/* Make padding not increase height in flex layouts (prevents cutoff) */
+.wrap, #adminGrid, #appCard, .tabPanel, .stageCard {
+  box-sizing: border-box;
 }
 
-/* Do NOT force flex / height locking on these */
-#adminGrid, #appCard { display: block; min-height: auto; overflow: visible; }
+/* 1) Lock viewport & kill page scroll */
+html, body { height: 100%; }
 
-/* Panels behave normally */
-.tabPanel { display: none; }
-.tabPanel.active { display: block; }
+body{
+  margin: 0;
+  padding: 0;
+  overflow: hidden;           /* kills page scrollbar */
+  display: flex;
+  flex-direction: column;
+}
 
-/* Don’t force stageCard to be a scroller */
-.stageCard{ overflow: visible; }
+/* nav sits on top; content takes remaining height */
+#siteNav{ flex: 0 0 auto; }
+
+/* 2) Wrap becomes the viewport frame (adds consistent spacing) */
+.wrap{
+  flex: 1 1 auto;
+  min-height: 0;              /* CRITICAL */
+  width: 100%;
+  max-width: 1600px;
+  margin: 0 auto;
+
+  padding: 12px 12px 18px;    /* ✅ TOP padding back, consistent */
+  overflow: hidden;
+
+  display: flex;
+  flex-direction: column;
+}
+
+/* 3) Admin grid fills remaining height */
+#adminGrid{
+  flex: 1 1 auto;
+  min-height: 0;              /* CRITICAL */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 4) appCard is a vertical layout container */
+#appCard{
+  flex: 1 1 auto;
+  min-height: 0;              /* CRITICAL */
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* 5) Context bar stays visible (NOT inside the scroll area) */
+.contextBar{
+  position: static;           /* NOT sticky */
+  flex: 0 0 auto;
+
+  background: rgba(255,255,255,.92);
+  backdrop-filter: blur(8px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px;
+  box-shadow: 0 8px 22px rgba(17,24,39,.08);
+}
+
+/* 6) Tab panels: MUST be flex columns when active */
+.tabPanel{
+  display: none;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  margin-top: 14px;
+  padding-top: 8px;
+  padding-bottom: 18px;
+}
+.tabPanel.active{
+  display: flex;
+  flex-direction: column;
+}
+
+/* 7) The ONLY vertical scroller */
+.tabPanel.active .stageCard{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+
+  margin-top: 0;
+  margin-bottom: 0;
+  padding-bottom: 24px;       /* makes the bottom “finish” visible */
+
+  box-shadow: 0 10px 26px rgba(17,24,39,.10);
+  border: 1px solid rgba(229,231,235,1);
+}
+
 
 
     
