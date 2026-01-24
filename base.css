@@ -36,13 +36,13 @@ body{
 .wrap{
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0px 18px 40px;
+  padding: 0 18px 40px;   /* ✅ was 18px 18px 40px */
 }
 
 .wrapSmall{
   max-width: 900px;
   margin: 0 auto;
-  padding: 18px 18px 40px;
+  padding: 0 18px 40px;   /* ✅ was 18px 18px 40px */
 }
 
 /* =========================
