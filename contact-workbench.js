@@ -1,9 +1,7 @@
+
 /* contact-workbench.js — Slice B UI
-   Uses:
-   - Reads: v_contact_workbench_queue, _mine, _done, _detail, campaign_options
-   - Writes: campaign_contacts, campaign_contact_enrichment, campaign_contact_enrichment_events
    Requires:
-   - app.shell.js (window.ABM.sb, getRoleSafe, getUserSafe)
+   - app.shell.js (window.ABM.sb, requireAuth, getRoleSafe, getUserSafe)
 */
 
 (function () {
@@ -14,10 +12,16 @@
   }
 
   // ---------- DOM ----------
+  function $(id) {
+    return document.getElementById(id.replace(/^#/, "")) || document.querySelector(id);
+  }
+
   const els = {
+    // optional (we removed from HTML, but keep safe)
     role: $("#wbRole"),
     me: $("#wbMe"),
 
+    filterClient: $("#filterClient"),      // NEW (optional)
     filterCampaign: $("#filterCampaign"),
     filterQueue: $("#filterQueue"),
     filterSearch: $("#filterSearch"),
@@ -53,10 +57,6 @@
     detailMsg: $("#detailMsg")
   };
 
-  function $(id) {
-    return document.getElementById(id.replace(/^#/, "")) || document.querySelector(id);
-  }
-
   function esc(s) {
     return String(s ?? "").replace(/[&<>"']/g, (c) => ({
       "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
@@ -84,34 +84,53 @@
     role: null,
     userId: null,
 
+    // campaign options cache for client/campaign selectors
+    campaignOpts: [],
+
     queueRows: [],
     selectedId: null,
-    selectedDetail: null
+    selectedDetail: null,
+
+    wired: false
   };
 
   // ---------- Init ----------
   async function init() {
+    // prevent double init if both events fire
+    if (state._inited) return;
+    state._inited = true;
+
     await window.ABM.requireAuth({ redirectTo: "/abm-upload/index.html" });
 
     state.user = await window.ABM.getUserSafe();
-    state.role = await window.ABM.getRoleSafe(); // 'ops' | 'admin' | 'uploader'
+    state.role = await window.ABM.getRoleSafe();
     state.userId = state.user?.id || null;
-   
-   if (els.role) els.role.textContent = state.role || "—";
-   if (els.me) els.me.textContent = state.user?.email || "—";
+
+    if (els.role) els.role.textContent = state.role || "—";
+    if (els.me) els.me.textContent = state.user?.email || "—";
 
     if (!state.userId || !(state.role === "ops" || state.role === "admin")) {
-      els.queueStatus.textContent = "Access denied: requires ops or admin.";
+      if (els.queueStatus) els.queueStatus.textContent = "Access denied: requires ops or admin.";
       disableAllActions();
       return;
     }
 
-    wireEvents();
-    await loadCampaignOptions();
+    wireEventsOnce();
+    await loadCampaignOptions();      // fills campaign + client (if present)
     await loadQueue();
   }
 
-  function wireEvents() {
+  function wireEventsOnce() {
+    if (state.wired) return;
+    state.wired = true;
+
+    if (els.filterClient) {
+      els.filterClient.addEventListener("change", () => {
+        repopulateCampaignDropdown();
+        loadQueue();
+      });
+    }
+
     els.filterCampaign.addEventListener("change", () => loadQueue());
     els.filterQueue.addEventListener("change", () => loadQueue());
     els.filterSearch.addEventListener("input", debounce(() => loadQueue(), 250));
@@ -166,18 +185,44 @@
       return;
     }
 
-    const opts = (data || []).map(r => ({
+    state.campaignOpts = (data || []).map(r => ({
+      campaign_id: r.campaign_id,
+      campaign_name: r.campaign_name,
+      client_name: r.client_name
+    }));
+
+    // Populate Client dropdown (if present)
+    if (els.filterClient) {
+      const clients = [...new Set(state.campaignOpts.map(x => x.client_name).filter(Boolean))].sort();
+      const keep = els.filterClient.value || "";
+      els.filterClient.innerHTML =
+        `<option value="">All clients</option>` +
+        clients.map(c => `<option value="${esc(c)}">${esc(c)}</option>`).join("");
+      if (keep) els.filterClient.value = keep;
+    }
+
+    // Populate Campaign dropdown (filtered by selected client if used)
+    repopulateCampaignDropdown();
+  }
+
+  function repopulateCampaignDropdown() {
+    const selectedCampaign = els.filterCampaign.value || "";
+    const selectedClient = els.filterClient ? (els.filterClient.value || "") : "";
+
+    const filtered = selectedClient
+      ? state.campaignOpts.filter(x => x.client_name === selectedClient)
+      : state.campaignOpts;
+
+    const opts = filtered.map(r => ({
       id: r.campaign_id,
       label: `${r.client_name} — ${r.campaign_name}`
     }));
 
-    // Keep selected if possible
-    const selected = els.filterCampaign.value;
-
-    els.filterCampaign.innerHTML = `<option value="">All active campaigns</option>` +
+    els.filterCampaign.innerHTML =
+      `<option value="">All active campaigns</option>` +
       opts.map(o => `<option value="${esc(o.id)}">${esc(o.label)}</option>`).join("");
 
-    if (selected) els.filterCampaign.value = selected;
+    if (selectedCampaign) els.filterCampaign.value = selectedCampaign;
   }
 
   async function loadQueue() {
@@ -185,6 +230,7 @@
     els.queueBody.innerHTML = "";
     state.queueRows = [];
 
+    const selectedClient = els.filterClient ? (els.filterClient.value || "") : "";
     const campaignId = els.filterCampaign.value || "";
     const qMode = els.filterQueue.value || "all";
     const search = (els.filterSearch.value || "").trim().toLowerCase();
@@ -194,7 +240,6 @@
     if (qMode === "mine") viewName = "v_contact_workbench_queue_mine";
     if (qMode === "done") viewName = "v_contact_workbench_queue_done";
 
-    // Columns that exist on all queue views per your schema dump
     let query = sb
       .from(viewName)
       .select([
@@ -226,9 +271,9 @@
       .order("enrichment_priority", { ascending: true })
       .order("created_at", { ascending: false });
 
+    if (selectedClient) query = query.eq("client_name", selectedClient);
     if (campaignId) query = query.eq("campaign_id", campaignId);
 
-    // Status filters (only apply when not using _done view)
     if (qMode === "pending") query = query.eq("enrichment_status", "pending");
     if (qMode === "in_progress") query = query.eq("enrichment_status", "in_progress");
     if (qMode === "verified") query = query.eq("enrichment_status", "verified");
@@ -237,12 +282,11 @@
     const { data, error } = await query;
 
     if (error) {
-      els.queueStatus.textContent = "Queue load failed.";
+      els.queueStatus.textContent = "Queue load failed (check console).";
       console.error("[Contact WB] queue error:", error);
       return;
     }
 
-    // Client-side search (Supabase ilike across multiple cols is possible, but keep simple)
     let rows = (data || []);
     if (search) {
       rows = rows.filter(r => {
@@ -292,13 +336,11 @@
       `;
     }).join("");
 
-    // row click
     [...els.queueBody.querySelectorAll(".queueRow")].forEach(tr => {
       tr.addEventListener("click", async () => {
         const id = tr.getAttribute("data-id");
         if (!id) return;
         state.selectedId = id;
-        // re-render highlights quickly
         renderQueue(state.queueRows);
         await loadDetail(id);
       });
@@ -326,14 +368,12 @@
 
     state.selectedDetail = data;
 
-    // Header pills
     els.dStatus.textContent = data.enrichment_status || "—";
     els.dPriority.textContent = String(data.enrichment_priority ?? "—");
     els.dAssigned.textContent = data.enrichment_assigned_to ? "Yes" : "No";
     els.dScore.textContent = String(data.completeness_score ?? "—");
     els.dReady.textContent = (data.activation_ready === true) ? "Yes" : "No";
 
-    // Raw KV (read-only)
     const rawPairs = [
       ["Email", data.email],
       ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
@@ -356,7 +396,6 @@
       <div class="k">${esc(k)}</div><div>${esc(v ?? "—")}</div>
     `).join("");
 
-    // Verified layer fields
     els.fLinkedIn.value = data.linkedin_url || "";
     els.fPhone.value = data.phone || "";
     els.fCompanySize.value = data.company_size || "";
@@ -367,33 +406,24 @@
     els.vfLinkedIn.value = vf.linkedin_url || "";
     els.vfPhone.value = vf.phone || "";
 
-    // Buttons + editability
     const editable = canEdit(data);
     const isUnassignedPending = (!data.enrichment_assigned_to) && (data.enrichment_status === "pending");
 
-    // Claim is only valid when unassigned+pending (matches cc_claim_ops_unassigned)
     els.btnClaim.disabled = !(isUnassignedPending && state.role === "ops");
-
-    // Save/Verify/Reject only if editable
     els.btnSave.disabled = !editable;
     els.btnVerify.disabled = !editable;
     els.btnReject.disabled = !editable;
 
-    // Lock the form when not editable
     setFormDisabled(!editable);
 
     if (!editable && !isUnassignedPending) {
       setMsg("Read-only: this contact is assigned to someone else (or you lack permission).");
-    } else {
-      setMsg("");
     }
   }
 
   function setFormDisabled(disabled) {
-    [
-      els.fLinkedIn, els.fPhone, els.fCompanySize, els.fNotes,
-      els.vfEmail, els.vfLinkedIn, els.vfPhone
-    ].forEach(el => el.disabled = !!disabled);
+    [els.fLinkedIn, els.fPhone, els.fCompanySize, els.fNotes, els.vfEmail, els.vfLinkedIn, els.vfPhone]
+      .forEach(el => { if (el) el.disabled = !!disabled; });
   }
 
   // ---------- Actions ----------
@@ -401,7 +431,6 @@
     const d = state.selectedDetail;
     if (!d?.campaign_contact_id) return;
 
-    // Enforce policy match: unassigned + pending
     if (d.enrichment_assigned_to || d.enrichment_status !== "pending") {
       setMsg("Cannot claim: not pending/unassigned.", true);
       return;
@@ -409,7 +438,6 @@
 
     setMsg("Claiming…");
 
-    // Update campaign_contacts (RLS: cc_claim_ops_unassigned)
     const { data: upd, error: updErr } = await sb
       .from("campaign_contacts")
       .update({
@@ -429,9 +457,7 @@
       return;
     }
 
-    // Insert event (RLS: ccee_insert_ops_assigned will now pass)
     await insertEvent(d.campaign_contact_id, "assigned", {});
-
     setMsg("Claimed.");
     await loadQueue();
     await loadDetail(d.campaign_contact_id);
@@ -455,7 +481,6 @@
       phone: els.vfPhone.value || null
     };
 
-    // Clean nulls out of json (optional)
     Object.keys(verified_fields).forEach(k => {
       if (verified_fields[k] === null || verified_fields[k] === "") delete verified_fields[k];
     });
@@ -469,10 +494,8 @@
       verified_fields,
       enriched_by: state.userId,
       enriched_at: new Date().toISOString()
-      // completeness_score + activation_ready can be computed by triggers/functions if you added them
     };
 
-    // Upsert enrichment (RLS: cce_insert_ops_assigned / cce_update_ops_assigned)
     const { error } = await sb
       .from("campaign_contact_enrichment")
       .upsert(payload, { onConflict: "campaign_contact_id" });
@@ -483,15 +506,7 @@
       return;
     }
 
-    await insertEvent(d.campaign_contact_id, "saved", {
-      fields: {
-        linkedin_url: !!payload.linkedin_url,
-        phone: !!payload.phone,
-        company_size: !!payload.company_size,
-        verified_fields: Object.keys(verified_fields)
-      }
-    });
-
+    await insertEvent(d.campaign_contact_id, "saved", { fields: Object.keys(verified_fields) });
     setMsg("Saved.");
     await loadQueue();
     await loadDetail(d.campaign_contact_id);
@@ -566,8 +581,6 @@
   }
 
   async function insertEvent(campaign_contact_id, event_type, event_payload) {
-   
-     // RLS enforces admin OR assigned-to-me via can_edit_campaign_contact()
     const { error } = await sb
       .from("campaign_contact_enrichment_events")
       .insert({
@@ -577,11 +590,16 @@
         created_by: state.userId
       });
 
-    if (error) {
-      // Don’t fail the UI if audit insert fails; but log it.
-      console.warn("[Contact WB] event insert failed:", error);
-    }
+    if (error) console.warn("[Contact WB] event insert failed:", error);
   }
 
+  // ---------- BOOT ----------
+  function bootOnce() {
+    init().catch(err => console.error("[Contact WB] init failed:", err));
+  }
 
+  // preferred: shell-ready event
+  window.addEventListener("abm:shell:ready", bootOnce);
+  // fallback: DOM ready (in case event isn’t dispatched)
+  window.addEventListener("DOMContentLoaded", bootOnce);
 })();
