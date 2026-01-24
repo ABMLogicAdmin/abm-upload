@@ -489,122 +489,29 @@ hr.divider {
   box-sizing: border-box;
 }
 
-/* 1) Lock viewport & kill page scroll */
-html, body { height: 100%; }
+/* ===== Admin Setup: match standard pages (normal flow + normal scroll) ===== */
 
-body{
-  margin: 0;
-  padding: 0;                 /* kills page padding */
-  overflow: hidden;           /* kills page scrollbar */
-  display: flex;
-  flex-direction: column;
-}
+/* Allow normal document flow + scrolling like other pages */
+html, body { height: auto; }
+body { overflow: auto; display: block; }
 
-/* nav sits on top; content takes remaining height */
-#siteNav{ flex: 0 0 auto; }
-
-/* 2) Wrap becomes the viewport frame (18px bottom) */
+/* Keep consistent frame spacing like other pages */
 .wrap{
-  flex: 1 1 auto;
-  min-height: 0;              /* CRITICAL */
-  width: 100%;
   max-width: 1600px;
   margin: 0 auto;
-
-  padding: 0 12px 18px;       /* 18px breathing room at bottom */
-  overflow: hidden;           /* prevents page scrollbar */
-
-  display: flex;              /* ✅ MISSING */
-  flex-direction: column;     /* ✅ MISSING */
+  padding: 0 12px 18px;   /* keep your 18px bottom breathing room */
 }
 
-/* 3) Admin grid fills remaining height */
-#adminGrid{
-  flex: 1 1 auto;
-  min-height: 0;              /* CRITICAL */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+/* Do NOT force flex / height locking on these */
+#adminGrid, #appCard { display: block; min-height: auto; overflow: visible; }
 
-  padding-bottom: 18px;       /* ✅ ensures visible breathing room */
-}
+/* Panels behave normally */
+.tabPanel { display: none; }
+.tabPanel.active { display: block; }
 
+/* Don’t force stageCard to be a scroller */
+.stageCard{ overflow: visible; }
 
-/* 4) appCard is a vertical layout container */
-#appCard{
-  flex: 1 1 auto;
-  min-height: 0;              /* CRITICAL */
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-/* 5) Context bar stays visible (NOT inside the scroll area) */
-.contextBar{
-  position: static;           /* NOT sticky */
-  flex: 0 0 auto;
-
-  /* ✅ restore "panel/card" look */
-  background: rgba(255,255,255,.92);
-  backdrop-filter: blur(8px);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 12px;
-  box-shadow: 0 8px 22px rgba(17,24,39,.08);
-}
-
-
-/* 6) Tab panels: MUST be flex columns when active */
-.tabPanel{
-  display: none;
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: hidden;
-  margin-top: 14px;
-  padding-top: 8px;  
-  padding-bottom: 18px;
-}
-
-.tabPanel.active{
-  display: flex;              /* IMPORTANT (overrides old display:block) */
-  flex-direction: column;
-}
-
-/* 7) The ONLY vertical scroller */
-.tabPanel.active .stageCard{
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow-y: auto;
-  overflow-x: hidden;
-
-  margin-top: 0;
-  margin-bottom: 0;       /* ✅ add */
-  padding-bottom: 18px;
-
-  box-shadow: 0 10px 26px rgba(17,24,39,.10);
-  border: 1px solid rgba(229,231,235,1);
-}
-
-/* =========================
-   FORCE flex layout even if JS sets display:block inline
-   ========================= */
-
-/* Keep the "hidden" state working */
-#adminGrid[style*="display:none"] { display: none !important; }
-#appCard[style*="display:none"]  { display: none !important; }
-
-/* When JS shows them as block, force flex */
-#adminGrid { display: flex !important; flex-direction: column !important; min-height: 0 !important; }
-#appCard   { display: flex !important; flex-direction: column !important; min-height: 0 !important; }
-
-/* Same issue for panels if JS uses style.display = "block" */
-.tabPanel { display: none !important; }
-.tabPanel.active { display: flex !important; flex-direction: column !important; }
-
-/* Make the scroller clearly “finish” above the bottom */
-.tabPanel.active .stageCard{
-  padding-bottom: 24px !important;
-}
 
     
   </style>
