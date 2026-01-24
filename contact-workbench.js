@@ -96,9 +96,9 @@
     state.user = await window.ABM.getUserSafe();
     state.role = await window.ABM.getRoleSafe(); // 'ops' | 'admin' | 'uploader'
     state.userId = state.user?.id || null;
-
-    els.role.textContent = state.role || "—";
-    els.me.textContent = state.user?.email || "—";
+   
+   if (els.role) els.role.textContent = state.role || "—";
+   if (els.me) els.me.textContent = state.user?.email || "—";
 
     if (!state.userId || !(state.role === "ops" || state.role === "admin")) {
       els.queueStatus.textContent = "Access denied: requires ops or admin.";
