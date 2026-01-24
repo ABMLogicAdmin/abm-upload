@@ -566,7 +566,8 @@
   }
 
   async function insertEvent(campaign_contact_id, event_type, event_payload) {
-    // RLS enforces admin OR assigned-to-me via can_edit_campaign_contact()
+   
+     // RLS enforces admin OR assigned-to-me via can_edit_campaign_contact()
     const { error } = await sb
       .from("campaign_contact_enrichment_events")
       .insert({
@@ -582,7 +583,5 @@
     }
   }
 
-  // ---------- boot ----------
-window.addEventListener("abm:shell:ready", () => init().catch(console.error));
 
 })();
