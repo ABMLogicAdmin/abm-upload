@@ -1,3 +1,4 @@
+/* DEBUG-FINGERPRINT: 2026-01-24 12:xx */
 /* base.css — shared styles used across all pages
    Purpose:
    - Global layout + typography
@@ -280,4 +281,16 @@ textarea{
   .navTop{ flex-wrap:wrap; }
   .navSpacer{ display:none; }
   .navBottom{ gap: 8px; }
+}
+
+body::before{
+  content:"BASECSS-LOADED";
+  position:fixed;
+  top:6px;
+  right:10px;
+  font-size:11px;
+  background:#fff;
+  border:1px solid #000;
+  padding:4px 6px;
+  z-index:999999;
 }
