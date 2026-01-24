@@ -511,9 +511,11 @@ body{
   max-width: 1600px;
   margin: 0 auto;
 
-  /* 18px breathing room so the final card never touches viewport bottom */
-  padding: 0 12px 18px;
-  overflow: hidden;           /* prevents any second scrollbar */
+  padding: 0 12px 18px;       /* 18px breathing room at bottom */
+  overflow: hidden;           /* prevents page scrollbar */
+
+  display: flex;              /* ✅ MISSING */
+  flex-direction: column;     /* ✅ MISSING */
 }
 
 /* 3) Admin grid fills remaining height */
@@ -523,7 +525,10 @@ body{
   display: flex;
   flex-direction: column;
   overflow: hidden;
+
+  padding-bottom: 18px;       /* ✅ ensures visible breathing room */
 }
+
 
 /* 4) appCard is a vertical layout container */
 #appCard{
