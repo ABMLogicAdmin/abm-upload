@@ -112,18 +112,18 @@
     }
 
     function setAuthedUI(isAuthed) {
-  const loginWrap = $("loginWrap");
-  const appGrid = $("appGrid");
-
-    if (isAuthed) {
-      if (loginWrap) loginWrap.style.display = "none";
-      if (appGrid) appGrid.style.display = "grid";
-    } else {
-      if (loginWrap) loginWrap.style.display = "";
-      if (appGrid) appGrid.style.display = "none";
-    }
-  }
+      const loginWrap = $("loginWrap");
+      const appGrid = $("appGrid");
     
+      if (isAuthed) {
+        if (loginWrap) loginWrap.style.display = "none";
+        if (appGrid) appGrid.style.display = "grid";
+      } else {
+        if (loginWrap) loginWrap.style.display = "";
+        if (appGrid) appGrid.style.display = "none";
+      }
+    }
+
     function mapViewToStatuses(view) {
       if (view === "pending_in_progress") return ["pending", "in_progress"];
       if (view === "pending") return ["pending"];
