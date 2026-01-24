@@ -509,7 +509,9 @@ hr.divider {
   line-height: 40px !important;
 }
 
-/* ====== Admin Setup: single-scroll layout ====== */
+/* ====== Admin Setup: single-scroll layout (FIXED) ====== */
+
+/* 1) Lock viewport & kill page scroll */
 html, body { height: 100%; }
 
 body{
@@ -523,49 +525,67 @@ body{
 /* nav sits on top; content takes remaining height */
 #siteNav{ flex: 0 0 auto; }
 
+/* 2) Wrap becomes the viewport frame (18px bottom) */
 .wrap{
   flex: 1 1 auto;
-  overflow: hidden;           /* prevents second scrollbar */
+  min-height: 0;              /* CRITICAL */
   width: 100%;
   max-width: 1600px;
   margin: 0 auto;
-  padding: 0 12px 18px;       /* 18px from bottom of screen */
+
+  /* 18px breathing room so the final card never touches viewport bottom */
+  padding: 0 12px 18px;
+  overflow: hidden;           /* prevents any second scrollbar */
 }
 
-/* admin container fills available height */
+/* 3) Admin grid fills remaining height */
 #adminGrid{
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;              /* CRITICAL */
+  display: flex;
+  flex-direction: column;
   overflow: hidden;
 }
 
-/* appCard becomes a vertical layout */
+/* 4) appCard is a vertical layout container */
 #appCard{
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;              /* CRITICAL */
   display: flex;
   flex-direction: column;
+  overflow: hidden;
 }
 
-/* context bar stays visible (NOT inside the scroll area) */
+/* 5) Context bar stays visible (NOT inside the scroll area) */
 .contextBar{
   position: static;           /* remove sticky behaviour */
   flex: 0 0 auto;
 }
 
-/* the tab panel area fills remaining space */
-.tabPanel.active{
+/* 6) Tab panels: MUST be flex columns when active */
+.tabPanel{
+  display: none;
   flex: 1 1 auto;
+  min-height: 0;              /* CRITICAL */
   overflow: hidden;
+  margin-top: 14px;           /* replaces .stageCard margin-top */
 }
 
-/* THIS is the only scroller */
+.tabPanel.active{
+  display: flex;              /* IMPORTANT (overrides old display:block) */
+  flex-direction: column;
+}
+
+/* 7) The ONLY vertical scroller */
 .tabPanel.active .stageCard{
   flex: 1 1 auto;
-  height: 100%;
-  max-height: none;           /* stop the old max-height calc */
+  min-height: 0;              /* CRITICAL */
   overflow-y: auto;
-  margin-top: 14px;
-}
+  overflow-x: hidden;
 
+  margin-top: 0;              /* moved to .tabPanel margin-top */
+  padding-bottom: 18px;       /* keeps content off bottom INSIDE scroller */
+}
     
   </style>
 </head>
