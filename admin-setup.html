@@ -584,6 +584,28 @@ body{
   box-shadow: 0 10px 26px rgba(17,24,39,.10);
   border: 1px solid rgba(229,231,235,1);
 }
+
+/* =========================
+   FORCE flex layout even if JS sets display:block inline
+   ========================= */
+
+/* Keep the "hidden" state working */
+#adminGrid[style*="display:none"] { display: none !important; }
+#appCard[style*="display:none"]  { display: none !important; }
+
+/* When JS shows them as block, force flex */
+#adminGrid { display: flex !important; flex-direction: column !important; min-height: 0 !important; }
+#appCard   { display: flex !important; flex-direction: column !important; min-height: 0 !important; }
+
+/* Same issue for panels if JS uses style.display = "block" */
+.tabPanel { display: none !important; }
+.tabPanel.active { display: flex !important; flex-direction: column !important; }
+
+/* Make the scroller clearly “finish” above the bottom */
+.tabPanel.active .stageCard{
+  padding-bottom: 24px !important;
+}
+
     
   </style>
 </head>
