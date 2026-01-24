@@ -61,15 +61,21 @@ textarea{ min-height:110px; resize:vertical; }
   margin-top:10px;
   overflow:auto;
   max-height:70vh;
+
+  background:#fff;                       /* ✅ force white */
   border:1px solid rgba(34,35,61,.10);
   border-radius:12px;
+  box-shadow:0 8px 30px rgba(17,24,39,.06); /* ✅ card-like shadow */
+
+  /* ✅ IMPORTANT: clips table corners so radius works */
+  overflow:hidden;
 }
 
 .tableWrap table{
   width:100%;
   border-collapse:collapse;
   font-size:13px;
-  background:#fff;
+  background:#fff !important;            /* ✅ force white */
 }
 
 .tableWrap thead th{
@@ -79,7 +85,7 @@ textarea{ min-height:110px; resize:vertical; }
   font-weight:800;
   padding:12px 10px;
   border-bottom:1px solid rgba(34,35,61,.12);
-  background:#fff;              /* ✅ was light blue */
+  background:#fff;              /* ✅ was light blue - now white baby! */
 }
 
 .tableWrap tbody td{
@@ -127,7 +133,7 @@ textarea{ min-height:110px; resize:vertical; }
   margin:14px 0;
 }
 
-/* Buttons - match the general system */
+/* Buttons */
 .toolbar{
   display:flex;
   gap:8px;
@@ -135,26 +141,37 @@ textarea{ min-height:110px; resize:vertical; }
   align-items:center;
 }
 
+/* default button = neutral outline */
 .btn{
   padding:10px 12px;
   border-radius:12px;
   border:1px solid var(--border);
   background:#fff;
+  color:var(--brand-navy);
   cursor:pointer;
-  font-weight:700;
+  font-weight:800;
   width:auto;
 }
 
-.btn:disabled{ opacity:.45; cursor:not-allowed; }
-
+/* primary action = brand blue */
 .btnPrimary{
-  border-color:rgba(48,173,247,.55);
-  background:rgba(48,173,247,.10);
+  border:1px solid rgba(48,173,247,.85);
+  background:var(--brand-primary);
+  color:#fff;
 }
 
+/* danger action = red */
 .btnDanger{
-  border-color:rgba(239,68,68,.45);
-  background:rgba(239,68,68,.10);
+  border:1px solid rgba(239,68,68,.85);
+  background:#ef4444;
+  color:#fff;
+}
+
+.btn:disabled,
+.btnPrimary:disabled,
+.btnDanger:disabled{
+  opacity:.45;
+  cursor:not-allowed;
 }
 
 .split{
@@ -195,3 +212,7 @@ textarea{ min-height:110px; resize:vertical; }
 
 /* Hide role/me pills (nav already shows this) */
 #wbRole, #wbMe { display: none; }
+
+.card{
+  background:#fff !important;
+}
