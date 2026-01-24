@@ -79,8 +79,21 @@
         <div class="hr"></div>
 
         <div class="subtle" id="queueStatus">Loading…</div>
-        <div style="overflow:auto; max-height: 70vh; margin-top: 8px;">
-          <table class="queueTable">
+<div class="tableWrap">
+  <table>
+    <thead>
+      <tr>
+        <th style="min-width:120px;">Status</th>
+        <th style="min-width:240px;">Contact</th>
+        <th style="min-width:220px;">Company</th>
+        <th style="min-width:200px;">Campaign</th>
+        <th style="min-width:90px;">Ready</th>
+      </tr>
+    </thead>
+    <tbody id="queueBody"></tbody>
+  </table>
+</div>
+
             <thead>
               <tr>
                 <th>Status</th>
