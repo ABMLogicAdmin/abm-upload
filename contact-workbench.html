@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+
+  <link rel="stylesheet" href="/abm-upload/base.css?v=30">
+  <link rel="stylesheet" href="/abm-upload/contact-workbench.css?v=1">
+  
+  <!-- 1) Supabase SDK (NOT defer) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  
+  <!-- 2) App Shell (creates window.ABM.sb ONCE) -->
+  <script src="/abm-upload/app.shell.js?v=1" defer></script>
+  
+  <!-- 3) Shared nav -->
+  <script src="/abm-upload/nav.js?v=23" defer></script>
+  
+  <!-- 4) Page JS -->
+  <script src="/abm-upload/contact-workbench.js?v=1" defer></script>
+
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ABM Logic — Contact Workbench</title>
@@ -8,12 +24,6 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
-
-  <link rel="stylesheet" href="/abm-upload/base.css?v=1">
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/abm-upload/app.shell.js?v=1"></script>
-  <script src="/abm-upload/nav.js?v=1"></script>
 
   <style>
     .wbWrap { max-width: 1400px; margin: 0 auto; padding: 14px; }
@@ -60,8 +70,11 @@
     }
   </style>
 </head>
-
-<body data-page-title="Contact Workbench" data-page-badge="Slice B" data-page-help="Verify + enrich activation contacts (raw is read-only).">
+<body
+  data-page-title="Contact Workbench"
+  data-page-badge="Slice B"
+  data-page-help="Verify + enrich activation contacts."
+>
   <div id="siteNav"></div>
 
   <div class="wbWrap">
@@ -217,6 +230,5 @@
     </div>
   </div>
 
-  <script src="/abm-upload/contact-workbench.js?v=1"></script>
 </body>
 </html>
