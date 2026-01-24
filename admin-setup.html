@@ -586,6 +586,50 @@ body{
   border: 1px solid rgba(229,231,235,1);
 }
 
+/* =========================
+   Admin Setup: FORCE flex layout even if JS sets display:block inline
+   ========================= */
+
+/* Keep the "hidden" state working (JS uses inline display:none) */
+#adminGrid[style*="display:none"] { display: none !important; }
+#appCard[style*="display:none"]  { display: none !important; }
+
+/* When JS shows them as block, force the correct flex layout */
+#adminGrid{
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+#appCard{
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* Panels: JS may set style.display="block" */
+.tabPanel{ display: none !important; }
+.tabPanel.active{
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* The ONLY vertical scroller */
+.tabPanel.active .stageCard{
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+
+  padding-bottom: 24px !important; /* visible “finish” above bottom */
+}
 
 
     
