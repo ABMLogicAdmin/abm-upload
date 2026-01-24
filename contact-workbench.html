@@ -1,22 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
-  <link rel="stylesheet" href="/abm-upload/base.css?v=30">
-  <link rel="stylesheet" href="/abm-upload/contact-workbench.css?v=1">
-  
-  <!-- 1) Supabase SDK (NOT defer) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  
-  <!-- 2) App Shell (creates window.ABM.sb ONCE) -->
-  <script src="/abm-upload/app.shell.js?v=1" defer></script>
-  
-  <!-- 3) Shared nav -->
-  <script src="/abm-upload/nav.js?v=23" defer></script>
-  
-  <!-- 4) Page JS -->
-  <script src="/abm-upload/contact-workbench.js?v=1" defer></script>
-
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>ABM Logic — Contact Workbench</title>
@@ -25,51 +9,25 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 
-  <style>
-    .wbWrap { max-width: 1400px; margin: 0 auto; padding: 14px; }
-    .wbGrid { display: grid; grid-template-columns: 1.15fr 1fr; gap: 12px; }
-    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; }
-    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    label { display:block; font-size: 12px; color: var(--muted); margin-bottom: 4px; }
-    input, select, textarea {
-      width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 10px;
-      font-family: inherit; font-size: 14px; background: #fff;
-    }
-    textarea { min-height: 100px; resize: vertical; }
-    .toolbar { display:flex; gap: 8px; flex-wrap: wrap; align-items:center; }
-    .btn { padding: 10px 12px; border-radius: 12px; border: 1px solid var(--border); background:#fff; cursor:pointer; font-weight:600; }
-    .btnPrimary { border-color: rgba(48,173,247,.5); background: rgba(48,173,247,.10); }
-    .btnDanger { border-color: rgba(239,68,68,.45); background: rgba(239,68,68,.10); }
-    .btn:disabled { opacity: .45; cursor:not-allowed; }
-    .metaLine { display:flex; gap:10px; flex-wrap: wrap; font-size: 12px; color: var(--muted); }
-    .pill { display:inline-flex; align-items:center; gap:6px; padding: 6px 10px; border-radius: 999px; border:1px solid var(--border); background:#fff; font-size:12px; }
-    .queueTable { width: 100%; border-collapse: collapse; }
-    .queueTable th, .queueTable td { border-bottom: 1px solid var(--border); padding: 10px 8px; font-size: 13px; vertical-align: top; }
-    .queueTable th { text-align:left; font-size: 12px; color: var(--muted); font-weight: 700; }
-    .queueRow { cursor: pointer; }
-    .queueRow:hover { background: rgba(48,173,247,.06); }
-    .queueRow.active { background: rgba(48,173,247,.10); outline: 1px solid rgba(48,173,247,.20); }
-    .small { font-size: 12px; color: var(--muted); }
-    .split { display:flex; justify-content: space-between; gap: 10px; flex-wrap: wrap; align-items: baseline; }
-    .title { font-size: 16px; font-weight: 800; margin: 0; }
-    .subtle { font-size: 12px; color: var(--muted); }
-    .hr { height:1px; background: var(--border); margin: 10px 0; }
-    .kv { display:grid; grid-template-columns: 160px 1fr; gap: 6px 10px; }
-    .kv div { font-size: 13px; }
-    .kv .k { color: var(--muted); }
-    .statusDot { width:8px; height:8px; border-radius:99px; display:inline-block; background:#9ca3af; }
-    .status-pending { background:#f59e0b; }
-    .status-in_progress { background:#3b82f6; }
-    .status-enriched { background:#10b981; }
-    .status-verified { background:#16a34a; }
-    .status-rejected { background:#ef4444; }
+  <!-- Shared styling -->
+  <link rel="stylesheet" href="/abm-upload/base.css?v=30">
 
-    @media (max-width: 980px){
-      .wbGrid{ grid-template-columns: 1fr; }
-    }
-  </style>
+  <!-- Contact workbench styling ONLY -->
+  <link rel="stylesheet" href="/abm-upload/contact-workbench.css?v=2">
+
+  <!-- 1) Supabase SDK (NOT defer) -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <!-- 2) App Shell (creates window.ABM.sb ONCE) -->
+  <script src="/abm-upload/app.shell.js?v=1" defer></script>
+
+  <!-- 3) Shared nav -->
+  <script src="/abm-upload/nav.js?v=23" defer></script>
+
+  <!-- 4) Page JS -->
+  <script src="/abm-upload/contact-workbench.js?v=2" defer></script>
 </head>
+
 <body
   data-page-title="Contact Workbench"
   data-page-badge="Slice B"
@@ -77,8 +35,8 @@
 >
   <div id="siteNav"></div>
 
-  <div class="wbWrap">
-    <div class="wbGrid">
+  <div class="wrap">
+    <div class="grid2">
       <!-- LEFT: QUEUE -->
       <div class="card">
         <div class="split">
