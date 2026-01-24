@@ -33,16 +33,17 @@ body{
 /* =========================
    Global layout helpers
 ========================= */
+
 .wrap{
   max-width: 1200px;
   margin: 0 auto;
-  padding: 0 18px 40px;   /* ✅ was 18px 18px 40px */
+  padding: 0 18px 40px;   /* top = 0 */
 }
 
 .wrapSmall{
   max-width: 900px;
   margin: 0 auto;
-  padding: 0 18px 40px;   /* ✅ was 18px 18px 40px */
+  padding: 0 18px 40px;   /* top = 0 */
 }
 
 /* =========================
