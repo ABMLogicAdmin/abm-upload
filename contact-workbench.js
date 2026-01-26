@@ -401,23 +401,24 @@ function wireEventsOnce() {
     els.dReady.textContent = (data.activation_ready === true) ? "Yes" : "No";
 
     const rawPairs = [
-      ["Email", data.email],
-      ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
-      ["Title", data.title],
-      ["LinkedIn (Raw)", data.raw_linkedin_url || "—"],
-      ["Company", data.company],
-      ["Domain", data.domain],
-      ["Department", data.department],
-      ["Seniority", data.seniority],
-      ["Country", data.country],
-      ["Industry", data.industry],
-      ["City", data.city],
-      ["Source System", data.source_system],
-      ["Created", fmtDt(data.created_at)],
-      ["Assigned At", fmtDt(data.enrichment_assigned_at)],
-      ["Due At", fmtDt(data.enrichment_due_at)],
-      ["Locked At", fmtDt(data.enrichment_locked_at)]
-    ];
+     ["Email", data.email],
+     ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
+     ["Title", data.title],
+     ["LinkedIn (Raw)", data.raw_linkedin_url || "—"],
+     ["Phones (Raw)", data.raw_phones || "—"],
+     ["Company", data.company],
+     ["Domain", data.domain],
+     ["Department", data.department],
+     ["Seniority", data.seniority],
+     ["Country", data.country],
+     ["Industry", data.industry],
+     ["City", data.city],
+     ["Source System", data.source_system],
+     ["Created", fmtDt(data.created_at)],
+     ["Assigned At", fmtDt(data.enrichment_assigned_at)],
+     ["Due At", fmtDt(data.enrichment_due_at)],
+     ["Locked At", fmtDt(data.enrichment_locked_at)]
+   ];
 
       els.rawKv.innerHTML = rawPairs.map(([k, v]) => {
         const val = String(v ?? "").trim();
