@@ -138,16 +138,27 @@
 
           <h3 style="margin:0 0 8px 0;">Verified Layer (editable)</h3>
 
-          <div class="row">
-            <div>
-              <label>LinkedIn URL</label>
-              <input id="fLinkedIn" type="text" placeholder="https://www.linkedin.com/in/…" />
-            </div>
-            <div>
-              <label>Phone</label>
-              <input id="fPhone" type="text" placeholder="+44…" />
-            </div>
-          </div>
+<div class="row">
+  <div>
+    <label>LinkedIn URL</label>
+    <input id="fLinkedIn" type="text" placeholder="https://www.linkedin.com/in/…" />
+  </div>
+  <div>
+    <label>Mobile Phone (verified)</label>
+    <input id="fPhoneMobile" type="text" placeholder="+44…" />
+  </div>
+</div>
+
+<div class="row" style="margin-top:10px;">
+  <div>
+    <label>Corporate Phone (verified)</label>
+    <input id="fPhoneCorporate" type="text" placeholder="+44…" />
+  </div>
+  <div>
+    <label>Other Phone (verified)</label>
+    <input id="fPhoneOther" type="text" placeholder="+44…" />
+  </div>
+</div>
 
           <div class="row" style="margin-top:10px;">
             <div>
@@ -165,26 +176,47 @@
             </div>
           </div>
 
-          <div class="row" style="margin-top:10px;">
-            <div>
-              <label>LinkedIn Verification</label>
-              <select id="vfLinkedIn">
-                <option value="">—</option>
-                <option value="verified">verified</option>
-                <option value="unverified">unverified</option>
-                <option value="inconclusive">inconclusive</option>
-              </select>
-            </div>
-            <div>
-              <label>Phone Verification</label>
-              <select id="vfPhone">
-                <option value="">—</option>
-                <option value="verified">verified</option>
-                <option value="unverified">unverified</option>
-                <option value="inconclusive">inconclusive</option>
-              </select>
-            </div>
-          </div>
+ <div class="row" style="margin-top:10px;">
+  <div>
+    <label>LinkedIn Verification</label>
+    <select id="vfLinkedIn">
+      <option value="">—</option>
+      <option value="verified">verified</option>
+      <option value="unverified">unverified</option>
+      <option value="inconclusive">inconclusive</option>
+    </select>
+  </div>
+  <div>
+    <label>Mobile Phone Verification</label>
+    <select id="vfPhoneMobile">
+      <option value="">—</option>
+      <option value="verified">verified</option>
+      <option value="unverified">unverified</option>
+      <option value="inconclusive">inconclusive</option>
+    </select>
+  </div>
+</div>
+
+<div class="row" style="margin-top:10px;">
+  <div>
+    <label>Corporate Phone Verification</label>
+    <select id="vfPhoneCorporate">
+      <option value="">—</option>
+      <option value="verified">verified</option>
+      <option value="unverified">unverified</option>
+      <option value="inconclusive">inconclusive</option>
+    </select>
+  </div>
+  <div>
+    <label>Other Phone Verification</label>
+    <select id="vfPhoneOther">
+      <option value="">—</option>
+      <option value="verified">verified</option>
+      <option value="unverified">unverified</option>
+      <option value="inconclusive">inconclusive</option>
+    </select>
+  </div>
+</div>
 
           <div style="margin-top:10px;">
             <label>Notes</label>
