@@ -42,7 +42,7 @@ body[data-page-title="Contact Workbench"] .card{
 /* Filters row spacing (CLIENT + CAMPAIGN + QUEUE + SEARCH = 4 columns) */
 .row3{
   display:grid;
-  grid-template-columns: 1fr 1fr 1fr 1.3fr;
+  grid-template-columns: 1fr 1fr 1fr 1.3fr; /* Client, Campaign, Queue, Search */
   gap:12px;
 }
 @media (max-width: 980px){
