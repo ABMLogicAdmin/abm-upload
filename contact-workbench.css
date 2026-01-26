@@ -380,19 +380,16 @@ body[data-page-title="Contact Workbench"] .pill{
 }
 
 /* =========================
-   Contact Workbench — FORCE neutral pill styling (override base.css)
+   Contact Workbench — Fix disabled primary buttons (Claim/Save/Mark Verified)
+   Disabled should look neutral (not blue) and text should be dark/readable
 ========================= */
 
-body[data-page-title="Contact Workbench"] .metaLine .pill{
+body[data-page-title="Contact Workbench"] .toolbar .btnPrimary:disabled{
   background:#fff !important;
   color:var(--brand-navy) !important;
-  border:1px solid rgba(34,35,61,.15) !important;
+  border:1px solid rgba(34,35,61,.18) !important;
+  opacity:1 !important;            /* keep readable */
   box-shadow:none !important;
-  outline:none !important;
 }
 
-/* the <b> values inside the pill */
-body[data-page-title="Contact Workbench"] .metaLine .pill b{
-  color:var(--brand-navy) !important;
-}
 
