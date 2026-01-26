@@ -371,3 +371,11 @@ body[data-page-title="Contact Workbench"] #detailEmpty{
   flex: 0 0 auto;
 }
 
+/* =========================
+   Contact Workbench – Fix pill text contrast
+========================= */
+
+body[data-page-title="Contact Workbench"] .pill{
+  color: var(--brand-navy);   /* dark readable text */
+}
+
