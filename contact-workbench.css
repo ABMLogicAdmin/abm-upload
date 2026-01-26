@@ -190,7 +190,7 @@ textarea{ min-height:110px; resize:vertical; }
   padding:12px 10px;
   border-bottom:1px solid rgba(34,35,61,.10);
   vertical-align:top;
-  font-size:13.5px;              /* match other page */
+  font-size:12px;              /* match other page */
 }
 
 /* row hover/active */
