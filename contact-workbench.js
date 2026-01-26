@@ -109,25 +109,33 @@ function formatScore(x) {
 
 // Fallback: simple completeness if DB view doesn’t return completeness_score
 function computeCompletenessFallback(d) {
-  const linkedin = String(d.verified_linkedin_url || d.linkedin_url || "").trim();
-  const anyPhone =
-    String(d.phone_mobile || "").trim() ||
-    String(d.phone_corporate || "").trim() ||
-    String(d.phone_other || "").trim();
+  const emailOk = !!String(d.email || "").trim();
 
-  const companySize = String(d.company_size || "").trim();
-  const emailOk = String(d.email || "").trim();
+  const rawLinkedIn =
+    String(
+      d.raw_linkedin_url ||
+      d.linkedin_url ||
+      d.linkedin ||
+      d.linkedin_profile_url ||
+      d.person_linkedin_url ||
+      ""
+    ).trim();
 
-  const checks = [
-    !!emailOk,
-    !!linkedin,
-    !!anyPhone,
-    !!companySize
-  ];
+  const rawAnyPhone =
+    !!String(d.raw_phone_mobile_best || "").trim() ||
+    !!String(d.raw_phone_corporate_best || "").trim() ||
+    !!String(d.raw_phone_other_best || "").trim() ||
+    !!String(d.phones || d.raw_phones || "").trim();
 
+  const companySizeOk =
+    !!String(d.verified_company_size || d.company_size || "").trim();
+
+  const checks = [emailOk, !!rawLinkedIn, rawAnyPhone, companySizeOk];
   const score = (checks.filter(Boolean).length / checks.length) * 100;
+
   return Math.round(score) + "%";
 }
+
    
   // ---------- State ----------
   const state = {
@@ -459,7 +467,7 @@ function wireEventsOnce() {
       console.log("[Contact WB] Detail row:", data);
 
 // Normalize status + assigned_to so Claim logic works even if view returns "Pending" or "".
-const statusNorm = normStatus(data.enrichment_status);
+const statusNorm = normStatus(data.enrichment_status) || "pending";
 const assignedTo = String(data.enrichment_assigned_to || "").trim(); // handles null and ""
 const isAssigned = !!assignedTo;
 
@@ -664,17 +672,20 @@ if (assignedTo || statusNorm !== "pending") {
 
     setMsg("Claiming…");
 
-    const { data: upd, error: updErr } = await sb
-      .from("campaign_contacts")
-      .update({
-        enrichment_assigned_to: state.userId,
-        enrichment_assigned_at: new Date().toISOString(),
-        enrichment_status: "in_progress"
-      })
-      .eq("campaign_contact_id", d.campaign_contact_id)
-      .eq("enrichment_status", "pending") // keep as-is (DB should be pending)
-      .select("campaign_contact_id")
-      .maybeSingle();
+const { data: upd, error: updErr } = await sb
+  .from("campaign_contacts")
+  .update({
+    enrichment_assigned_to: state.userId,
+    enrichment_assigned_at: new Date().toISOString(),
+    enrichment_status: "in_progress"
+  })
+  .eq("campaign_contact_id", d.campaign_contact_id)
+  // ✅ allow status to be pending OR NULL (because DB might store NULL initially)
+  .or("enrichment_status.eq.pending,enrichment_status.is.null")
+  // ✅ allow assigned_to to be NULL OR empty string
+  .or("enrichment_assigned_to.is.null,enrichment_assigned_to.eq.")
+  .select("campaign_contact_id")
+  .maybeSingle();
 
     if (updErr || !upd) {
       setMsg("Claim failed (RLS blocked or already claimed).", true);
