@@ -13,8 +13,8 @@
 }
 
 /* Contact Workbench should be wider than global .wrap */
-.wrap{
-  max-width: 1600px;   /* try 1600; we can push to 1800 if you want */
+body[data-page-title="Contact Workbench"] .wrap{
+  max-width: 1600px;
   width: 100%;
 }
 
@@ -59,60 +59,34 @@ input, select, textarea{
 }
 textarea{ min-height:110px; resize:vertical; }
 
-/* ===== Table wrapper (rounded + shadow + scroll body) ===== */
+/* =========================
+   Queue table (Lead WB look)
+========================= */
+
 .tableWrap{
   margin-top:10px;
   border:1px solid rgba(34,35,61,.10);
   border-radius:12px;
-  overflow:hidden; /* clips corners */
+  overflow:auto;              /* scroll inside if needed */
   background:#fff;
-  box-shadow:0 8px 30px rgba(17,24,39,.06);
+
+  box-shadow:none;            /* IMPORTANT: no inner card shadow */
 }
 
-/* the table itself */
-.tableWrap table{
-  width:100%;
-  border-collapse:collapse;
-  font-size:13px;
-  background:#fff;
-}
-
-/* fixed header */
-.tableWrap thead th{
-  text-align:left;
-  font-size:12px;
-  color:var(--muted);
-  font-weight:800;
-  padding:12px 10px;
-  border-bottom:1px solid rgba(34,35,61,.12);
-  background:#fff;
-}
-
-/* ===== Table wrapper (Lead WB-style) ===== */
-.tableWrap{
-  margin-top:10px;
-  border:1px solid rgba(34,35,61,.10);
-  border-radius:12px;
-  overflow:auto;            /* wrapper scrolls if needed */
-  background:#fff;
-  box-shadow:0 8px 30px rgba(17,24,39,.06);
-}
-
-/* normal table */
 .tableWrap table{
   width:100%;
   border-collapse:separate;
   border-spacing:0;
   font-size:13px;
   background:#fff;
-  min-width: 900px;         /* prevents "squash" on smaller widths */
+  min-width: 900px;           /* avoids squashing columns */
 }
 
-/* header */
 .tableWrap thead th{
-  position: sticky;         /* nicer when the queue is long */
+  position: sticky;
   top: 0;
   z-index: 1;
+
   text-align:left;
   font-size:12px;
   color:var(--muted);
@@ -120,6 +94,19 @@ textarea{ min-height:110px; resize:vertical; }
   padding:12px 10px;
   border-bottom:1px solid rgba(34,35,61,.12);
   background:#fff;
+}
+
+.tableWrap tbody td{
+  padding:12px 10px;
+  border-bottom:1px solid rgba(34,35,61,.08);
+  vertical-align:top;
+}
+
+.tableWrap tbody tr{ cursor:pointer; }
+.tableWrap tbody tr:hover{ background:rgba(48,173,247,.06); }
+.tableWrap tbody tr.active{
+  background:rgba(48,173,247,.10);
+  outline:1px solid rgba(48,173,247,.20);
 }
 
 /* body cells */
@@ -275,5 +262,10 @@ body[data-page-title="Contact Workbench"] .grid2{
     padding-left: 12px;
     padding-right: 12px;
   }
+}
+
+/* Force cards to be white on Contact Workbench (overrides base.css tint) */
+body[data-page-title="Contact Workbench"] .card{
+  background:#fff !important;
 }
 
