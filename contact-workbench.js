@@ -92,6 +92,43 @@ function normalizeUrl(u) {
     return "statusDot";
   }
 
+function normStatus(s) {
+  return String(s || "").trim().toLowerCase();
+}
+
+function formatScore(x) {
+  if (x === null || x === undefined || x === "") return "—";
+  const n = Number(x);
+  if (Number.isNaN(n)) return String(x);
+  // handle 0..1 as fraction
+  if (n >= 0 && n <= 1) return Math.round(n * 100) + "%";
+  // handle 0..100 as percent
+  if (n > 1 && n <= 100) return Math.round(n) + "%";
+  return String(n);
+}
+
+// Fallback: simple completeness if DB view doesn’t return completeness_score
+function computeCompletenessFallback(d) {
+  const linkedin = String(d.verified_linkedin_url || d.linkedin_url || "").trim();
+  const anyPhone =
+    String(d.phone_mobile || "").trim() ||
+    String(d.phone_corporate || "").trim() ||
+    String(d.phone_other || "").trim();
+
+  const companySize = String(d.company_size || "").trim();
+  const emailOk = String(d.email || "").trim();
+
+  const checks = [
+    !!emailOk,
+    !!linkedin,
+    !!anyPhone,
+    !!companySize
+  ];
+
+  const score = (checks.filter(Boolean).length / checks.length) * 100;
+  return Math.round(score) + "%";
+}
+   
   // ---------- State ----------
   const state = {
     user: null,
@@ -360,7 +397,7 @@ function wireEventsOnce() {
       const name = [r.first_name, r.last_name].filter(Boolean).join(" ").trim() || "—";
       const company = r.company || r.domain || "—";
       const ready = (r.activation_ready === true) ? "Yes" : "No";
-      const score = (r.completeness_score ?? "—");
+      const score = formatScore(r.completeness_score);
       const active = (state.selectedId && r.campaign_contact_id === state.selectedId) ? "active" : "";
       const statusClass = statusDotClass(r.enrichment_status);
 
@@ -421,11 +458,25 @@ function wireEventsOnce() {
     state.selectedDetail = data;
       console.log("[Contact WB] Detail row:", data);
 
-    els.dStatus.textContent = data.enrichment_status || "—";
-    els.dPriority.textContent = String(data.enrichment_priority ?? "—");
-    els.dAssigned.textContent = data.enrichment_assigned_to ? "Yes" : "No";
-    els.dScore.textContent = String(data.completeness_score ?? "—");
-    els.dReady.textContent = (data.activation_ready === true) ? "Yes" : "No";
+// Normalize status + assigned_to so Claim logic works even if view returns "Pending" or "".
+const statusNorm = normStatus(data.enrichment_status);
+const assignedTo = String(data.enrichment_assigned_to || "").trim(); // handles null and ""
+const isAssigned = !!assignedTo;
+
+// UI pills
+els.dStatus.textContent = statusNorm ? statusNorm : "—";
+els.dPriority.textContent = String(data.enrichment_priority ?? "—");
+els.dAssigned.textContent = isAssigned ? "Yes" : "No";
+
+// Completeness (prefer DB, fallback to JS calc)
+if (data.completeness_score !== null && data.completeness_score !== undefined && data.completeness_score !== "") {
+  els.dScore.textContent = formatScore(data.completeness_score);
+} else {
+  els.dScore.textContent = computeCompletenessFallback(data);
+}
+
+els.dReady.textContent = (data.activation_ready === true) ? "Yes" : "No";
+
 
 // ---- Typed raw phones (best-effort) ----
 let rawMobile = String(data.raw_phone_mobile_best || "").trim();
@@ -568,9 +619,8 @@ els.vfPhoneCorporate.value = vf.phone_corporate || "";
 els.vfPhoneOther.value = vf.phone_other || "";
 
     const editable = canEdit(data);
-    const isUnassignedPending =
-     (!data.enrichment_assigned_to) &&
-     (data.enrichment_status === "pending");
+// Use normalized values
+const isUnassignedPending = (!isAssigned) && (statusNorm === "pending");
    
     const canClaim =
     state.role === "ops" || state.role === "admin";
@@ -603,10 +653,14 @@ els.vfPhoneOther.value = vf.phone_other || "";
     const d = state.selectedDetail;
     if (!d?.campaign_contact_id) return;
 
-    if (d.enrichment_assigned_to || d.enrichment_status !== "pending") {
-      setMsg("Cannot claim: not pending/unassigned.", true);
-      return;
-    }
+const statusNorm = normStatus(d.enrichment_status);
+const assignedTo = String(d.enrichment_assigned_to || "").trim();
+
+if (assignedTo || statusNorm !== "pending") {
+  setMsg("Cannot claim: not pending/unassigned.", true);
+  return;
+}
+
 
     setMsg("Claiming…");
 
@@ -618,8 +672,7 @@ els.vfPhoneOther.value = vf.phone_other || "";
         enrichment_status: "in_progress"
       })
       .eq("campaign_contact_id", d.campaign_contact_id)
-      .is("enrichment_assigned_to", null)
-      .eq("enrichment_status", "pending")
+      .eq("enrichment_status", "pending") // keep as-is (DB should be pending)
       .select("campaign_contact_id")
       .maybeSingle();
 
