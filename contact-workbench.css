@@ -379,3 +379,20 @@ body[data-page-title="Contact Workbench"] .pill{
   color: var(--brand-navy);   /* dark readable text */
 }
 
+/* =========================
+   Contact Workbench — FORCE neutral pill styling (override base.css)
+========================= */
+
+body[data-page-title="Contact Workbench"] .metaLine .pill{
+  background:#fff !important;
+  color:var(--brand-navy) !important;
+  border:1px solid rgba(34,35,61,.15) !important;
+  box-shadow:none !important;
+  outline:none !important;
+}
+
+/* the <b> values inside the pill */
+body[data-page-title="Contact Workbench"] .metaLine .pill b{
+  color:var(--brand-navy) !important;
+}
+
