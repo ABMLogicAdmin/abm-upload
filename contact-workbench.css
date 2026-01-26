@@ -392,4 +392,24 @@ body[data-page-title="Contact Workbench"] .toolbar .btnPrimary:disabled{
   box-shadow:none !important;
 }
 
+/* =========================
+   Contact Workbench — Fix disabled action buttons
+   (Claim/Save/Mark Verified when no row selected)
+========================= */
+
+body[data-page-title="Contact Workbench"] .toolbar .btn:disabled{
+  opacity: 1 !important;                 /* stop “washed out” look */
+  background: #fff !important;
+  color: var(--muted) !important;        /* readable */
+  border: 1px solid rgba(34,35,61,.18) !important;
+  box-shadow: none !important;
+}
+
+/* If base.css forces primary buttons to look “active” even when disabled */
+body[data-page-title="Contact Workbench"] .toolbar .btnPrimary:disabled{
+  background: #fff !important;
+  color: var(--muted) !important;
+  border: 1px solid rgba(34,35,61,.18) !important;
+}
+
 
