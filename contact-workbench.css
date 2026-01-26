@@ -345,3 +345,29 @@ body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap 
   z-index: 2;
   background: #fff;
 }
+
+/* =========================
+   Contact Workbench — Detail panel internal scroller
+========================= */
+
+/* Make the Detail card scroll internally */
+body[data-page-title="Contact Workbench"] .grid2 > .card:nth-child(2){
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* The detail form becomes the scroller */
+body[data-page-title="Contact Workbench"] #detailForm{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;          /* ✅ internal scroll */
+  padding-right: 6px;      /* optional: nicer next to scrollbar */
+}
+
+/* When empty state is showing, keep it pinned at top */
+body[data-page-title="Contact Workbench"] #detailEmpty{
+  flex: 0 0 auto;
+}
+
