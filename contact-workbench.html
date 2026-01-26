@@ -46,13 +46,35 @@
 
         <div class="hr"></div>
 
-     <div class="row3">
+  <div class="row3">
 
           <div>
-            <label>Search (email/company)</label>
-            <input id="filterSearch" type="text" placeholder="e.g. jane@acme.com or Acme" />
+            <label>Campaign</label>
+            <select id="filterCampaign">
+              <option value="">All campaigns</option>
+            </select>
           </div>
+        
+          <div>
+            <label>Queue</label>
+            <select id="filterQueue">
+              <option value="all">All (pending + in progress)</option>
+              <option value="mine">Mine (assigned to me)</option>
+              <option value="done">Done (enriched/verified/rejected)</option>
+              <option value="pending">Pending only</option>
+              <option value="in_progress">In progress only</option>
+              <option value="verified">Verified only</option>
+              <option value="rejected">Rejected only</option>
+            </select>
+          </div>
+        
+          <div>
+            <label>Search (name/email/company/domain)</label>
+            <input id="filterSearch" type="text" placeholder="e.g. Jane Doe, jane@acme.com, Acme, acme.com" />
+          </div>
+        
         </div>
+
 
         <div class="hr"></div>
 
