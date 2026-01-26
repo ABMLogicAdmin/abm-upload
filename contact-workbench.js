@@ -470,8 +470,18 @@ const rawPairs = [
   ["Email", data.email],
   ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
   ["Title", data.title],
-  ["LinkedIn", data.raw_linkedin_url || "—"],
 
+const rawLinkedIn =
+  (data.raw_linkedin_url ||
+   data.linkedin_url ||
+   data.linkedin ||
+   data.linkedin_profile_url ||
+   data.person_linkedin_url ||
+   "").trim();
+
+...
+
+  ["LinkedIn", rawLinkedIn || "—"],
   ["Mobile Phone (raw)", rawMobile || "—"],
   ["Corporate Phone (raw)", rawCorp || "—"],
   ["Other Phone (raw)", rawOther || (rawFallbackBlob || "—")],
@@ -501,7 +511,7 @@ const rawPairs = [
         return `<div class="k">${esc(k)}</div><div>${rightSide}</div>`;
    }).join("");
 
-els.fLinkedIn.value = data.verified_linkedin_url || "";
+els.fLinkedIn.value = (data.verified_linkedin_url || rawLinkedIn || "");
 
 // verified phones now come from campaign_contacts (via the v3 view)
 els.fPhoneMobile.value = data.phone_mobile || "";
