@@ -391,6 +391,8 @@ function wireEventsOnce() {
     }
 
     state.selectedDetail = data;
+      console.log("[Contact WB] Detail row:", data);
+
 
     els.dStatus.textContent = data.enrichment_status || "—";
     els.dPriority.textContent = String(data.enrichment_priority ?? "—");
@@ -402,6 +404,7 @@ function wireEventsOnce() {
       ["Email", data.email],
       ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
       ["Title", data.title],
+      ["LinkedIn (Raw)", data.linkedin_url ? data.linkedin_url : "—"],
       ["Company", data.company],
       ["Domain", data.domain],
       ["Department", data.department],
@@ -431,14 +434,13 @@ function wireEventsOnce() {
     els.vfPhone.value = vf.phone || "";
 
     const editable = canEdit(data);
-   const isUnassignedPending =
+    const isUnassignedPending =
      (!data.enrichment_assigned_to) &&
      (data.enrichment_status === "pending");
    
-   const canClaim =
-     state.role === "ops" || state.role === "admin";
-   
-   els.btnClaim.disabled = !(isUnassignedPending && canClaim);
+    const canClaim =
+    state.role === "ops" || state.role === "admin";
+    els.btnClaim.disabled = !(isUnassignedPending && canClaim);
 
     els.btnSave.disabled = !editable;
     els.btnVerify.disabled = !editable;
