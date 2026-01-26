@@ -45,14 +45,19 @@
     dScore: $("#dScore"),
     dReady: $("#dReady"),
 
-    fLinkedIn: $("#fLinkedIn"),
-    fPhone: $("#fPhone"),
-    fCompanySize: $("#fCompanySize"),
-    fNotes: $("#fNotes"),
+fLinkedIn: $("#fLinkedIn"),
+fPhoneMobile: $("#fPhoneMobile"),
+fPhoneCorporate: $("#fPhoneCorporate"),
+fPhoneOther: $("#fPhoneOther"),
+fCompanySize: $("#fCompanySize"),
+fNotes: $("#fNotes"),
 
-    vfEmail: $("#vfEmail"),
-    vfLinkedIn: $("#vfLinkedIn"),
-    vfPhone: $("#vfPhone"),
+vfEmail: $("#vfEmail"),
+vfLinkedIn: $("#vfLinkedIn"),
+vfPhoneMobile: $("#vfPhoneMobile"),
+vfPhoneCorporate: $("#vfPhoneCorporate"),
+vfPhoneOther: $("#vfPhoneOther"),
+
 
     detailMsg: $("#detailMsg")
   };
@@ -276,14 +281,12 @@ function wireEventsOnce() {
         "source_system",
         "created_at",
         "verified_linkedin_url",
-        "verified_phone",
         "verified_company_size",
         "completeness_score",
         "activation_ready"
       ].join(","))
       .order("enrichment_priority", { ascending: true })
-      .order("created_at", { ascending: false });
-
+   
     if (selectedClient) query = query.eq("client_name", selectedClient);
     if (campaignId) query = query.eq("campaign_id", campaignId);
 
@@ -378,7 +381,7 @@ function wireEventsOnce() {
     els.rawKv.innerHTML = "Loading…";
 
     const { data, error } = await sb
-      .from("v_contact_workbench_detail_v2")
+      .from("v_contact_workbench_detail_v3")
       .select("*")
       .eq("campaign_contact_id", campaignContactId)
       .maybeSingle();
@@ -399,38 +402,37 @@ function wireEventsOnce() {
     els.dScore.textContent = String(data.completeness_score ?? "—");
     els.dReady.textContent = (data.activation_ready === true) ? "Yes" : "No";
 
-   // ---- Build phone rows (raw phones -> multiple lines) ----
-   const rawPhones = String(data.raw_phones || "").trim();
-   
-   // split by comma, newline, semicolon, or |
-   const phoneList = rawPhones
-     ? rawPhones.split(/[,\n;|]+/).map(p => p.trim()).filter(Boolean)
-     : [];
-   
-   // label phones (you can rename later)
-   const phonePairs = phoneList.length
-     ? phoneList.map((p, i) => [`Phone ${i + 1}`, p])
-     : [["Phones", "—"]];
-   
-   const rawPairs = [
-     ["Email", data.email],
-     ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
-     ["Title", data.title],
-     ["LinkedIn", data.raw_linkedin_url || "—"],
-     ...phonePairs,
-     ["Company", data.company],
-     ["Domain", data.domain],
-     ["Department", data.department],
-     ["Seniority", data.seniority],
-     ["Country", data.country],
-     ["Industry", data.industry],
-     ["City", data.city],
-     ["Source System", data.source_system],
-     ["Created", fmtDt(data.created_at)],
-     ["Assigned At", fmtDt(data.enrichment_assigned_at)],
-     ["Due At", fmtDt(data.enrichment_due_at)],
-     ["Locked At", fmtDt(data.enrichment_locked_at)]
-   ];
+   // ---- Typed raw phones (best-effort) ----
+const rawMobile = String(data.raw_phone_mobile_best || "").trim();
+const rawCorp   = String(data.raw_phone_corporate_best || "").trim();
+const rawOther  = String(data.raw_phone_other_best || "").trim();
+
+// fallback: if typed raws aren’t present, show the legacy blob
+const rawFallbackBlob = String(data.phones || data.raw_phones || "").trim();
+
+const rawPairs = [
+  ["Email", data.email],
+  ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
+  ["Title", data.title],
+  ["LinkedIn", data.raw_linkedin_url || "—"],
+
+  ["Mobile Phone (raw)", rawMobile || "—"],
+  ["Corporate Phone (raw)", rawCorp || "—"],
+  ["Other Phone (raw)", rawOther || (rawFallbackBlob || "—")],
+
+  ["Company", data.company],
+  ["Domain", data.domain],
+  ["Department", data.department],
+  ["Seniority", data.seniority],
+  ["Country", data.country],
+  ["Industry", data.industry],
+  ["City", data.city],
+  ["Source System", data.source_system],
+  ["Created", fmtDt(data.created_at)],
+  ["Assigned At", fmtDt(data.enrichment_assigned_at)],
+  ["Due At", fmtDt(data.enrichment_due_at)],
+  ["Locked At", fmtDt(data.enrichment_locked_at)]
+];
 
       els.rawKv.innerHTML = rawPairs.map(([k, v]) => {
         const val = String(v ?? "").trim();
@@ -443,15 +445,23 @@ function wireEventsOnce() {
         return `<div class="k">${esc(k)}</div><div>${rightSide}</div>`;
    }).join("");
 
-    els.fLinkedIn.value = data.verified_linkedin_url || "";
-    els.fPhone.value = data.phone || "";
-    els.fCompanySize.value = data.company_size || "";
-    els.fNotes.value = data.notes || "";
+els.fLinkedIn.value = data.verified_linkedin_url || "";
 
-    const vf = (data.verified_fields && typeof data.verified_fields === "object") ? data.verified_fields : {};
-    els.vfEmail.value = vf.email || "";
-    els.vfLinkedIn.value = vf.linkedin_url || "";
-    els.vfPhone.value = vf.phone || "";
+// verified phones now come from campaign_contacts (via the v3 view)
+els.fPhoneMobile.value = data.phone_mobile || "";
+els.fPhoneCorporate.value = data.phone_corporate || "";
+els.fPhoneOther.value = data.phone_other || "";
+
+els.fCompanySize.value = data.company_size || "";
+els.fNotes.value = data.notes || "";
+
+const vf = (data.verified_fields && typeof data.verified_fields === "object") ? data.verified_fields : {};
+els.vfEmail.value = vf.email || "";
+els.vfLinkedIn.value = vf.linkedin_url || "";
+
+els.vfPhoneMobile.value = vf.phone_mobile || "";
+els.vfPhoneCorporate.value = vf.phone_corporate || "";
+els.vfPhoneOther.value = vf.phone_other || "";
 
     const editable = canEdit(data);
     const isUnassignedPending =
@@ -474,7 +484,13 @@ function wireEventsOnce() {
   }
 
   function setFormDisabled(disabled) {
-    [els.fLinkedIn, els.fPhone, els.fCompanySize, els.fNotes, els.vfEmail, els.vfLinkedIn, els.vfPhone]
+    [
+  els.fLinkedIn,
+  els.fPhoneMobile, els.fPhoneCorporate, els.fPhoneOther,
+  els.fCompanySize, els.fNotes,
+  els.vfEmail, els.vfLinkedIn,
+  els.vfPhoneMobile, els.vfPhoneCorporate, els.vfPhoneOther
+]
       .forEach(el => { if (el) el.disabled = !!disabled; });
   }
 
@@ -526,27 +542,48 @@ function wireEventsOnce() {
 
     setMsg("Saving…");
 
-    const verified_fields = {
-      ...(d.verified_fields && typeof d.verified_fields === "object" ? d.verified_fields : {}),
-      email: els.vfEmail.value || null,
-      linkedin_url: els.vfLinkedIn.value || null,
-      phone: els.vfPhone.value || null
-    };
+const verified_fields = {
+  ...(d.verified_fields && typeof d.verified_fields === "object" ? d.verified_fields : {}),
+  email: els.vfEmail.value || null,
+  linkedin_url: els.vfLinkedIn.value || null,
+  phone_mobile: els.vfPhoneMobile.value || null,
+  phone_corporate: els.vfPhoneCorporate.value || null,
+  phone_other: els.vfPhoneOther.value || null
+};
+
 
     Object.keys(verified_fields).forEach(k => {
       if (verified_fields[k] === null || verified_fields[k] === "") delete verified_fields[k];
     });
 
-    const payload = {
-      campaign_contact_id: d.campaign_contact_id,
-      linkedin_url: (els.fLinkedIn.value || "").trim() || null,
-      phone: (els.fPhone.value || "").trim() || null,
-      company_size: (els.fCompanySize.value || "").trim() || null,
-      notes: (els.fNotes.value || "").trim() || null,
-      verified_fields,
-      enriched_by: state.userId,
-      enriched_at: new Date().toISOString()
-    };
+   const payload = {
+  campaign_contact_id: d.campaign_contact_id,
+  linkedin_url: (els.fLinkedIn.value || "").trim() || null,
+  company_size: (els.fCompanySize.value || "").trim() || null,
+  notes: (els.fNotes.value || "").trim() || null,
+  verified_fields,
+  enriched_by: state.userId,
+  enriched_at: new Date().toISOString()
+};
+
+// Save structured verified phones on campaign_contacts
+const phoneUpd = {
+  phone_mobile: (els.fPhoneMobile.value || "").trim() || null,
+  phone_corporate: (els.fPhoneCorporate.value || "").trim() || null,
+  phone_other: (els.fPhoneOther.value || "").trim() || null
+};
+
+const { error: phoneErr } = await sb
+  .from("campaign_contacts")
+  .update(phoneUpd)
+  .eq("campaign_contact_id", d.campaign_contact_id);
+
+if (phoneErr) {
+  setMsg("Save failed (phone update).", true);
+  console.error("[Contact WB] phone save error:", phoneErr);
+  return;
+}
+
 
     const { error } = await sb
       .from("campaign_contact_enrichment")
