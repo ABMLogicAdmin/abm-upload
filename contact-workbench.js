@@ -402,13 +402,55 @@ function wireEventsOnce() {
     els.dScore.textContent = String(data.completeness_score ?? "—");
     els.dReady.textContent = (data.activation_ready === true) ? "Yes" : "No";
 
-   // ---- Typed raw phones (best-effort) ----
-const rawMobile = String(data.raw_phone_mobile_best || "").trim();
-const rawCorp   = String(data.raw_phone_corporate_best || "").trim();
-const rawOther  = String(data.raw_phone_other_best || "").trim();
+// ---- Typed raw phones (best-effort) ----
+let rawMobile = String(data.raw_phone_mobile_best || "").trim();
+let rawCorp   = String(data.raw_phone_corporate_best || "").trim();
+let rawOther  = String(data.raw_phone_other_best || "").trim();
 
-// fallback: if typed raws aren’t present, show the legacy blob
-const rawFallbackBlob = String(data.phones || data.raw_phones || "").trim();
+// fallback: if typed raws aren’t present, use the legacy blob and split it
+const rawFallbackBlob = String(data.phones || data.raw_phones || rawOther || "").trim();
+
+function splitPhones(blob) {
+  if (!blob) return [];
+  return blob
+    .split(/[,\n;|]+/)
+    .map(p => p.trim())
+    .filter(Boolean);
+}
+
+// very simple heuristic (works well for your current Belgian-style data):
+// - treat +32 4xx... as "mobile"
+// - otherwise first becomes corporate, second becomes other
+function classifyPhones(list) {
+  let mobile = "";
+  let corporate = "";
+  let other = "";
+
+  for (const p of list) {
+    const norm = p.replace(/\s+/g, " ").trim();
+    if (!mobile && /^\+32\s*4/.test(norm)) {
+      mobile = norm;
+      continue;
+    }
+    if (!corporate) { corporate = norm; continue; }
+    if (!other) { other = norm; continue; }
+  }
+
+  // if we never found a mobile, just assign sequentially
+  if (!mobile && list.length >= 1) corporate = corporate || list[0];
+  if (!other && list.length >= 2) other = list[1];
+
+  return { mobile, corporate, other };
+}
+
+if (!rawMobile && !rawCorp) {
+  const list = splitPhones(rawFallbackBlob);
+  const c = classifyPhones(list);
+
+  rawMobile = rawMobile || c.mobile;
+  rawCorp   = rawCorp   || c.corporate;
+  rawOther  = rawOther  || c.other;
+}
 
 const rawPairs = [
   ["Email", data.email],
