@@ -404,7 +404,7 @@ function wireEventsOnce() {
       ["Email", data.email],
       ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
       ["Title", data.title],
-      ["LinkedIn (Raw)", data.linkedin_url ? data.linkedin_url : "—"],
+      ["LinkedIn (Raw)", data.raw_linkedin_url || "—"],
       ["Company", data.company],
       ["Domain", data.domain],
       ["Department", data.department],
@@ -419,11 +419,18 @@ function wireEventsOnce() {
       ["Locked At", fmtDt(data.enrichment_locked_at)]
     ];
 
-    els.rawKv.innerHTML = rawPairs.map(([k, v]) => `
-      <div class="k">${esc(k)}</div><div>${esc(v ?? "—")}</div>
-    `).join("");
+      els.rawKv.innerHTML = rawPairs.map(([k, v]) => {
+        const val = String(v ?? "").trim();
+        const isLinkedIn = String(k).toLowerCase().includes("linkedin");
+      
+        const rightSide = (isLinkedIn && val && val !== "—")
+          ? `<a href="${esc(val)}" target="_blank" rel="noopener noreferrer">${esc(val)}</a>`
+          : esc(val || "—");
+   
+        return `<div class="k">${esc(k)}</div><div>${rightSide}</div>`;
+   }).join("");
 
-    els.fLinkedIn.value = data.linkedin_url || "";
+    els.fLinkedIn.value = data.verified_linkedin_url || "";
     els.fPhone.value = data.phone || "";
     els.fCompanySize.value = data.company_size || "";
     els.fNotes.value = data.notes || "";
