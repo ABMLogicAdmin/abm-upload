@@ -466,6 +466,16 @@ if (!rawMobile || !rawOther || otherLooksLikeBlob) {
   }
 }
 
+const rawLinkedIn = String(
+  data.raw_linkedin_url ||
+  data.linkedin_url ||
+  data.linkedin ||
+  data.linkedin_profile_url ||
+  data.person_linkedin_url ||
+  ""
+).trim();
+
+     
 const rawPairs = [
   ["Email", data.email],
   ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
@@ -478,8 +488,6 @@ const rawLinkedIn =
    data.linkedin_profile_url ||
    data.person_linkedin_url ||
    "").trim();
-
-...
 
   ["LinkedIn", rawLinkedIn || "—"],
   ["Mobile Phone (raw)", rawMobile || "—"],
