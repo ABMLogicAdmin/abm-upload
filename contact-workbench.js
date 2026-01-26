@@ -74,6 +74,14 @@ vfPhoneOther: $("#vfPhoneOther"),
     try { return new Date(x).toLocaleString(); } catch { return String(x); }
   }
 
+function normalizeUrl(u) {
+  const s = String(u || "").trim();
+  if (!s) return "";
+  if (/^https?:\/\//i.test(s)) return s;     // already good
+  if (/^\/\//.test(s)) return "https:" + s;  // starts with //
+  return "https://" + s;                     // add https://
+}
+
   function statusDotClass(status) {
     const s = String(status || "").toLowerCase();
     if (s === "pending") return "statusDot status-pending";
@@ -159,6 +167,20 @@ function wireEventsOnce() {
   on(els.btnSave, "click", onSave, "#btnSave");
   on(els.btnVerify, "click", onVerify, "#btnVerify");
   on(els.btnReject, "click", onReject, "#btnReject");
+  on(els.fLinkedIn, "input", () => {
+  if (!els.lnkLinkedIn) return;
+
+  const li = normalizeUrl(els.fLinkedIn.value);
+
+  if (li) {
+    els.lnkLinkedIn.href = li;
+    els.lnkLinkedIn.textContent = "Open LinkedIn";
+    els.lnkLinkedIn.style.display = "inline";
+  } else {
+    els.lnkLinkedIn.href = "#";
+    els.lnkLinkedIn.style.display = "none";
+  }
+}, "#fLinkedIn");
 }
 
   function debounce(fn, ms) {
@@ -483,15 +505,6 @@ const rawPairs = [
   ["Email", data.email],
   ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
   ["Title", data.title],
-
-const rawLinkedIn =
-  (data.raw_linkedin_url ||
-   data.linkedin_url ||
-   data.linkedin ||
-   data.linkedin_profile_url ||
-   data.person_linkedin_url ||
-   "").trim();
-
   ["LinkedIn", rawLinkedIn || "—"],
   ["Mobile Phone (raw)", rawMobile || "—"],
   ["Corporate Phone (raw)", rawCorp || "—"],
@@ -523,16 +536,20 @@ const rawLinkedIn =
    }).join("");
 
 els.fLinkedIn.value = (data.verified_linkedin_url || rawLinkedIn || "");
-const li = (els.fLinkedIn.value || "").trim();
+
+const li = normalizeUrl(els.fLinkedIn.value);
+
 if (els.lnkLinkedIn) {
   if (li) {
     els.lnkLinkedIn.href = li;
+    els.lnkLinkedIn.textContent = "Open LinkedIn";
     els.lnkLinkedIn.style.display = "inline";
   } else {
     els.lnkLinkedIn.href = "#";
     els.lnkLinkedIn.style.display = "none";
   }
 }
+
 
 // verified phones now come from campaign_contacts (via the v3 view)
 els.fPhoneMobile.value = data.phone_mobile || "";
