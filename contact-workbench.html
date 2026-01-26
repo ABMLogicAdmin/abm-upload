@@ -25,7 +25,7 @@
   <script src="/abm-upload/nav.js?v=23" defer></script>
 
   <!-- 4) Page JS -->
-  <script src="/abm-upload/contact-workbench.js?v=9" defer></script>
+  <script src="/abm-upload/contact-workbench.js?v=10" defer></script>
 </head>
 
 <body
@@ -48,18 +48,39 @@
 
      <div class="row3">
 
-          <div>
-            <label>Queue</label>
-            <select id="filterQueue">
-              <option value="all">All (pending + in progress)</option>
-              <option value="mine">Mine (assigned to me)</option>
-              <option value="done">Done (enriched/verified/rejected)</option>
-              <option value="pending">Pending only</option>
-              <option value="in_progress">In progress only</option>
-              <option value="verified">Verified only</option>
-              <option value="rejected">Rejected only</option>
-            </select>
+       <div class="row3">
+
+            <div>
+              <label>Campaign</label>
+              <select id="filterCampaign">
+                <option value="">All active campaigns</option>
+              </select>
+            </div>
+          
+            <div>
+              <label>Queue</label>
+              <select id="filterQueue">
+                <option value="all">All (pending + in progress)</option>
+                <option value="mine">Mine (assigned to me)</option>
+                <option value="done">Done (enriched/verified/rejected)</option>
+                <option value="pending">Pending only</option>
+                <option value="in_progress">In progress only</option>
+                <option value="verified">Verified only</option>
+                <option value="rejected">Rejected only</option>
+              </select>
+            </div>
+          
+            <div>
+              <label>Search (email/company)</label>
+              <input
+                id="filterSearch"
+                type="text"
+                placeholder="e.g. jane@acme.com or Acme"
+              />
+            </div>
+          
           </div>
+
 
           <div>
             <label>Search (email/company)</label>
