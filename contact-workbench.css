@@ -28,6 +28,12 @@ body[data-page-title="Contact Workbench"] .wrap{
   box-shadow:0 8px 30px rgba(17,24,39,.06);
 }
 
+/* Ensure card rounding is visually respected on Contact Workbench */
+body[data-page-title="Contact Workbench"] .card{
+  overflow: hidden;   /* clips inner children to rounded corners */
+}
+
+
 /* Filters row spacing (CLIENT + CAMPAIGN + QUEUE + SEARCH = 4 columns) */
 .row3{
   display:grid;
@@ -267,5 +273,18 @@ body[data-page-title="Contact Workbench"] .grid2{
 /* Force cards to be white on Contact Workbench (overrides base.css tint) */
 body[data-page-title="Contact Workbench"] .card{
   background:#fff !important;
+}
+
+/* =========================
+   Contact Workbench – Card rounding fix
+   Ensures white tiles show rounded corners
+========================= */
+
+body[data-page-title="Contact Workbench"] .card{
+  overflow: hidden;   /* forces inner content to respect rounded corners */
+}
+
+body[data-page-title="Contact Workbench"] .tableWrap{
+  margin-top: 14px;   /* reveals card corner curvature above table */
 }
 
