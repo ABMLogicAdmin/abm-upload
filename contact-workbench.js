@@ -393,32 +393,45 @@ function wireEventsOnce() {
     state.selectedDetail = data;
       console.log("[Contact WB] Detail row:", data);
 
-
     els.dStatus.textContent = data.enrichment_status || "—";
     els.dPriority.textContent = String(data.enrichment_priority ?? "—");
     els.dAssigned.textContent = data.enrichment_assigned_to ? "Yes" : "No";
     els.dScore.textContent = String(data.completeness_score ?? "—");
     els.dReady.textContent = (data.activation_ready === true) ? "Yes" : "No";
 
-    const rawPairs = [
-     ["Email", data.email],
-     ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
-     ["Title", data.title],
-     ["LinkedIn (Raw)", data.raw_linkedin_url || "—"],
-     ["Phones (Raw)", data.raw_phones || "—"],
-     ["Company", data.company],
-     ["Domain", data.domain],
-     ["Department", data.department],
-     ["Seniority", data.seniority],
-     ["Country", data.country],
-     ["Industry", data.industry],
-     ["City", data.city],
-     ["Source System", data.source_system],
-     ["Created", fmtDt(data.created_at)],
-     ["Assigned At", fmtDt(data.enrichment_assigned_at)],
-     ["Due At", fmtDt(data.enrichment_due_at)],
-     ["Locked At", fmtDt(data.enrichment_locked_at)]
-   ];
+// ---- Build phone rows (raw phones -> multiple lines) ----
+const rawPhones = String(data.raw_phones || "").trim();
+
+// split by comma, newline, semicolon, or |
+const phoneList = rawPhones
+  ? rawPhones.split(/[,\n;|]+/).map(p => p.trim()).filter(Boolean)
+  : [];
+
+// label phones (you can rename later)
+const phonePairs = phoneList.length
+  ? phoneList.map((p, i) => [`Phone ${i + 1}`, p])
+  : [["Phones", "—"]];
+
+const rawPairs = [
+  ["Email", data.email],
+  ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
+  ["Title", data.title],
+  ["LinkedIn (Raw)", data.raw_linkedin_url || "—"],
+  ...phonePairs,
+  ["Company", data.company],
+  ["Domain", data.domain],
+  ["Department", data.department],
+  ["Seniority", data.seniority],
+  ["Country", data.country],
+  ["Industry", data.industry],
+  ["City", data.city],
+  ["Source System", data.source_system],
+  ["Created", fmtDt(data.created_at)],
+  ["Assigned At", fmtDt(data.enrichment_assigned_at)],
+  ["Due At", fmtDt(data.enrichment_due_at)],
+  ["Locked At", fmtDt(data.enrichment_locked_at)]
+];
+
 
       els.rawKv.innerHTML = rawPairs.map(([k, v]) => {
         const val = String(v ?? "").trim();
