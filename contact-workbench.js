@@ -120,31 +120,40 @@
     await loadQueue();
   }
 
-  function wireEventsOnce() {
-    if (state.wired) return;
-    state.wired = true;
+function wireEventsOnce() {
+  if (state.wired) return;
+  state.wired = true;
 
-    if (els.filterClient) {
-      els.filterClient.addEventListener("change", () => {
-        repopulateCampaignDropdown();
-        loadQueue();
-      });
+  // Helper: bind only if the element exists
+  function on(el, evt, fn, name) {
+    if (!el) {
+      console.warn(`[Contact WB] Missing element: ${name} (skipping ${evt} binding)`);
+      return;
     }
-
-    els.filterCampaign.addEventListener("change", () => loadQueue());
-    els.filterQueue.addEventListener("change", () => loadQueue());
-    els.filterSearch.addEventListener("input", debounce(() => loadQueue(), 250));
-
-    els.btnRefresh.addEventListener("click", async () => {
-      await loadQueue();
-      if (state.selectedId) await loadDetail(state.selectedId);
-    });
-
-    els.btnClaim.addEventListener("click", onClaim);
-    els.btnSave.addEventListener("click", onSave);
-    els.btnVerify.addEventListener("click", onVerify);
-    els.btnReject.addEventListener("click", onReject);
+    el.addEventListener(evt, fn);
   }
+
+  // Filters (some are optional by design)
+  on(els.filterClient, "change", () => {
+    repopulateCampaignDropdown();
+    loadQueue();
+  }, "#filterClient");
+
+  on(els.filterCampaign, "change", () => loadQueue(), "#filterCampaign");
+  on(els.filterQueue, "change", () => loadQueue(), "#filterQueue");
+  on(els.filterSearch, "input", debounce(() => loadQueue(), 250), "#filterSearch");
+
+  // Actions
+  on(els.btnRefresh, "click", async () => {
+    await loadQueue();
+    if (state.selectedId) await loadDetail(state.selectedId);
+  }, "#btnRefresh");
+
+  on(els.btnClaim, "click", onClaim, "#btnClaim");
+  on(els.btnSave, "click", onSave, "#btnSave");
+  on(els.btnVerify, "click", onVerify, "#btnVerify");
+  on(els.btnReject, "click", onReject, "#btnReject");
+}
 
   function debounce(fn, ms) {
     let t = null;
@@ -160,11 +169,10 @@
   }
 
   function disableAllActions() {
-    els.btnClaim.disabled = true;
-    els.btnSave.disabled = true;
-    els.btnVerify.disabled = true;
-    els.btnReject.disabled = true;
-  }
+  [els.btnClaim, els.btnSave, els.btnVerify, els.btnReject].forEach(b => {
+    if (b) b.disabled = true;
+  });
+}
 
   function canEdit(detail) {
     if (!detail) return false;
