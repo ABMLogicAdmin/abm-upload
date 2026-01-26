@@ -296,14 +296,25 @@ function wireEventsOnce() {
     }
 
     let rows = (data || []);
-    if (search) {
-      rows = rows.filter(r => {
-        const email = String(r.email || "").toLowerCase();
-        const comp = String(r.company || "").toLowerCase();
-        const dom  = String(r.domain || "").toLowerCase();
-        return email.includes(search) || comp.includes(search) || dom.includes(search);
-      });
-    }
+   if (search) {
+     rows = rows.filter(r => {
+       const email = String(r.email || "").toLowerCase();
+       const comp  = String(r.company || "").toLowerCase();
+       const dom   = String(r.domain || "").toLowerCase();
+       const fn    = String(r.first_name || "").toLowerCase();
+       const ln    = String(r.last_name || "").toLowerCase();
+       const name  = (fn + " " + ln).trim();
+   
+       return (
+         email.includes(search) ||
+         comp.includes(search) ||
+         dom.includes(search)  ||
+         fn.includes(search)   ||
+         ln.includes(search)   ||
+         name.includes(search)
+       );
+     });
+   }
 
     state.queueRows = rows;
     els.queueStatus.textContent = `${rows.length} row(s)`;
