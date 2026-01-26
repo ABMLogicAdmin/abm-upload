@@ -443,13 +443,27 @@ function classifyPhones(list) {
   return { mobile, corporate, other };
 }
 
-if (!rawMobile && !rawCorp) {
+// Run fallback split if:
+// - we’re missing mobile OR missing other, OR
+// - rawOther contains multiple numbers (comma-separated blob)
+const otherLooksLikeBlob = /[,;|]/.test(rawOther) || /[,;|]/.test(rawFallbackBlob);
+
+if (!rawMobile || !rawOther || otherLooksLikeBlob) {
   const list = splitPhones(rawFallbackBlob);
   const c = classifyPhones(list);
 
+  // fill missing fields only
   rawMobile = rawMobile || c.mobile;
   rawCorp   = rawCorp   || c.corporate;
   rawOther  = rawOther  || c.other;
+
+  // ✅ de-dup: if rawOther still contains the same number as rawCorp, remove it
+  const norm = (s) => String(s || "").replace(/\s+/g, "").trim();
+  if (norm(rawOther) && norm(rawCorp) && norm(rawOther).includes(norm(rawCorp))) {
+    // if rawOther is a blob, re-split and remove duplicates
+    const cleaned = splitPhones(rawOther).filter(p => norm(p) !== norm(rawCorp));
+    rawOther = cleaned.join(", ") || "—";
+  }
 }
 
 const rawPairs = [
