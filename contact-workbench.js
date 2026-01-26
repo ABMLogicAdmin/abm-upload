@@ -431,9 +431,15 @@ function wireEventsOnce() {
     els.vfPhone.value = vf.phone || "";
 
     const editable = canEdit(data);
-    const isUnassignedPending = (!data.enrichment_assigned_to) && (data.enrichment_status === "pending");
+   const isUnassignedPending =
+     (!data.enrichment_assigned_to) &&
+     (data.enrichment_status === "pending");
+   
+   const canClaim =
+     state.role === "ops" || state.role === "admin";
+   
+   els.btnClaim.disabled = !(isUnassignedPending && canClaim);
 
-    els.btnClaim.disabled = !(isUnassignedPending && state.role === "ops");
     els.btnSave.disabled = !editable;
     els.btnVerify.disabled = !editable;
     els.btnReject.disabled = !editable;
