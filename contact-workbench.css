@@ -412,4 +412,31 @@ body[data-page-title="Contact Workbench"] .toolbar .btnPrimary:disabled{
   border: 1px solid rgba(34,35,61,.18) !important;
 }
 
+/* =========================
+   Contact Workbench — FORCE Neutral buttons (Claim/Save/Verify)
+   This beats base.css even if it uses :disabled or !important.
+========================= */
+
+body[data-page-title="Contact Workbench"] .toolbar .btnNeutral{
+  background:#fff !important;
+  color:var(--brand-navy) !important;
+  border:1px solid rgba(34,35,61,.18) !important;
+  box-shadow:none !important;
+  outline:none !important;
+}
+
+/* Keep neutral look when disabled */
+body[data-page-title="Contact Workbench"] .toolbar .btnNeutral:disabled{
+  background:#fff !important;
+  color:var(--muted) !important;
+  border:1px solid rgba(34,35,61,.18) !important;
+  opacity:1 !important;     /* readable */
+}
+
+/* If base.css applies weird focus/active ring */
+body[data-page-title="Contact Workbench"] .toolbar .btnNeutral:focus,
+body[data-page-title="Contact Workbench"] .toolbar .btnNeutral:active{
+  box-shadow:none !important;
+  outline:none !important;
+}
 
