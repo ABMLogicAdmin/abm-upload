@@ -46,6 +46,7 @@
     dReady: $("#dReady"),
 
 fLinkedIn: $("#fLinkedIn"),
+lnkLinkedIn: $("#lnkLinkedIn"),
 fPhoneMobile: $("#fPhoneMobile"),
 fPhoneCorporate: $("#fPhoneCorporate"),
 fPhoneOther: $("#fPhoneOther"),
@@ -286,6 +287,8 @@ function wireEventsOnce() {
         "activation_ready"
       ].join(","))
       .order("enrichment_priority", { ascending: true })
+      .order("created_at", { ascending: false });
+
    
     if (selectedClient) query = query.eq("client_name", selectedClient);
     if (campaignId) query = query.eq("campaign_id", campaignId);
@@ -520,6 +523,16 @@ const rawLinkedIn =
    }).join("");
 
 els.fLinkedIn.value = (data.verified_linkedin_url || rawLinkedIn || "");
+const li = (els.fLinkedIn.value || "").trim();
+if (els.lnkLinkedIn) {
+  if (li) {
+    els.lnkLinkedIn.href = li;
+    els.lnkLinkedIn.style.display = "inline";
+  } else {
+    els.lnkLinkedIn.href = "#";
+    els.lnkLinkedIn.style.display = "none";
+  }
+}
 
 // verified phones now come from campaign_contacts (via the v3 view)
 els.fPhoneMobile.value = data.phone_mobile || "";
