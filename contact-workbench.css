@@ -1,5 +1,6 @@
 /* contact-workbench.css
    Goal: match Lead Workbench styling (cards, table, spacing)
+   Cleanup: remove duplicates, keep behavior identical, only change font sizes to match Lead WB
 */
 
 :root{
@@ -7,6 +8,10 @@
   --radius:14px;
   --shadow:0 10px 35px rgba(17,24,39,.12);
 }
+
+/* =========================
+   Layout
+========================= */
 
 .grid2{
   display:grid;
@@ -18,13 +23,39 @@
   .grid2{ grid-template-columns: 1fr; }
 }
 
-/* Contact Workbench should be wider than global .wrap */
+/* Wider than global .wrap (Contact WB only) */
 body[data-page-title="Contact Workbench"] .wrap{
-  max-width: 1600px;
+  max-width: min(1600px, calc(100vw - 36px));
   width: 100%;
+  padding-left: 18px;
+  padding-right: 18px;
+  flex: 1 1 auto;
+  min-height: 0;                 /* CRITICAL for inner scrolling */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
 
-/* Card look */
+@media (max-width: 980px){
+  body[data-page-title="Contact Workbench"] .wrap{
+    max-width: 100%;
+    padding-left: 12px;
+    padding-right: 12px;
+  }
+}
+
+/* Make columns feel “full screen” */
+body[data-page-title="Contact Workbench"] .grid2{
+  grid-template-columns: minmax(420px, 1.15fr) minmax(520px, 1.85fr);
+  flex: 1 1 auto;
+  min-height: 0;                 /* CRITICAL */
+  align-items: stretch;          /* cards stretch to same height */
+}
+
+/* =========================
+   Cards
+========================= */
+
 .card{
   background:var(--card);
   border:1px solid var(--border);
@@ -33,26 +64,28 @@ body[data-page-title="Contact Workbench"] .wrap{
   box-shadow:var(--shadow);
 }
 
-/* Ensure card rounding is visually respected on Contact Workbench */
+/* Force cards to be white and respect rounding */
 body[data-page-title="Contact Workbench"] .card{
-  overflow: hidden;   /* clips inner children to rounded corners */
+  background:#fff !important;
+  overflow:hidden;               /* clips inner children to rounded corners */
 }
 
+/* Both cards behave like panels (no page scroll) */
+body[data-page-title="Contact Workbench"] .grid2 > .card{
+  min-height: 0;                 /* CRITICAL */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
 
-/* Filters row spacing (CLIENT + CAMPAIGN + QUEUE + SEARCH = 4 columns) */
-.row3{
-  display:grid;
-  grid-template-columns: 1fr 1fr 1fr 1.3fr; /* Client, Campaign, Queue, Search */
-  gap:12px;
-}
-@media (max-width: 980px){
-  .row3{ grid-template-columns: 1fr; }
-}
+/* =========================
+   Typography (match Lead WB)
+========================= */
 
 label{
   display:block;
   margin-top:0;
-  font-size:12.5px;
+  font-size:12.5px;              /* match other page */
   color:var(--brand-navy);
   font-weight:600;
 }
@@ -61,7 +94,7 @@ input, select, textarea{
   width:100%;
   padding:11px 12px;
   margin-top:7px;
-  font-size:14px;
+  font-size:14px;                /* match other page */
   border-radius:10px;
   border:1px solid var(--border);
   font-family:inherit;
@@ -70,8 +103,58 @@ input, select, textarea{
 }
 textarea{ min-height:110px; resize:vertical; }
 
+.title{
+  margin:0;
+  font-size:16px;                /* keep as-is (header) */
+  font-weight:800;
+  color:var(--brand-navy);
+}
+
+.subtle{
+  font-size:12px;                /* match other page muted size */
+  color:var(--muted);
+}
+
+/* Raw Snapshot / section headers in detail panel */
+#detailForm h3{
+  font-size:12.5px;              /* match other page .boxTitle */
+  font-weight:900;
+  color:var(--brand-navy);
+}
+
+/* Raw snapshot key/value area */
+.kv{
+  display:grid;
+  grid-template-columns: 160px 1fr;
+  gap:6px 10px;
+  font-size:13px;                /* slightly smaller than table body */
+  line-height:1.35;
+}
+
 /* =========================
-   Queue table (Lead WB look)
+   Filters row
+========================= */
+
+.row3{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr 1.3fr;
+  gap:12px;
+}
+@media (max-width: 980px){
+  .row3{ grid-template-columns: 1fr; }
+}
+
+.row{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+}
+@media (max-width: 980px){
+  .row{ grid-template-columns: 1fr; }
+}
+
+/* =========================
+   Queue table
 ========================= */
 
 .tableWrap{
@@ -79,7 +162,7 @@ textarea{ min-height:110px; resize:vertical; }
   overflow-y:auto;
   max-width:100%;
   width:100%;
-  margin-top:8px;
+  margin-top:14px;               /* keep curvature visible */
   border:1px solid rgba(34,35,61,.10);
   border-radius:12px;
   background:#fff;
@@ -95,7 +178,7 @@ textarea{ min-height:110px; resize:vertical; }
 
 .tableWrap thead th{
   text-align:left;
-  font-size:12px;
+  font-size:12px;                /* match other page */
   color:var(--muted);
   font-weight:900;
   padding:10px;
@@ -105,24 +188,9 @@ textarea{ min-height:110px; resize:vertical; }
 
 .tableWrap tbody td{
   padding:12px 10px;
-  border-bottom:1px solid rgba(34,35,61,.08);
+  border-bottom:1px solid rgba(34,35,61,.10);
   vertical-align:top;
-  font-size:13.5px;
-}
-
-
-.tableWrap tbody tr{ cursor:pointer; }
-.tableWrap tbody tr:hover{ background:rgba(48,173,247,.06); }
-.tableWrap tbody tr.active{
-  background:rgba(48,173,247,.10);
-  outline:1px solid rgba(48,173,247,.20);
-}
-
-/* body cells */
-.tableWrap tbody td{
-  padding:12px 10px;
-  border-bottom:1px solid rgba(34,35,61,.08);
-  vertical-align:top;
+  font-size:13.5px;              /* match other page */
 }
 
 /* row hover/active */
@@ -133,45 +201,53 @@ textarea{ min-height:110px; resize:vertical; }
   outline:1px solid rgba(48,173,247,.20);
 }
 
-/* body cells */
-.tableWrap tbody td{
-  padding:12px 10px;
-  border-bottom:1px solid rgba(34,35,61,.10);
-  vertical-align:top;
+/* Sticky header inside scrolling table */
+body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;                /* queue scroller */
+}
+body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap thead th{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
 }
 
-.tableWrap tbody tr{ cursor:pointer; }
-.tableWrap tbody tr:hover{ background:rgba(48,173,247,.06); }
-.tableWrap tbody tr.active{
-  background:rgba(48,173,247,.10);
-  outline:1px solid rgba(48,173,247,.20);
-}
+/* =========================
+   Pills / meta line
+========================= */
 
-/* Pills + meta */
 .pill{
   display:inline-flex;
   align-items:center;
   justify-content:center;
   border-radius:999px;
   padding:6px 10px;
-  font-size:12px;
+  font-size:11px;                /* match other page pill size */
   border:1px solid var(--border);
   background:#fff;
+  color:var(--brand-navy);        /* readable */
 }
+
 .metaLine{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  font-size:12px;
+  font-size:12px;                /* container size (fine) */
   color:var(--muted);
 }
+
 .hr{
   height:1px;
   background:rgba(34,35,61,.12);
   margin:14px 0;
 }
 
-/* Buttons */
+/* =========================
+   Buttons (toolbar)
+========================= */
+
 .toolbar{
   display:flex;
   gap:8px;
@@ -179,7 +255,6 @@ textarea{ min-height:110px; resize:vertical; }
   align-items:center;
 }
 
-/* default = neutral outline */
 .btn{
   padding:10px 12px;
   border-radius:12px;
@@ -189,16 +264,17 @@ textarea{ min-height:110px; resize:vertical; }
   cursor:pointer;
   font-weight:800;
   width:auto;
+  font-size:13px;                /* match other page button sizing */
 }
 
-/* primary action = brand blue */
+/* primary action */
 .btnPrimary{
   border:1px solid rgba(48,173,247,.85);
   background:var(--brand-primary);
   color:#fff;
 }
 
-/* danger action = red */
+/* danger action */
 .btnDanger{
   border:1px solid rgba(239,68,68,.85);
   background:#ef4444;
@@ -206,151 +282,18 @@ textarea{ min-height:110px; resize:vertical; }
 }
 
 .btn:disabled{
-  opacity:.45;
   cursor:not-allowed;
-}
-
-.split{
-  display:flex;
-  justify-content:space-between;
-  gap:10px;
-  flex-wrap:wrap;
-  align-items:baseline;
-}
-
-.title{
-  margin:0;
-  font-size:16px;
-  font-weight:800;
-  color:var(--brand-navy);
-}
-
-.subtle{
-  font-size:12px;
-  color:var(--muted);
-}
-
-.row{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
-  gap:12px;
-}
-@media (max-width: 980px){
-  .row{ grid-template-columns: 1fr; }
-}
-
-.kv{
-  display:grid;
-  grid-template-columns: 160px 1fr;
-  gap:6px 10px;
-}
-
-#wbRole, #wbMe { display:none; }
-
-/* =========================
-   Contact Workbench — Wider layout
-   (override base.css .wrap only on this page)
-========================= */
-
-/* Allow full-width on desktop, but keep a sensible max on large monitors */
-body[data-page-title="Contact Workbench"] .wrap{
-  max-width: min(1600px, calc(100vw - 36px));
-  padding-left: 18px;
-  padding-right: 18px;
-}
-
-/* Make the grid columns feel more “full screen” */
-body[data-page-title="Contact Workbench"] .grid2{
-  grid-template-columns: minmax(420px, 1.15fr) minmax(520px, 1.85fr);
-}
-
-/* Keep the table usable on smaller screens */
-@media (max-width: 980px){
-  body[data-page-title="Contact Workbench"] .wrap{
-    max-width: 100%;
-    padding-left: 12px;
-    padding-right: 12px;
-  }
-}
-
-/* Force cards to be white on Contact Workbench (overrides base.css tint) */
-body[data-page-title="Contact Workbench"] .card{
+  opacity:1;                     /* readable */
   background:#fff !important;
+  color:var(--muted) !important;
+  border:1px solid rgba(34,35,61,.18) !important;
+  box-shadow:none !important;
 }
 
 /* =========================
-   Contact Workbench – Card rounding fix
-   Ensures white tiles show rounded corners
+   Detail panel internal scroller
 ========================= */
 
-body[data-page-title="Contact Workbench"] .card{
-  overflow: hidden;   /* forces inner content to respect rounded corners */
-}
-
-body[data-page-title="Contact Workbench"] .tableWrap{
-  margin-top: 14px;   /* reveals card corner curvature above table */
-}
-
-/* =========================
-   Contact Workbench — No page scroll
-   Scroll INSIDE the Queue table only
-========================= */
-
-html, body { height: 100%; }
-
-body[data-page-title="Contact Workbench"]{
-  overflow: hidden;              /* kill page scroll */
-  display: flex;
-  flex-direction: column;
-}
-
-/* nav stays on top, content takes remaining height */
-body[data-page-title="Contact Workbench"] #siteNav{ flex: 0 0 auto; }
-
-/* wrap fills the remaining viewport */
-body[data-page-title="Contact Workbench"] .wrap{
-  flex: 1 1 auto;
-  min-height: 0;                 /* CRITICAL for inner scrolling */
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* grid fills available height */
-body[data-page-title="Contact Workbench"] .grid2{
-  flex: 1 1 auto;
-  min-height: 0;                 /* CRITICAL */
-  align-items: stretch;          /* cards stretch to same height */
-}
-
-/* make BOTH cards behave like “panels” (no page scroll) */
-body[data-page-title="Contact Workbench"] .grid2 > .card{
-  min-height: 0;                 /* CRITICAL */
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
-
-/* the Queue card (left) — make tableWrap take the remaining height */
-body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap{
-  flex: 1 1 auto;
-  min-height: 0;                 /* CRITICAL */
-  overflow: auto;                /* ✅ the scroller */
-}
-
-/* optional: keep the table header visible while the body scrolls */
-body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap thead th{
-  position: sticky;
-  top: 0;
-  z-index: 2;
-  background: #fff;
-}
-
-/* =========================
-   Contact Workbench — Detail panel internal scroller
-========================= */
-
-/* Make the Detail card scroll internally */
 body[data-page-title="Contact Workbench"] .grid2 > .card:nth-child(2){
   min-height: 0;
   overflow: hidden;
@@ -358,85 +301,29 @@ body[data-page-title="Contact Workbench"] .grid2 > .card:nth-child(2){
   flex-direction: column;
 }
 
-/* The detail form becomes the scroller */
+/* Make the detail form the scroller */
 body[data-page-title="Contact Workbench"] #detailForm{
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;          /* ✅ internal scroll */
-  padding-right: 6px;      /* optional: nicer next to scrollbar */
+  overflow: auto;
+  padding-right: 6px;
 }
-
-/* When empty state is showing, keep it pinned at top */
 body[data-page-title="Contact Workbench"] #detailEmpty{
   flex: 0 0 auto;
 }
 
-/* =========================
-   Contact Workbench – Fix pill text contrast
-========================= */
-
-body[data-page-title="Contact Workbench"] .pill{
-  color: var(--brand-navy);   /* dark readable text */
-}
+/* Hide optional header elements if present */
+#wbRole, #wbMe { display:none; }
 
 /* =========================
-   Contact Workbench — Fix disabled primary buttons (Claim/Save/Mark Verified)
-   Disabled should look neutral (not blue) and text should be dark/readable
+   No page scroll on Contact Workbench
 ========================= */
 
-body[data-page-title="Contact Workbench"] .toolbar .btnPrimary:disabled{
-  background:#fff !important;
-  color:var(--brand-navy) !important;
-  border:1px solid rgba(34,35,61,.18) !important;
-  opacity:1 !important;            /* keep readable */
-  box-shadow:none !important;
+html, body { height: 100%; }
+
+body[data-page-title="Contact Workbench"]{
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
 }
-
-/* =========================
-   Contact Workbench — Fix disabled action buttons
-   (Claim/Save/Mark Verified when no row selected)
-========================= */
-
-body[data-page-title="Contact Workbench"] .toolbar .btn:disabled{
-  opacity: 1 !important;                 /* stop “washed out” look */
-  background: #fff !important;
-  color: var(--muted) !important;        /* readable */
-  border: 1px solid rgba(34,35,61,.18) !important;
-  box-shadow: none !important;
-}
-
-/* If base.css forces primary buttons to look “active” even when disabled */
-body[data-page-title="Contact Workbench"] .toolbar .btnPrimary:disabled{
-  background: #fff !important;
-  color: var(--muted) !important;
-  border: 1px solid rgba(34,35,61,.18) !important;
-}
-
-/* =========================
-   Contact Workbench — FORCE Neutral buttons (Claim/Save/Verify)
-   This beats base.css even if it uses :disabled or !important.
-========================= */
-
-body[data-page-title="Contact Workbench"] .toolbar .btnNeutral{
-  background:#fff !important;
-  color:var(--brand-navy) !important;
-  border:1px solid rgba(34,35,61,.18) !important;
-  box-shadow:none !important;
-  outline:none !important;
-}
-
-/* Keep neutral look when disabled */
-body[data-page-title="Contact Workbench"] .toolbar .btnNeutral:disabled{
-  background:#fff !important;
-  color:var(--muted) !important;
-  border:1px solid rgba(34,35,61,.18) !important;
-  opacity:1 !important;     /* readable */
-}
-
-/* If base.css applies weird focus/active ring */
-body[data-page-title="Contact Workbench"] .toolbar .btnNeutral:focus,
-body[data-page-title="Contact Workbench"] .toolbar .btnNeutral:active{
-  box-shadow:none !important;
-  outline:none !important;
-}
-
+body[data-page-title="Contact Workbench"] #siteNav{ flex: 0 0 auto; }
