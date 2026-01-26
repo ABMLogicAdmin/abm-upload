@@ -213,25 +213,30 @@ function wireEventsOnce() {
     repopulateCampaignDropdown();
   }
 
-  function repopulateCampaignDropdown() {
-    const selectedCampaign = els.filterCampaign.value || "";
-    const selectedClient = els.filterClient ? (els.filterClient.value || "") : "";
-
-    const filtered = selectedClient
-      ? state.campaignOpts.filter(x => x.client_name === selectedClient)
-      : state.campaignOpts;
-
-    const opts = filtered.map(r => ({
-      id: r.campaign_id,
-      label: `${r.client_name} — ${r.campaign_name}`
-    }));
-
-    els.filterCampaign.innerHTML =
-      `<option value="">All active campaigns</option>` +
-      opts.map(o => `<option value="${esc(o.id)}">${esc(o.label)}</option>`).join("");
-
-    if (selectedCampaign) els.filterCampaign.value = selectedCampaign;
-  }
+   function repopulateCampaignDropdown() {
+     if (!els.filterCampaign) {
+       console.warn("[Contact WB] Missing element: #filterCampaign (cannot populate campaigns)");
+       return;
+     }
+   
+     const selectedCampaign = els.filterCampaign.value || "";
+     const selectedClient = els.filterClient ? (els.filterClient.value || "") : "";
+   
+     const filtered = selectedClient
+       ? state.campaignOpts.filter(x => x.client_name === selectedClient)
+       : state.campaignOpts;
+   
+     const opts = filtered.map(r => ({
+       id: r.campaign_id,
+       label: `${r.client_name} — ${r.campaign_name}`
+     }));
+   
+     els.filterCampaign.innerHTML =
+       `<option value="">All active campaigns</option>` +
+       opts.map(o => `<option value="${esc(o.id)}">${esc(o.label)}</option>`).join("");
+   
+     if (selectedCampaign) els.filterCampaign.value = selectedCampaign;
+   }
 
   async function loadQueue() {
     els.queueStatus.textContent = "Loading queue…";
