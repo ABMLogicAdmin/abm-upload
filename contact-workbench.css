@@ -12,6 +12,12 @@
   .grid2{ grid-template-columns: 1fr; }
 }
 
+/* Contact Workbench should be wider than global .wrap */
+.wrap{
+  max-width: 1600px;   /* try 1600; we can push to 1800 if you want */
+  width: 100%;
+}
+
 /* Card look */
 .card{
   margin-top:0;
@@ -82,19 +88,53 @@ textarea{ min-height:110px; resize:vertical; }
   background:#fff;
 }
 
-/* scroll body */
-.tableWrap tbody{
-  display:block;
-  max-height:70vh;
-  overflow:auto;
+/* ===== Table wrapper (Lead WB-style) ===== */
+.tableWrap{
+  margin-top:10px;
+  border:1px solid rgba(34,35,61,.10);
+  border-radius:12px;
+  overflow:auto;            /* wrapper scrolls if needed */
+  background:#fff;
+  box-shadow:0 8px 30px rgba(17,24,39,.06);
 }
 
-/* keep header and body aligned */
-.tableWrap thead,
-.tableWrap tbody tr{
-  display:table;
+/* normal table */
+.tableWrap table{
   width:100%;
-  table-layout:fixed;
+  border-collapse:separate;
+  border-spacing:0;
+  font-size:13px;
+  background:#fff;
+  min-width: 900px;         /* prevents "squash" on smaller widths */
+}
+
+/* header */
+.tableWrap thead th{
+  position: sticky;         /* nicer when the queue is long */
+  top: 0;
+  z-index: 1;
+  text-align:left;
+  font-size:12px;
+  color:var(--muted);
+  font-weight:800;
+  padding:12px 10px;
+  border-bottom:1px solid rgba(34,35,61,.12);
+  background:#fff;
+}
+
+/* body cells */
+.tableWrap tbody td{
+  padding:12px 10px;
+  border-bottom:1px solid rgba(34,35,61,.08);
+  vertical-align:top;
+}
+
+/* row hover/active */
+.tableWrap tbody tr{ cursor:pointer; }
+.tableWrap tbody tr:hover{ background:rgba(48,173,247,.06); }
+.tableWrap tbody tr.active{
+  background:rgba(48,173,247,.10);
+  outline:1px solid rgba(48,173,247,.20);
 }
 
 /* body cells */
