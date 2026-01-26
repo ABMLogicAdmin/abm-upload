@@ -291,3 +291,57 @@ body[data-page-title="Contact Workbench"] .tableWrap{
   margin-top: 14px;   /* reveals card corner curvature above table */
 }
 
+/* =========================
+   Contact Workbench — No page scroll
+   Scroll INSIDE the Queue table only
+========================= */
+
+html, body { height: 100%; }
+
+body[data-page-title="Contact Workbench"]{
+  overflow: hidden;              /* kill page scroll */
+  display: flex;
+  flex-direction: column;
+}
+
+/* nav stays on top, content takes remaining height */
+body[data-page-title="Contact Workbench"] #siteNav{ flex: 0 0 auto; }
+
+/* wrap fills the remaining viewport */
+body[data-page-title="Contact Workbench"] .wrap{
+  flex: 1 1 auto;
+  min-height: 0;                 /* CRITICAL for inner scrolling */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* grid fills available height */
+body[data-page-title="Contact Workbench"] .grid2{
+  flex: 1 1 auto;
+  min-height: 0;                 /* CRITICAL */
+  align-items: stretch;          /* cards stretch to same height */
+}
+
+/* make BOTH cards behave like “panels” (no page scroll) */
+body[data-page-title="Contact Workbench"] .grid2 > .card{
+  min-height: 0;                 /* CRITICAL */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* the Queue card (left) — make tableWrap take the remaining height */
+body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap{
+  flex: 1 1 auto;
+  min-height: 0;                 /* CRITICAL */
+  overflow: auto;                /* ✅ the scroller */
+}
+
+/* optional: keep the table header visible while the body scrolls */
+body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap thead th{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+}
