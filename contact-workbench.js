@@ -378,7 +378,7 @@ function wireEventsOnce() {
     els.rawKv.innerHTML = "Loading…";
 
     const { data, error } = await sb
-      .from("v_contact_workbench_detail")
+      .from("v_contact_workbench_detail_v2")
       .select("*")
       .eq("campaign_contact_id", campaignContactId)
       .maybeSingle();
