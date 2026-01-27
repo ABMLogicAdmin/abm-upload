@@ -125,6 +125,8 @@ const state = {
   wired: false,
   _inited: false
 };
+window.__cw_state = state;
+   
 
 
   // ---------- Init ----------
