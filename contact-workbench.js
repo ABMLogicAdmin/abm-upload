@@ -697,13 +697,6 @@
     pushPair(pairs, "enrichment_due_at", "Due At", fmtDt(data.enrichment_due_at));
     pushPair(pairs, "enrichment_locked_at", "Locked At", fmtDt(data.enrichment_locked_at));
 
-    // Phones + linkedin + size (in case you want them visible in the “all” section too)
-    pushPair(pairs, "raw_linkedin_best", "LinkedIn", best.rawLinkedIn);
-    pushPair(pairs, "raw_phone_mobile_best_eff", "Mobile Phone", best.rawMobile);
-    pushPair(pairs, "raw_phone_corporate_best_eff", "Corporate Phone", best.rawCorp);
-    pushPair(pairs, "raw_phone_other_best_eff", "Other Phone", best.rawOther);
-    pushPair(pairs, "raw_company_size_eff", "Company Size", best.rawCompanySize);
-
     // Generic: include anything else on the row that has a value and isn’t already present.
     // This is what guarantees “ALL raw fields”.
     const already = new Set(pairs.map(p => p.key));
