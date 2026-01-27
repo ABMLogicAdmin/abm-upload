@@ -565,10 +565,9 @@ const rawPairs = [
   ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
   ["Title", data.title],
   ["LinkedIn", rawLinkedIn || "—"],
-  ["Mobile Phone (raw)", rawMobile || "—"],
-  ["Corporate Phone (raw)", rawCorp || "—"],
-  ["Other Phone (raw)", rawOther || (rawFallbackBlob || "—")],
-
+  ["Mobile Phone", rawMobile || "—"],
+  ["Corporate Phone", rawCorp || "—"],
+  ["Other Phone", rawOther || (rawFallbackBlob || "—")],
   ["Company", data.company],
   ["Domain", data.domain],
   ["Department", data.department],
