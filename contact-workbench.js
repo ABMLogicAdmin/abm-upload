@@ -490,6 +490,13 @@
       { key: "phone_corporate",label: "Corporate Phone", raw: best.rawCorp,      placeholder: "+44…" },
       { key: "phone_other",    label: "Other Phone",     raw: best.rawOther,     placeholder: "+44…" },
       { key: "company_size",   label: "Company Size",    raw: best.rawCompanySize, placeholder: "e.g. 201-500" }
+      { key: "company",      label: "Company",     raw: String(data.company || "").trim(),     placeholder: "Edit company (optional)" },
+      { key: "domain",       label: "Domain",      raw: String(data.domain || "").trim(),      placeholder: "Edit domain (optional)" },
+      { key: "department",   label: "Department",  raw: String(data.department || "").trim(),  placeholder: "Edit department (optional)" },
+      { key: "seniority",    label: "Seniority",   raw: String(data.seniority || "").trim(),   placeholder: "Edit seniority (optional)" },
+      { key: "country",      label: "Country",     raw: String(data.country || "").trim(),     placeholder: "Edit country (optional)" },
+      { key: "industry",     label: "Industry",    raw: String(data.industry || "").trim(),    placeholder: "Edit industry (optional)" },
+      { key: "city",         label: "City",        raw: String(data.city || "").trim(),        placeholder: "Edit city (optional)" },
     ];
 
     // Verification dropdown options
