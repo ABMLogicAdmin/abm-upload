@@ -126,7 +126,6 @@
 
         <div id="detailForm" style="display:none;">
 
-        <!-- ONE section only: all raw fields displayed here -->
         <h3 style="margin:0 0 8px 0;">Contact Review</h3>
       
         <div class="decisionGridWrap">
@@ -139,8 +138,15 @@
                 <th>Verified</th>
               </tr>
             </thead>
-            <tbody id="decisionBody">
-              <!-- JS renders rows here -->
+      
+            <!-- Key fields (editable + verifiable) -->
+            <tbody id="decisionBodyKey">
+              <!-- JS renders key rows here -->
+            </tbody>
+      
+            <!-- All other raw fields (read-only, still visible) -->
+            <tbody id="decisionBodyAll">
+              <!-- JS renders all remaining raw fields here -->
             </tbody>
           </table>
         </div>
