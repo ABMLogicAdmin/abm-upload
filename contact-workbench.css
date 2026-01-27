@@ -331,3 +331,36 @@ body[data-page-title="Contact Workbench"] #siteNav{ flex: 0 0 auto; }
   font-size: 12px;
 }
 
+/* Contact Review table - calmer headers */
+.reviewTable th{
+  font-size: 12px;          /* smaller */
+  font-weight: 600;         /* slightly lighter than bold */
+  color: var(--muted);      /* softer */
+  padding: 8px 10px;        /* tighter */
+  text-transform: none;     /* keep as-is */
+  letter-spacing: .01em;
+}
+
+.reviewTable td{
+  padding: 10px 10px;       /* slightly tighter rows */
+  vertical-align: top;
+}
+
+/* Minimal gridlines for scan-ability */
+.reviewTable{
+  border-collapse: collapse;
+}
+
+.reviewTable thead th{
+  border-bottom: 1px solid var(--border);
+}
+
+.reviewTable tbody td{
+  border-bottom: 1px solid rgba(229,231,235,.75);
+}
+
+/* Optional: subtle vertical dividers */
+.reviewTable th + th,
+.reviewTable td + td{
+  border-left: 1px solid rgba(229,231,235,.55);
+}
