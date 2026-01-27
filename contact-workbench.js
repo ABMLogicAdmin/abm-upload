@@ -322,9 +322,9 @@ function wireEventsOnce() {
     const search = (els.filterSearch.value || "").trim().toLowerCase();
 
     // Pick base view
-    let viewName = "v_contact_workbench_queue";
-    if (qMode === "mine") viewName = "v_contact_workbench_queue_mine";
-    if (qMode === "done") viewName = "v_contact_workbench_queue_done";
+let viewName = "v_contact_workbench_queue_v2";
+if (qMode === "mine") viewName = "v_contact_workbench_queue_mine_v2";
+if (qMode === "done") viewName = "v_contact_workbench_queue_done_v2";
 
     let query = sb
       .from(viewName)
@@ -350,8 +350,11 @@ function wireEventsOnce() {
         "created_at",
         "verified_linkedin_url",
         "verified_company_size",
-        "completeness_score",
+        "completeness_score_sql",
+        "is_complete_sql",
+        "missing_fields_sql",
         "activation_ready"
+
       ].join(","))
       .order("enrichment_priority", { ascending: true })
       .order("created_at", { ascending: false });
@@ -405,7 +408,7 @@ function wireEventsOnce() {
       const name = [r.first_name, r.last_name].filter(Boolean).join(" ").trim() || "—";
       const company = r.company || r.domain || "—";
       const ready = (r.activation_ready === true) ? "Yes" : "No";
-      const score = formatScore(r.completeness_score);
+      const score = formatScore(r.completeness_score_sql);
       const active = (state.selectedId && r.campaign_contact_id === state.selectedId) ? "active" : "";
       const statusClass = statusDotClass(r.enrichment_status);
 
@@ -451,7 +454,7 @@ function wireEventsOnce() {
     els.rawKv.innerHTML = "Loading…";
 
     const { data, error } = await sb
-      .from("v_contact_workbench_detail_v3")
+      .from("v_contact_workbench_detail_v5")
       .select("*")
       .eq("campaign_contact_id", campaignContactId)
       .maybeSingle();
@@ -465,6 +468,9 @@ function wireEventsOnce() {
 
     state.selectedDetail = data;
       console.log("[Contact WB] Detail row:", data);
+    window.__cw_detail = data;
+    window.__cw_selected_id = campaignContactId;
+
 
 // Normalize status + assigned_to so Claim logic works even if view returns "Pending" or "".
 const statusNorm = normStatus(data.enrichment_status) || "pending";
@@ -476,11 +482,13 @@ els.dStatus.textContent = statusNorm ? statusNorm : "—";
 els.dPriority.textContent = String(data.enrichment_priority ?? "—");
 els.dAssigned.textContent = isAssigned ? "Yes" : "No";
 
-// Completeness (prefer DB, fallback to JS calc)
-if (data.completeness_score !== null && data.completeness_score !== undefined && data.completeness_score !== "") {
-  els.dScore.textContent = formatScore(data.completeness_score);
+// Completeness (SQL only)
+const sqlScore = data.completeness_score_effective ?? data.completeness_score;
+if (sqlScore === null || sqlScore === undefined || sqlScore === "") {
+  els.dScore.textContent = "—";
+  console.error("[Contact WB] Missing completeness score from SQL view", data);
 } else {
-  els.dScore.textContent = computeCompletenessFallback(data);
+  els.dScore.textContent = formatScore(sqlScore);
 }
 
 els.dReady.textContent = (data.activation_ready === true) ? "Yes" : "No";
@@ -614,7 +622,7 @@ els.fPhoneMobile.value = data.phone_mobile || "";
 els.fPhoneCorporate.value = data.phone_corporate || "";
 els.fPhoneOther.value = data.phone_other || "";
 
-els.fCompanySize.value = data.company_size || "";
+els.fCompanySize.value = data.company_size || data.verified_company_size || "";
 els.fNotes.value = data.notes || "";
 
 const vf = (data.verified_fields && typeof data.verified_fields === "object") ? data.verified_fields : {};
