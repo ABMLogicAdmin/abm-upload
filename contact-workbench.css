@@ -364,3 +364,31 @@ body[data-page-title="Contact Workbench"] #siteNav{ flex: 0 0 auto; }
 .reviewTable td + td{
   border-left: 1px solid rgba(229,231,235,.55);
 }
+
+/* Contact Review table — headers + minimal gridlines (actual table is .decisionGrid) */
+body[data-page-title="Contact Workbench"] .decisionGrid{
+  width: 100%;
+  border-collapse: collapse;
+}
+
+body[data-page-title="Contact Workbench"] .decisionGrid thead th{
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(34,35,61,.12);
+  white-space: nowrap;
+}
+
+body[data-page-title="Contact Workbench"] .decisionGrid tbody td{
+  padding: 10px 10px;
+  border-bottom: 1px solid rgba(34,35,61,.08);
+  vertical-align: top;
+}
+
+/* subtle column dividers */
+body[data-page-title="Contact Workbench"] .decisionGrid th + th,
+body[data-page-title="Contact Workbench"] .decisionGrid td + td{
+  border-left: 1px solid rgba(34,35,61,.06);
+}
