@@ -5,8 +5,9 @@
    HTML expects:
    - #queueBody, #queueStatus
    - #detailEmpty, #detailForm
-   - #rawKv
-   - #decisionBody
+   - #rawKv (optional; we will not use it now, but safe if present)
+   - #decisionBodyKey (key editable fields)
+   - #decisionBodyAll (all other raw fields)
    - #fNotes
    - #detailMsg
 */
@@ -20,7 +21,7 @@
 
   // ---------- DOM ----------
   function $(id) {
-    return document.getElementById(id.replace(/^#/, "")) || document.querySelector(id);
+    return document.getElementById(String(id).replace(/^#/, "")) || document.querySelector(id);
   }
 
   const els = {
@@ -44,9 +45,13 @@
 
     detailEmpty: $("#detailEmpty"),
     detailForm: $("#detailForm"),
+
+    // optional legacy container (safe to keep)
     rawKv: $("#rawKv"),
 
-    decisionBody: $("#decisionBody"),
+    // NEW: two tbody blocks
+    decisionBodyKey: $("#decisionBodyKey"),
+    decisionBodyAll: $("#decisionBodyAll"),
 
     dStatus: $("#dStatus"),
     dPriority: $("#dPriority"),
@@ -271,7 +276,6 @@
     const qMode = els.filterQueue ? (els.filterQueue.value || "all") : "all";
     const search = (els.filterSearch ? (els.filterSearch.value || "") : "").trim().toLowerCase();
 
-    // Pick base view
     let viewName = "v_contact_workbench_queue_v2";
     if (qMode === "mine") viewName = "v_contact_workbench_queue_mine_v2";
     if (qMode === "done") viewName = "v_contact_workbench_queue_done_v2";
@@ -396,10 +400,13 @@
   // ---------- Detail ----------
   async function loadDetail(campaignContactId) {
     setMsg("");
+
     if (els.detailEmpty) els.detailEmpty.style.display = "none";
     if (els.detailForm) els.detailForm.style.display = "block";
-    if (els.rawKv) els.rawKv.innerHTML = "Loading…";
-    if (els.decisionBody) els.decisionBody.innerHTML = "";
+
+    // clear tables
+    if (els.decisionBodyKey) els.decisionBodyKey.innerHTML = "";
+    if (els.decisionBodyAll) els.decisionBodyAll.innerHTML = "";
 
     const { data, error } = await sb
       .from("v_contact_workbench_detail_v5")
@@ -408,9 +415,9 @@
       .maybeSingle();
 
     if (error || !data) {
-      if (els.rawKv) els.rawKv.innerHTML = `<div class="small">Failed to load detail.</div>`;
       console.error("[Contact WB] detail error:", error);
       disableAllActions();
+      setMsg("Failed to load detail.", true);
       return;
     }
 
@@ -426,7 +433,6 @@
     if (els.dPriority) els.dPriority.textContent = String(data.enrichment_priority ?? "—");
     if (els.dAssigned) els.dAssigned.textContent = isAssigned ? "Yes" : "No";
 
-    // Completeness (SQL only; keep your current contract)
     const sqlScore = data.completeness_score_effective ?? data.completeness_score_sql ?? data.completeness_score;
     if (els.dScore) {
       if (sqlScore === null || sqlScore === undefined || sqlScore === "") {
@@ -439,11 +445,8 @@
 
     if (els.dReady) els.dReady.textContent = (data.activation_ready === true) ? "Yes" : "No";
 
-    // Render RAW snapshot (keep everything operators need)
-    renderRawSnapshot(data);
-
-    // Render Field Review grid
-    renderDecisionGrid(data);
+    // render the single unified table
+    renderUnifiedReviewTable(data);
 
     // Notes
     if (els.fNotes) els.fNotes.value = data.notes || "";
@@ -465,10 +468,129 @@
     }
   }
 
-  function renderRawSnapshot(data) {
-    if (!els.rawKv) return;
+  // ---------- Unified Review Table ----------
+  function renderUnifiedReviewTable(data) {
+    if (!els.decisionBodyKey || !els.decisionBodyAll) {
+      console.warn("[Contact WB] Missing decision tbody elements (#decisionBodyKey / #decisionBodyAll)");
+      return;
+    }
 
-    // ---- typed raw phones best-effort (your existing logic) ----
+    const vf = (data.verified_fields && typeof data.verified_fields === "object") ? data.verified_fields : {};
+
+    // Build “best raw” values (same heuristics as before)
+    const best = computeBestRawFields(data);
+
+    // Key fields you want operators to work through
+    const keyFields = [
+      { key: "email",          label: "Email",           raw: best.rawEmail,      placeholder: "Edit email (optional)" },
+      { key: "name",           label: "Name",            raw: best.rawName,       placeholder: "Edit name (optional)" },
+      { key: "title",          label: "Title",           raw: best.rawTitle,      placeholder: "Edit title (optional)" },
+      { key: "linkedin_url",   label: "LinkedIn URL",    raw: best.rawLinkedIn,   placeholder: "https://www.linkedin.com/in/…" },
+      { key: "phone_mobile",   label: "Mobile Phone",    raw: best.rawMobile,    placeholder: "+44…" },
+      { key: "phone_corporate",label: "Corporate Phone", raw: best.rawCorp,      placeholder: "+44…" },
+      { key: "phone_other",    label: "Other Phone",     raw: best.rawOther,     placeholder: "+44…" },
+      { key: "company_size",   label: "Company Size",    raw: best.rawCompanySize, placeholder: "e.g. 201-500" }
+    ];
+
+    // Verification dropdown options
+    const options = [
+      { v: "",             t: "—" },
+      { v: "verified",     t: "verified" },
+      { v: "unverified",   t: "unverified" },
+      { v: "inconclusive", t: "inconclusive" }
+    ];
+
+    // Render KEY rows (editable + verified)
+    els.decisionBodyKey.innerHTML = keyFields.map(f => {
+      // status stored as vf[key]
+      const status = String(vf[f.key] || "").trim();
+      // edit value stored as vf[key + "_value"]
+      const edited = String(vf[f.key + "_value"] || "").trim();
+
+      return `
+        <tr data-field="${esc(f.key)}">
+          <td><div class="small"><b>${esc(f.label)}</b></div></td>
+          <td>${renderRawCell(f.key, f.raw)}</td>
+          <td>
+            <input
+              type="text"
+              data-cw-edit="1"
+              data-field="${esc(f.key)}"
+              placeholder="${esc(f.placeholder)}"
+              value="${esc(edited)}"
+            />
+          </td>
+          <td>
+            <select data-cw-verify="1" data-field="${esc(f.key)}">
+              ${options.map(o => `<option value="${esc(o.v)}" ${o.v === status ? "selected" : ""}>${esc(o.t)}</option>`).join("")}
+            </select>
+          </td>
+        </tr>
+      `;
+    }).join("");
+
+    // Now render ALL remaining fields (raw-only)
+    // Strategy:
+    // - flatten the row into display pairs
+    // - exclude keys already shown (keyFields) + internal/system columns
+    // - show everything else as “Field | Raw | — | —”
+    const shownKeys = new Set(keyFields.map(x => x.key));
+
+    // “don’t show” keys (internal / noisy / duplicates)
+    const skip = new Set([
+      "verified_fields",
+      "notes",
+      "completeness_score",
+      "completeness_score_sql",
+      "completeness_score_effective",
+      "is_complete_sql",
+      "missing_fields_sql",
+
+      // assignment/status fields are already in pills
+      "enrichment_status",
+      "enrichment_priority",
+      "enrichment_assigned_to",
+      "enrichment_assigned_at",
+      "enrichment_due_at",
+      "enrichment_locked_at",
+
+      // we already show in queue or as key
+      "email", "first_name", "last_name", "title",
+      "raw_linkedin_url", "linkedin_url", "linkedin", "linkedin_profile_url", "person_linkedin_url",
+      "raw_phone_mobile_best", "raw_phone_corporate_best", "raw_phone_other_best",
+      "phones", "raw_phones",
+
+      // ids
+      "campaign_contact_id"
+    ]);
+
+    // Add shownKeys to skip (so we don’t duplicate)
+    shownKeys.forEach(k => skip.add(k));
+
+    const pairs = buildAllDisplayPairs(data, best);
+
+    const allRows = pairs
+      .filter(p => !skip.has(p.key))
+      .map(p => ({
+        label: p.label,
+        key: p.key,
+        value: p.value
+      }));
+
+    els.decisionBodyAll.innerHTML = allRows.map(r => {
+      return `
+        <tr data-field="${esc(r.key)}">
+          <td><div class="small"><b>${esc(r.label)}</b></div></td>
+          <td>${renderRawCell(r.key, r.value)}</td>
+          <td><span class="small">—</span></td>
+          <td><span class="small">—</span></td>
+        </tr>
+      `;
+    }).join("");
+  }
+
+  function computeBestRawFields(data) {
+    // ---- typed raw phones best-effort (same logic as your old renderRawSnapshot) ----
     let rawMobile = String(data.raw_phone_mobile_best || "").trim();
     let rawCorp   = String(data.raw_phone_corporate_best || "").trim();
     let rawOther  = String(data.raw_phone_other_best || "").trim();
@@ -519,115 +641,85 @@
       ""
     ).trim();
 
-    const rawPairs = [
-      ["Email", data.email],
-      ["Name", ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—")],
-      ["Title", data.title],
-      ["LinkedIn", rawLinkedIn || "—"],
-      ["Mobile Phone", rawMobile || "—"],
-      ["Corporate Phone", rawCorp || "—"],
-      ["Other Phone", rawOther || (rawFallbackBlob || "—")],
-      ["Company", data.company],
-      ["Domain", data.domain],
-      ["Department", data.department],
-      ["Seniority", data.seniority],
-      ["Country", data.country],
-      ["Industry", data.industry],
-      ["City", data.city],
-      ["Source System", data.source_system],
-      ["Created", fmtDt(data.created_at)],
-      ["Assigned At", fmtDt(data.enrichment_assigned_at)],
-      ["Due At", fmtDt(data.enrichment_due_at)],
-      ["Locked At", fmtDt(data.enrichment_locked_at)]
-    ];
+    const rawName = ([data.first_name, data.last_name].filter(Boolean).join(" ").trim() || "—");
 
-    els.rawKv.innerHTML = rawPairs.map(([k, v]) => {
-      const val = String(v ?? "").trim();
-      const isLinkedIn = String(k).toLowerCase().includes("linkedin");
-      const href = normalizeUrl(val);
+    const rawCompanySize = String(data.company_size || data.raw_company_size || data.verified_company_size || "").trim();
 
-      const rightSide = (isLinkedIn && val && val !== "—")
-        ? `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(val)}</a>`
-        : esc(val || "—");
-
-      return `<div class="k">${esc(k)}</div><div>${rightSide}</div>`;
-    }).join("");
+    return {
+      rawEmail: String(data.email || "").trim(),
+      rawName,
+      rawTitle: String(data.title || "").trim(),
+      rawLinkedIn: rawLinkedIn || "",
+      rawMobile: rawMobile || "",
+      rawCorp: rawCorp || "",
+      rawOther: rawOther || (rawFallbackBlob || ""),
+      rawCompanySize: rawCompanySize || ""
+    };
   }
 
-  function renderDecisionGrid(data) {
-    if (!els.decisionBody) return;
+  function buildAllDisplayPairs(data, best) {
+    // We want “all raw fields operators need” in readable labels
+    // This list can grow without breaking anything. Anything not in here will still appear
+    // via the generic object iteration below.
+    const pairs = [];
 
-    const vf = (data.verified_fields && typeof data.verified_fields === "object") ? data.verified_fields : {};
+    // Common “business” fields
+    pushPair(pairs, "company", "Company", data.company);
+    pushPair(pairs, "domain", "Domain", data.domain);
+    pushPair(pairs, "department", "Department", data.department);
+    pushPair(pairs, "seniority", "Seniority", data.seniority);
+    pushPair(pairs, "country", "Country", data.country);
+    pushPair(pairs, "industry", "Industry", data.industry);
+    pushPair(pairs, "city", "City", data.city);
+    pushPair(pairs, "source_system", "Source System", data.source_system);
 
-    // Helper: get raw values (best-effort)
-    const rawEmail = String(data.email || "").trim();
-    const rawLinkedIn = String(
-      data.raw_linkedin_url ||
-      data.linkedin_url ||
-      data.linkedin ||
-      data.linkedin_profile_url ||
-      data.person_linkedin_url ||
-      ""
-    ).trim();
+    // Dates / ops metadata (these are useful even if not editable)
+    pushPair(pairs, "created_at", "Created", fmtDt(data.created_at));
+    pushPair(pairs, "enrichment_assigned_at", "Assigned At", fmtDt(data.enrichment_assigned_at));
+    pushPair(pairs, "enrichment_due_at", "Due At", fmtDt(data.enrichment_due_at));
+    pushPair(pairs, "enrichment_locked_at", "Locked At", fmtDt(data.enrichment_locked_at));
 
-    const rawMobile = String(data.raw_phone_mobile_best || "").trim();
-    const rawCorp   = String(data.raw_phone_corporate_best || "").trim();
-    const rawOther  = String(data.raw_phone_other_best || "").trim();
+    // Phones + linkedin + size (in case you want them visible in the “all” section too)
+    pushPair(pairs, "raw_linkedin_best", "LinkedIn (raw best)", best.rawLinkedIn);
+    pushPair(pairs, "raw_phone_mobile_best_eff", "Mobile Phone (raw best)", best.rawMobile);
+    pushPair(pairs, "raw_phone_corporate_best_eff", "Corporate Phone (raw best)", best.rawCorp);
+    pushPair(pairs, "raw_phone_other_best_eff", "Other Phone (raw best)", best.rawOther);
+    pushPair(pairs, "raw_company_size_eff", "Company Size (raw best)", best.rawCompanySize);
 
-    const rawCompanySize = String(data.company_size || data.raw_company_size || "").trim();
+    // Generic: include anything else on the row that has a value and isn’t already present.
+    // This is what guarantees “ALL raw fields”.
+    const already = new Set(pairs.map(p => p.key));
+    Object.keys(data || {}).forEach(k => {
+      if (already.has(k)) return;
+      const v = data[k];
+      if (v === null || v === undefined) return;
+      const s = String(v).trim();
+      if (!s) return;
 
-    const fields = [
-      { key: "email",         label: "Email",          raw: rawEmail,      placeholder: "Edit email (optional)" },
-      { key: "linkedin_url",  label: "LinkedIn URL",   raw: rawLinkedIn,   placeholder: "https://www.linkedin.com/in/…" },
-      { key: "phone_mobile",  label: "Mobile Phone",   raw: rawMobile,     placeholder: "+44…" },
-      { key: "phone_corporate",label:"Corporate Phone",raw: rawCorp,       placeholder: "+44…" },
-      { key: "phone_other",   label: "Other Phone",    raw: rawOther,      placeholder: "+44…" },
-      { key: "company_size",  label: "Company Size",   raw: rawCompanySize,placeholder: "e.g. 201-500" }
-    ];
+      // human-ish label
+      const label = k
+        .replace(/_/g, " ")
+        .replace(/\b\w/g, m => m.toUpperCase());
 
-    const options = [
-      { v: "",            t: "—" },
-      { v: "verified",    t: "verified" },
-      { v: "unverified",  t: "unverified" },
-      { v: "inconclusive",t: "inconclusive" }
-    ];
+      pairs.push({ key: k, label, value: v });
+    });
 
-    // Build rows
-    els.decisionBody.innerHTML = fields.map(f => {
-      const status = String(vf[f.key] || "").trim();                 // status stored as vf.email etc
-      const edited = String(vf[f.key + "_value"] || "").trim();      // edited value stored as vf.email_value etc
+    return pairs;
+  }
 
-      const rawCell = renderRawCell(f.key, f.raw);
-
-      return `
-        <tr data-field="${esc(f.key)}">
-          <td><div class="small"><b>${esc(f.label)}</b></div></td>
-          <td>${rawCell}</td>
-          <td>
-            <input
-              type="text"
-              data-cw-edit="1"
-              data-field="${esc(f.key)}"
-              placeholder="${esc(f.placeholder)}"
-              value="${esc(edited)}"
-            />
-          </td>
-          <td>
-            <select data-cw-verify="1" data-field="${esc(f.key)}">
-              ${options.map(o => `<option value="${esc(o.v)}" ${o.v === status ? "selected" : ""}>${esc(o.t)}</option>`).join("")}
-            </select>
-          </td>
-        </tr>
-      `;
-    }).join("");
+  function pushPair(arr, key, label, value) {
+    if (value === null || value === undefined) return;
+    const s = String(value).trim();
+    if (!s) return;
+    arr.push({ key, label, value });
   }
 
   function renderRawCell(fieldKey, rawValue) {
     const v = String(rawValue || "").trim();
     if (!v) return `<span class="small">—</span>`;
 
-    // make linkedin clickable
-    if (fieldKey === "linkedin_url") {
+    // clickable linkedin-like fields
+    if (String(fieldKey).toLowerCase().includes("linkedin")) {
       const href = normalizeUrl(v);
       return `<a href="${esc(href)}" target="_blank" rel="noopener noreferrer">${esc(v)}</a>`;
     }
@@ -638,12 +730,10 @@
     const root = els.detailForm;
     if (!root) return;
 
-    // Disable dynamic decision controls
     root.querySelectorAll("[data-cw-edit],[data-cw-verify]").forEach(el => {
       el.disabled = !!disabled;
     });
 
-    // Notes
     if (els.fNotes) els.fNotes.disabled = !!disabled;
   }
 
@@ -698,16 +788,14 @@
 
     setMsg("Saving…");
 
-    // Read decision grid controls
     const vf = (d.verified_fields && typeof d.verified_fields === "object") ? { ...d.verified_fields } : {};
-
     const root = els.detailForm;
+
     if (!root) {
       setMsg("Save failed: detail form missing.", true);
       return;
     }
 
-    // collect edits (value) + verification status
     const edits = {};
     const statuses = {};
 
@@ -725,18 +813,14 @@
       if (val) statuses[k] = val;
     });
 
-    // Merge into verified_fields:
-    // - vf[key] = status
-    // - vf[key + "_value"] = edit value
     Object.keys(statuses).forEach(k => { vf[k] = statuses[k]; });
     Object.keys(edits).forEach(k => { vf[k + "_value"] = edits[k]; });
 
-    // prune empties
     Object.keys(vf).forEach(k => {
       if (vf[k] === null || vf[k] === undefined || String(vf[k]).trim() === "") delete vf[k];
     });
 
-    // Persist: phones go to campaign_contacts (structured)
+    // Persist: phones go to campaign_contacts
     const phoneUpd = {};
     if (edits.phone_mobile) phoneUpd.phone_mobile = edits.phone_mobile;
     if (edits.phone_corporate) phoneUpd.phone_corporate = edits.phone_corporate;
@@ -755,7 +839,6 @@
       }
     }
 
-    // Persist: enrichment table (linkedin + company size + notes + verified_fields)
     const payload = {
       campaign_contact_id: d.campaign_contact_id,
       notes: (els.fNotes ? (els.fNotes.value || "").trim() : "") || null,
@@ -763,12 +846,10 @@
       enriched_by: state.userId,
       enriched_at: new Date().toISOString(),
 
-      // Store these in native columns if present in your table
       linkedin_url: (edits.linkedin_url || "").trim() || null,
       company_size: (edits.company_size || "").trim() || null
     };
 
-    // If operator didn't edit linkedin/company_size, keep existing stored values from row if available
     if (!payload.linkedin_url && d.linkedin_url) payload.linkedin_url = d.linkedin_url;
     if (!payload.company_size && (d.company_size || d.verified_company_size)) {
       payload.company_size = d.company_size || d.verified_company_size;
