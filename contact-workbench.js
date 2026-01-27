@@ -425,9 +425,13 @@
     window.__cw_detail = data;
     window.__cw_selected_id = campaignContactId;
 
-    const statusNorm = normStatus(data.enrichment_status) || "pending";
+    const statusNorm = normStatus(data.enrichment_status); // raw
     const assignedTo = String(data.enrichment_assigned_to || "").trim();
     const isAssigned = !!assignedTo;
+      
+    const isUnassignedClaimable =
+        (!isAssigned) && (!statusNorm || statusNorm === "pending"); // null/blank OR pending
+
 
     if (els.dStatus) els.dStatus.textContent = statusNorm || "—";
     if (els.dPriority) els.dPriority.textContent = String(data.enrichment_priority ?? "—");
@@ -453,17 +457,16 @@
 
     // Enable/disable actions
     const editable = canEdit(data);
-    const isUnassignedPending = (!isAssigned) && (statusNorm === "pending");
     const canClaim = (state.role === "ops" || state.role === "admin");
 
-    if (els.btnClaim) els.btnClaim.disabled = !(isUnassignedPending && canClaim);
+    if (els.btnClaim) els.btnClaim.disabled = !(isUnassignedClaimable && canClaim);
     if (els.btnSave) els.btnSave.disabled = !editable;
     if (els.btnVerify) els.btnVerify.disabled = !editable;
     if (els.btnReject) els.btnReject.disabled = !editable;
 
     setFormDisabled(!editable);
 
-    if (!editable && !isUnassignedPending) {
+    if (!editable && !isUnassignedClaimable) {
       setMsg("Read-only: this contact is assigned to someone else (or you lack permission).");
     }
   }
@@ -763,32 +766,32 @@
     const d = state.selectedDetail;
     if (!d?.campaign_contact_id) return;
 
-    const statusNorm = normStatus(d.enrichment_status);
-    const assignedTo = String(d.enrichment_assigned_to || "").trim();
-
-    if (assignedTo || statusNorm !== "pending") {
-      setMsg("Cannot claim: not pending/unassigned.", true);
-      return;
-    }
+   const statusNorm = normStatus(d.enrichment_status);
+   const assignedTo = String(d.enrichment_assigned_to || "").trim();
+   
+   if (assignedTo || (statusNorm && statusNorm !== "pending")) {
+     setMsg("Cannot claim: not pending/unassigned.", true);
+     return;
+   }
 
     setMsg("Claiming…");
 
-    const { data: upd, error: updErr } = await sb
-      .from("campaign_contacts")
-      .update({
-        enrichment_assigned_to: state.userId,
-        enrichment_assigned_at: new Date().toISOString(),
-        enrichment_status: "in_progress"
-      })
-      .eq("campaign_contact_id", d.campaign_contact_id)
-      .or("enrichment_status.eq.pending,enrichment_status.is.null")
-      .or("enrichment_assigned_to.is.null,enrichment_assigned_to.eq.")
-      .select("campaign_contact_id")
-      .maybeSingle();
+const { data: upd, error: updErr } = await sb
+  .from("campaign_contacts")
+  .update({
+    enrichment_assigned_to: state.userId,
+    enrichment_assigned_at: new Date().toISOString(),
+    enrichment_status: "in_progress"
+  })
+  .eq("campaign_contact_id", d.campaign_contact_id)
+  .or("enrichment_status.is.null,enrichment_status.eq.pending") // allow null OR pending
+  .is("enrichment_assigned_to", null)                           // must be unassigned
+  .select("campaign_contact_id,enrichment_status,enrichment_assigned_to")
+  .maybeSingle();
 
     if (updErr || !upd) {
       setMsg("Claim failed (RLS blocked or already claimed).", true);
-      console.error("[Contact WB] claim error:", updErr);
+      console.error("[Contact WB] claim error:", updErr, JSON.stringify(updErr, null, 2));
       return;
     }
 
