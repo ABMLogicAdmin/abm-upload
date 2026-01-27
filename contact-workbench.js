@@ -570,7 +570,9 @@
       "has_company_sql",
       "has_country_sql",
       "is_complete_effective_sql",
-
+      "phone_mobile_raw",
+      "phone_corporate_raw",
+      "phone_other_raw",
 
       // assignment/status fields are already in pills
       "enrichment_status",
