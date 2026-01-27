@@ -481,23 +481,24 @@
     const best = computeBestRawFields(data);
 
     // Key fields you want operators to work through
-    const keyFields = [
-      { key: "email",          label: "Email",           raw: best.rawEmail,      placeholder: "Edit email (optional)" },
-      { key: "name",           label: "Name",            raw: best.rawName,       placeholder: "Edit name (optional)" },
-      { key: "title",          label: "Title",           raw: best.rawTitle,      placeholder: "Edit title (optional)" },
-      { key: "linkedin_url",   label: "LinkedIn URL",    raw: best.rawLinkedIn,   placeholder: "https://www.linkedin.com/in/…" },
-      { key: "phone_mobile",   label: "Mobile Phone",    raw: best.rawMobile,    placeholder: "+44…" },
-      { key: "phone_corporate",label: "Corporate Phone", raw: best.rawCorp,      placeholder: "+44…" },
-      { key: "phone_other",    label: "Other Phone",     raw: best.rawOther,     placeholder: "+44…" },
-      { key: "company_size",   label: "Company Size",    raw: best.rawCompanySize, placeholder: "e.g. 201-500" }
-      { key: "company",      label: "Company",     raw: String(data.company || "").trim(),     placeholder: "Edit company (optional)" },
-      { key: "domain",       label: "Domain",      raw: String(data.domain || "").trim(),      placeholder: "Edit domain (optional)" },
-      { key: "department",   label: "Department",  raw: String(data.department || "").trim(),  placeholder: "Edit department (optional)" },
-      { key: "seniority",    label: "Seniority",   raw: String(data.seniority || "").trim(),   placeholder: "Edit seniority (optional)" },
-      { key: "country",      label: "Country",     raw: String(data.country || "").trim(),     placeholder: "Edit country (optional)" },
-      { key: "industry",     label: "Industry",    raw: String(data.industry || "").trim(),    placeholder: "Edit industry (optional)" },
-      { key: "city",         label: "City",        raw: String(data.city || "").trim(),        placeholder: "Edit city (optional)" },
-    ];
+   const keyFields = [
+     { key: "email",           label: "Email",          raw: best.rawEmail,      placeholder: "Edit email (optional)" },
+     { key: "name",            label: "Name",           raw: best.rawName,       placeholder: "Edit name (optional)" },
+     { key: "title",           label: "Title",          raw: best.rawTitle,      placeholder: "Edit title (optional)" },
+     { key: "linkedin_url",    label: "LinkedIn URL",   raw: best.rawLinkedIn,   placeholder: "https://www.linkedin.com/in/…" },
+     { key: "phone_mobile",    label: "Mobile Phone",   raw: best.rawMobile,     placeholder: "+44…" },
+     { key: "phone_corporate", label: "Corporate Phone",raw: best.rawCorp,       placeholder: "+44…" },
+     { key: "phone_other",     label: "Other Phone",    raw: best.rawOther,      placeholder: "+44…" },
+     { key: "company_size",    label: "Company Size",   raw: best.rawCompanySize,placeholder: "e.g. 201-500" },
+   
+     { key: "company",         label: "Company",        raw: String(data.company || "").trim(),      placeholder: "Edit company (optional)" },
+     { key: "domain",          label: "Domain",         raw: String(data.domain || "").trim(),       placeholder: "Edit domain (optional)" },
+     { key: "department",      label: "Department",     raw: String(data.department || "").trim(),   placeholder: "Edit department (optional)" },
+     { key: "seniority",       label: "Seniority",      raw: String(data.seniority || "").trim(),    placeholder: "Edit seniority (optional)" },
+     { key: "country",         label: "Country",        raw: String(data.country || "").trim(),      placeholder: "Edit country (optional)" },
+     { key: "industry",        label: "Industry",       raw: String(data.industry || "").trim(),     placeholder: "Edit industry (optional)" },
+     { key: "city",            label: "City",           raw: String(data.city || "").trim(),         placeholder: "Edit city (optional)" }
+   ];
 
     // Verification dropdown options
     const options = [
