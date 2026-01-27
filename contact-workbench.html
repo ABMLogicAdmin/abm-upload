@@ -13,19 +13,19 @@
   <link rel="stylesheet" href="/abm-upload/base.css?v=30">
 
   <!-- Contact workbench styling ONLY -->
-  <link rel="stylesheet" href="/abm-upload/contact-workbench.css?v=22">
+  <link rel="stylesheet" href="/abm-upload/contact-workbench.css?v=23">
 
-  <!-- 1) Supabase SDK (NOT defer) -->
+  <!-- Supabase SDK -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
-  <!-- 2) App Shell (creates window.ABM.sb ONCE) -->
+  <!-- App Shell -->
   <script src="/abm-upload/app.shell.js?v=1" defer></script>
 
-  <!-- 3) Shared nav -->
+  <!-- Shared nav -->
   <script src="/abm-upload/nav.js?v=23" defer></script>
 
-  <!-- 4) Page JS -->
-  <script src="/abm-upload/contact-workbench.js?v=28" defer></script>
+  <!-- Page JS -->
+  <script src="/abm-upload/contact-workbench.js?v=29" defer></script>
 </head>
 
 <body
@@ -41,61 +41,57 @@
       <div class="card">
         <div class="split">
           <h2 class="title">Queue</h2>
-          
         </div>
 
         <div class="hr"></div>
 
         <div class="row3">
-      
-        <div>
-          <label>Client</label>
-          <select id="filterClient">
-            <option value="">All clients</option>
-          </select>
+          <div>
+            <label>Client</label>
+            <select id="filterClient">
+              <option value="">All clients</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Campaign</label>
+            <select id="filterCampaign">
+              <option value="">All campaigns</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Queue</label>
+            <select id="filterQueue">
+              <option value="all">All (pending + in progress)</option>
+              <option value="mine">Mine</option>
+              <option value="done">Done</option>
+              <option value="pending">Pending</option>
+              <option value="in_progress">In progress</option>
+              <option value="verified">Verified</option>
+              <option value="rejected">Rejected</option>
+            </select>
+          </div>
+
+          <div>
+            <label>Search</label>
+            <input id="filterSearch" type="text" placeholder="Name, email, company…" />
+          </div>
         </div>
-      
-        <div>
-          <label>Campaign</label>
-          <select id="filterCampaign">
-            <option value="">All campaigns</option>
-          </select>
-        </div>
-      
-        <div>
-          <label>Queue</label>
-          <select id="filterQueue">
-            <option value="all">All (pending + in progress)</option>
-            <option value="mine">Mine (assigned to me)</option>
-            <option value="done">Done (enriched/verified/rejected)</option>
-            <option value="pending">Pending only</option>
-            <option value="in_progress">In progress only</option>
-            <option value="verified">Verified only</option>
-            <option value="rejected">Rejected only</option>
-          </select>
-        </div>
-      
-        <div>
-          <label>Search </label>
-          <input id="filterSearch" type="text" placeholder="e.g. Jane, jane@acme.com, Acme, acme.com" />
-        </div>
-      
-      </div>
 
         <div class="hr"></div>
 
         <div class="subtle" id="queueStatus">Loading…</div>
 
-        <!-- ✅ ONE table only -->
         <div class="tableWrap">
           <table>
             <thead>
               <tr>
-                <th style="min-width:120px;">Status</th>
-                <th style="min-width:240px;">Contact</th>
-                <th style="min-width:220px;">Company</th>
-                <th style="min-width:200px;">Campaign</th>
-                <th style="min-width:90px;">Ready</th>
+                <th>Status</th>
+                <th>Contact</th>
+                <th>Company</th>
+                <th>Campaign</th>
+                <th>Ready</th>
               </tr>
             </thead>
             <tbody id="queueBody"></tbody>
@@ -129,108 +125,40 @@
         <div id="detailEmpty" class="subtle">Select a row in the queue.</div>
 
         <div id="detailForm" style="display:none;">
-          <h3 style="margin:0 0 8px 0;">Raw Contact Snapshot</h3>
-          <div class="kv" id="rawKv"></div>
 
-          <div class="hr"></div>
+          <h3 style="margin:0 0 8px 0;">Field Review</h3>
 
-          <h3 style="margin:0 0 8px 0;">Verified Layer (editable)</h3>
-
-<div class="row">
-  
-  <div>
-  <label>LinkedIn URL</label>
-  <input id="fLinkedIn" type="text" placeholder="https://www.linkedin.com/in/…" />
-  <div class="small" style="margin-top:6px;">
-    <a id="lnkLinkedIn" href="#" target="_blank" rel="noopener noreferrer" style="display:none;">Open LinkedIn</a>
-  </div>
-</div>
-
-  <div>
-    <label>Mobile Phone (verified)</label>
-    <input id="fPhoneMobile" type="text" placeholder="+44…" />
-  </div>
-</div>
-
-<div class="row" style="margin-top:10px;">
-  <div>
-    <label>Corporate Phone (verified)</label>
-    <input id="fPhoneCorporate" type="text" placeholder="+44…" />
-  </div>
-  <div>
-    <label>Other Phone (verified)</label>
-    <input id="fPhoneOther" type="text" placeholder="+44…" />
-  </div>
-</div>
-
-          <div class="row" style="margin-top:10px;">
-            <div>
-              <label>Company Size</label>
-              <input id="fCompanySize" type="text" placeholder="e.g. 201-500" />
-            </div>
-            <div>
-              <label>Email Verification</label>
-              <select id="vfEmail">
-                <option value="">—</option>
-                <option value="verified">verified</option>
-                <option value="unverified">unverified</option>
-                <option value="inconclusive">inconclusive</option>
-              </select>
-            </div>
+          <div class="decisionGridWrap">
+            <table class="decisionGrid">
+              <thead>
+                <tr>
+                  <th>Raw</th>
+                  <th>Edit</th>
+                  <th>Verified</th>
+                </tr>
+              </thead>
+              <tbody id="decisionBody">
+                <!-- JS renders rows -->
+              </tbody>
+            </table>
           </div>
 
- <div class="row" style="margin-top:10px;">
-  <div>
-    <label>LinkedIn Verification</label>
-    <select id="vfLinkedIn">
-      <option value="">—</option>
-      <option value="verified">verified</option>
-      <option value="unverified">unverified</option>
-      <option value="inconclusive">inconclusive</option>
-    </select>
-  </div>
-  <div>
-    <label>Mobile Phone Verification</label>
-    <select id="vfPhoneMobile">
-      <option value="">—</option>
-      <option value="verified">verified</option>
-      <option value="unverified">unverified</option>
-      <option value="inconclusive">inconclusive</option>
-    </select>
-  </div>
-</div>
-
-<div class="row" style="margin-top:10px;">
-  <div>
-    <label>Corporate Phone Verification</label>
-    <select id="vfPhoneCorporate">
-      <option value="">—</option>
-      <option value="verified">verified</option>
-      <option value="unverified">unverified</option>
-      <option value="inconclusive">inconclusive</option>
-    </select>
-  </div>
-  <div>
-    <label>Other Phone Verification</label>
-    <select id="vfPhoneOther">
-      <option value="">—</option>
-      <option value="verified">verified</option>
-      <option value="unverified">unverified</option>
-      <option value="inconclusive">inconclusive</option>
-    </select>
-  </div>
-</div>
+          <div class="hr"></div>
 
           <div style="margin-top:10px;">
             <label>Notes</label>
-            <textarea id="fNotes" placeholder="Rationale / corrections / rejection reason…"></textarea>
+            <textarea
+              id="fNotes"
+              placeholder="Rationale / corrections / rejection reason…"
+            ></textarea>
           </div>
 
           <div class="hr"></div>
+
           <div class="subtle" id="detailMsg"></div>
         </div>
-      </div>
 
+      </div>
     </div>
   </div>
 </body>
