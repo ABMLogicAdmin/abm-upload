@@ -1,6 +1,7 @@
 /* contact-workbench.css
    Goal: match Lead Workbench styling (cards, table, spacing)
-   Cleanup: remove duplicates, keep behavior identical, only change font sizes to match Lead WB
+   Cleanup: remove dead/duplicate code, keep behavior identical
+   NOTE: no size/color/font changes vs your provided CSS
 */
 
 :root{
@@ -30,7 +31,7 @@ body[data-page-title="Contact Workbench"] .wrap{
   padding-left: 18px;
   padding-right: 18px;
   flex: 1 1 auto;
-  min-height: 0;                 /* CRITICAL for inner scrolling */
+  min-height: 0;     /* CRITICAL for inner scrolling */
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -44,12 +45,12 @@ body[data-page-title="Contact Workbench"] .wrap{
   }
 }
 
-/* Make columns feel “full screen” */
+/* Make columns feel “full screen” (Contact WB only) */
 body[data-page-title="Contact Workbench"] .grid2{
   grid-template-columns: minmax(420px, 1.15fr) minmax(520px, 1.85fr);
   flex: 1 1 auto;
-  min-height: 0;                 /* CRITICAL */
-  align-items: stretch;          /* cards stretch to same height */
+  min-height: 0;     /* CRITICAL */
+  align-items: stretch;
 }
 
 /* =========================
@@ -64,18 +65,18 @@ body[data-page-title="Contact Workbench"] .grid2{
   box-shadow:var(--shadow);
 }
 
-/* Force cards to be white and respect rounding */
-body[data-page-title="Contact Workbench"] .card{
-  background:#fff !important;
-  overflow:hidden;               /* clips inner children to rounded corners */
-}
-
-/* Both cards behave like panels (no page scroll) */
+/* Contact WB: ensure panels behave like full-height columns */
 body[data-page-title="Contact Workbench"] .grid2 > .card{
-  min-height: 0;                 /* CRITICAL */
+  min-height: 0;     /* CRITICAL */
   overflow: hidden;
   display: flex;
   flex-direction: column;
+}
+
+/* Force cards to be white and respect rounding (kept behavior) */
+body[data-page-title="Contact Workbench"] .card{
+  background:#fff !important;
+  overflow:hidden;
 }
 
 /* =========================
@@ -85,7 +86,7 @@ body[data-page-title="Contact Workbench"] .grid2 > .card{
 label{
   display:block;
   margin-top:0;
-  font-size:12.5px;              /* match other page */
+  font-size:12.5px;
   color:var(--brand-navy);
   font-weight:600;
 }
@@ -94,7 +95,7 @@ input, select, textarea{
   width:100%;
   padding:11px 12px;
   margin-top:7px;
-  font-size:14px;                /* match other page */
+  font-size:14px;
   border-radius:10px;
   border:1px solid var(--border);
   font-family:inherit;
@@ -105,19 +106,19 @@ textarea{ min-height:110px; resize:vertical; }
 
 .title{
   margin:0;
-  font-size:16px;                /* keep as-is (header) */
+  font-size:16px;
   font-weight:800;
   color:var(--brand-navy);
 }
 
 .subtle{
-  font-size:12px;                /* match other page muted size */
+  font-size:12px;
   color:var(--muted);
 }
 
-/* Raw Snapshot / section headers in detail panel */
+/* Section headers in detail panel */
 #detailForm h3{
-  font-size:12.5px;              /* match other page .boxTitle */
+  font-size:12.5px;
   font-weight:900;
   color:var(--brand-navy);
 }
@@ -127,7 +128,7 @@ textarea{ min-height:110px; resize:vertical; }
   display:grid;
   grid-template-columns: 160px 1fr;
   gap:6px 10px;
-  font-size:13px;                /* slightly smaller than table body */
+  font-size:13px;
   line-height:1.35;
 }
 
@@ -162,7 +163,7 @@ textarea{ min-height:110px; resize:vertical; }
   overflow-y:auto;
   max-width:100%;
   width:100%;
-  margin-top:14px;               /* keep curvature visible */
+  margin-top:14px;
   border:1px solid rgba(34,35,61,.10);
   border-radius:12px;
   background:#fff;
@@ -178,7 +179,7 @@ textarea{ min-height:110px; resize:vertical; }
 
 .tableWrap thead th{
   text-align:left;
-  font-size:12px;                /* match other page */
+  font-size:12px;
   color:var(--muted);
   font-weight:900;
   padding:10px;
@@ -190,7 +191,7 @@ textarea{ min-height:110px; resize:vertical; }
   padding:12px 10px;
   border-bottom:1px solid rgba(34,35,61,.10);
   vertical-align:top;
-  font-size:12px;              /* match other page */
+  font-size:12px;
 }
 
 /* row hover/active */
@@ -201,11 +202,11 @@ textarea{ min-height:110px; resize:vertical; }
   outline:1px solid rgba(48,173,247,.20);
 }
 
-/* Sticky header inside scrolling table */
+/* Sticky header inside scrolling queue table */
 body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap{
   flex: 1 1 auto;
   min-height: 0;
-  overflow: auto;                /* queue scroller */
+  overflow: auto;
 }
 body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap thead th{
   position: sticky;
@@ -224,17 +225,17 @@ body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap 
   justify-content:center;
   border-radius:999px;
   padding:6px 10px;
-  font-size:11px;                /* match other page pill size */
+  font-size:11px;
   border:1px solid var(--border);
   background:#fff;
-  color:var(--brand-navy);        /* readable */
+  color:var(--brand-navy);
 }
 
 .metaLine{
   display:flex;
   gap:10px;
   flex-wrap:wrap;
-  font-size:12px;                /* container size (fine) */
+  font-size:12px;
   color:var(--muted);
 }
 
@@ -264,7 +265,7 @@ body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap 
   cursor:pointer;
   font-weight:800;
   width:auto;
-  font-size:13px;                /* match other page button sizing */
+  font-size:13px;
 }
 
 /* primary action */
@@ -283,7 +284,7 @@ body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap 
 
 .btn:disabled{
   cursor:not-allowed;
-  opacity:1;                     /* readable */
+  opacity:1;
   background:#fff !important;
   color:var(--muted) !important;
   border:1px solid rgba(34,35,61,.18) !important;
@@ -293,13 +294,6 @@ body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap 
 /* =========================
    Detail panel internal scroller
 ========================= */
-
-body[data-page-title="Contact Workbench"] .grid2 > .card:nth-child(2){
-  min-height: 0;
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-}
 
 /* Make the detail form the scroller */
 body[data-page-title="Contact Workbench"] #detailForm{
