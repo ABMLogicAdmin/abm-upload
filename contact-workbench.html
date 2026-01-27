@@ -105,9 +105,9 @@
           <h2 class="title">Detail</h2>
           <div class="toolbar">
             <button class="btn" id="btnRefresh" type="button">Refresh</button>
-            <button class="btn btnNeutral" id="btnClaim" type="button" disabled>Claim</button>
-            <button class="btn btnNeutral" id="btnSave" type="button" disabled>Save</button>
-            <button class="btn btnNeutral" id="btnVerify" type="button" disabled>Mark Verified</button>
+            <button class="btn" id="btnClaim" type="button" disabled>Claim</button>
+            <button class="btn" id="btnSave" type="button" disabled>Save</button>
+            <button class="btn" id="btnVerify" type="button" disabled>Mark Verified</button>
             <button class="btn btnDanger" id="btnReject" type="button" disabled>Reject</button>
           </div>
         </div>
@@ -126,40 +126,48 @@
 
         <div id="detailForm" style="display:none;">
 
+          <!-- 1) Raw Contact Snapshot (read-only, keep EVERYTHING) -->
+          <h3 style="margin:0 0 8px 0;">Raw Contact Snapshot</h3>
+          <div class="kv" id="rawKv"></div>
+
+          <div class="hr"></div>
+
+          <!-- 2) Field Review (operators verify/edit key fields) -->
           <h3 style="margin:0 0 8px 0;">Field Review</h3>
 
           <div class="decisionGridWrap">
             <table class="decisionGrid">
               <thead>
                 <tr>
+                  <th>Field</th>
                   <th>Raw</th>
                   <th>Edit</th>
                   <th>Verified</th>
                 </tr>
               </thead>
               <tbody id="decisionBody">
-                <!-- JS renders rows -->
+                <!-- JS renders rows here -->
               </tbody>
             </table>
           </div>
 
           <div class="hr"></div>
 
+          <!-- 3) Notes -->
           <div style="margin-top:10px;">
             <label>Notes</label>
-            <textarea
-              id="fNotes"
-              placeholder="Rationale / corrections / rejection reason…"
-            ></textarea>
+            <textarea id="fNotes" placeholder="Rationale / corrections / rejection reason…"></textarea>
           </div>
 
           <div class="hr"></div>
 
+          <!-- 4) System messages -->
           <div class="subtle" id="detailMsg"></div>
-        </div>
 
+        </div>
       </div>
-    </div>
-  </div>
+
+    </div><!-- /.grid2 -->
+  </div><!-- /.wrap -->
 </body>
 </html>
