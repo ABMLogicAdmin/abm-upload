@@ -126,45 +126,37 @@
 
         <div id="detailForm" style="display:none;">
 
-          <!-- 1) Raw Contact Snapshot (read-only, keep EVERYTHING) -->
-          <h3 style="margin:0 0 8px 0;">Raw Contact Snapshot</h3>
-          <div class="kv" id="rawKv"></div>
-
-          <div class="hr"></div>
-
-          <!-- 2) Field Review (operators verify/edit key fields) -->
-          <h3 style="margin:0 0 8px 0;">Field Review</h3>
-
-          <div class="decisionGridWrap">
-            <table class="decisionGrid">
-              <thead>
-                <tr>
-                  <th>Field</th>
-                  <th>Raw</th>
-                  <th>Edit</th>
-                  <th>Verified</th>
-                </tr>
-              </thead>
-              <tbody id="decisionBody">
-                <!-- JS renders rows here -->
-              </tbody>
-            </table>
-          </div>
-
-          <div class="hr"></div>
-
-          <!-- 3) Notes -->
-          <div style="margin-top:10px;">
-            <label>Notes</label>
-            <textarea id="fNotes" placeholder="Rationale / corrections / rejection reason…"></textarea>
-          </div>
-
-          <div class="hr"></div>
-
-          <!-- 4) System messages -->
-          <div class="subtle" id="detailMsg"></div>
-
+        <!-- ONE section only: all raw fields displayed here -->
+        <h3 style="margin:0 0 8px 0;">Contact Review</h3>
+      
+        <div class="decisionGridWrap">
+          <table class="decisionGrid">
+            <thead>
+              <tr>
+                <th>Field</th>
+                <th>Raw</th>
+                <th>Edit</th>
+                <th>Verified</th>
+              </tr>
+            </thead>
+            <tbody id="decisionBody">
+              <!-- JS renders rows here -->
+            </tbody>
+          </table>
         </div>
+      
+        <div class="hr"></div>
+      
+        <div style="margin-top:10px;">
+          <label>Notes</label>
+          <textarea id="fNotes" placeholder="Rationale / corrections / rejection reason…"></textarea>
+        </div>
+      
+        <div class="hr"></div>
+        <div class="subtle" id="detailMsg"></div>
+      
+      </div>
+
       </div>
 
     </div><!-- /.grid2 -->
