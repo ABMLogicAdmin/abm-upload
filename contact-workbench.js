@@ -110,20 +110,22 @@
   }
 
   // ---------- State ----------
-  const state = {
-    user: null,
-    role: null,
-    userId: null,
+const state = {
+  user: null,
+  role: null,
+  userId: null,
 
-    campaignOpts: [],
+  campaignOpts: [],
 
-    queueRows: [],
-    selectedId: null,
-    selectedDetail: null,
+  queueRows: [],
+  selectedId: null,
+  selectedDetail: null,
+  selectedQueueRow: null,   // <-- ADD THIS
 
-    wired: false,
-    _inited: false
-  };
+  wired: false,
+  _inited: false
+};
+
 
   // ---------- Init ----------
   async function init() {
@@ -386,15 +388,23 @@
       `;
     }).join("");
 
-    [...els.queueBody.querySelectorAll(".queueRow")].forEach(tr => {
-      tr.addEventListener("click", async () => {
-        const id = tr.getAttribute("data-id");
-        if (!id) return;
-        state.selectedId = id;
-        renderQueue(state.queueRows);
-        await loadDetail(id);
-      });
-    });
+   [...els.queueBody.querySelectorAll(".queueRow")].forEach(tr => {
+  tr.addEventListener("click", async () => {
+    const id = tr.getAttribute("data-id");
+    if (!id) return;
+
+    state.selectedId = id;
+
+    // NEW: store the clicked queue row (contains enrichment_status/assigned_to)
+    state.selectedQueueRow = (state.queueRows || []).find(
+      r => String(r.campaign_contact_id) === String(id)
+    ) || null;
+
+    renderQueue(state.queueRows);
+    await loadDetail(id);
+  });
+});
+
   }
 
   // ---------- Detail ----------
@@ -425,12 +435,31 @@
     window.__cw_detail = data;
     window.__cw_selected_id = campaignContactId;
 
-    const statusNorm = normStatus(data.enrichment_status); // raw
-    const assignedTo = String(data.enrichment_assigned_to || "").trim();
-    const isAssigned = !!assignedTo;
+    // NEW: fallback to queue row because detail view may not include these fields
+      const qRow =
+        state.selectedQueueRow ||
+        (state.queueRows || []).find(r => String(r.campaign_contact_id) === String(campaignContactId)) ||
+        null;
       
-    const isUnassignedClaimable =
-        (!isAssigned) && (!statusNorm || statusNorm === "pending"); // null/blank OR pending
+      const effectiveStatusRaw =
+        (data.enrichment_status !== null && data.enrichment_status !== undefined)
+          ? data.enrichment_status
+          : (qRow ? qRow.enrichment_status : null);
+      
+      const effectiveAssignedToRaw =
+        (data.enrichment_assigned_to !== null && data.enrichment_assigned_to !== undefined)
+          ? data.enrichment_assigned_to
+          : (qRow ? qRow.enrichment_assigned_to : null);
+      
+      const statusNorm = normStatus(effectiveStatusRaw);
+      const assignedTo = String(effectiveAssignedToRaw || "").trim();
+      const isAssigned = !!assignedTo;
+      
+      const isUnassignedClaimable =
+        (!isAssigned) && (!statusNorm || statusNorm === "pending");
+
+
+
 
 
     if (els.dStatus) els.dStatus.textContent = statusNorm || "—";
@@ -766,8 +795,21 @@
     const d = state.selectedDetail;
     if (!d?.campaign_contact_id) return;
 
-   const statusNorm = normStatus(d.enrichment_status);
-   const assignedTo = String(d.enrichment_assigned_to || "").trim();
+   const qRow = state.selectedQueueRow || null;
+   
+   const effectiveStatusRaw =
+     (d.enrichment_status !== null && d.enrichment_status !== undefined)
+       ? d.enrichment_status
+       : (qRow ? qRow.enrichment_status : null);
+   
+   const effectiveAssignedToRaw =
+     (d.enrichment_assigned_to !== null && d.enrichment_assigned_to !== undefined)
+       ? d.enrichment_assigned_to
+       : (qRow ? qRow.enrichment_assigned_to : null);
+   
+   const statusNorm = normStatus(effectiveStatusRaw);
+   const assignedTo = String(effectiveAssignedToRaw || "").trim();
+
    
    if (assignedTo || (statusNorm && statusNorm !== "pending")) {
      setMsg("Cannot claim: not pending/unassigned.", true);
