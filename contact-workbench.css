@@ -95,7 +95,7 @@ input, select, textarea{
   width:100%;
   padding:11px 12px;
   margin-top:7px;
-  font-size:14px;
+  font-size:12px;
   border-radius:10px;
   border:1px solid var(--border);
   font-family:inherit;
@@ -163,7 +163,7 @@ textarea{ min-height:110px; resize:vertical; }
   overflow-y:auto;
   max-width:100%;
   width:100%;
-  margin-top:14px;
+  margin-top:12px;
   border:1px solid rgba(34,35,61,.10);
   border-radius:12px;
   background:#fff;
