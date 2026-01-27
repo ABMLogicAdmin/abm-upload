@@ -776,24 +776,32 @@
 
     setMsg("Claiming…");
 
-const { data: upd, error: updErr } = await sb
-  .from("campaign_contacts")
-  .update({
-    enrichment_assigned_to: state.userId,
-    enrichment_assigned_at: new Date().toISOString(),
-    enrichment_status: "in_progress"
-  })
-  .eq("campaign_contact_id", d.campaign_contact_id)
-  .or("enrichment_status.is.null,enrichment_status.eq.pending") // allow null OR pending
-  .is("enrichment_assigned_to", null)                           // must be unassigned
-  .select("campaign_contact_id,enrichment_status,enrichment_assigned_to")
-  .maybeSingle();
-
-    if (updErr || !upd) {
-      setMsg("Claim failed (RLS blocked or already claimed).", true);
-      console.error("[Contact WB] claim error:", updErr, JSON.stringify(updErr, null, 2));
-      return;
-    }
+   const { data: updRows, error: updErr } = await sb
+     .from("campaign_contacts")
+     .update({
+       enrichment_assigned_to: state.userId,
+       enrichment_assigned_at: new Date().toISOString(),
+       enrichment_status: "in_progress"
+     })
+     .eq("campaign_contact_id", d.campaign_contact_id)
+     .or("enrichment_status.is.null,enrichment_status.eq.pending")
+     .is("enrichment_assigned_to", null)
+     .select("campaign_contact_id,enrichment_status,enrichment_assigned_to"); // <-- no maybeSingle
+   
+   if (updErr) {
+     setMsg("Claim failed (RLS or validation).", true);
+     console.error("[Contact WB] claim error:", updErr);
+     return;
+   }
+   
+   if (!updRows || updRows.length !== 1) {
+     // This is your case right now
+     setMsg("Claim failed: 0 rows updated (RLS blocked or already claimed).", true);
+     console.warn("[Contact WB] claim updated rows:", updRows);
+     return;
+   }
+   
+   const upd = updRows[0];
 
     await insertEvent(d.campaign_contact_id, "assigned", {});
     setMsg("Claimed.");
