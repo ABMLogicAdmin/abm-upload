@@ -321,3 +321,13 @@ body[data-page-title="Contact Workbench"]{
   flex-direction: column;
 }
 body[data-page-title="Contact Workbench"] #siteNav{ flex: 0 0 auto; }
+
+/* Contact Review table text sizing */
+.decisionGrid td {
+  font-size: 12px;
+}
+
+.decisionGrid td a {
+  font-size: 12px;
+}
+
