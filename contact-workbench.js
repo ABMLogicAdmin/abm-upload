@@ -148,7 +148,7 @@ window.__cw_state = state;
       if (sess?.session?.user) {
         // logged in, continue
       } else {
-        location.href = "/abm-upload/index.html";
+        location.href = /abm-upload/admin-setup.html";
         return;
       }
 
