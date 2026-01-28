@@ -144,12 +144,14 @@ window.__cw_state = state;
      }
       
      // Auto-show app if already logged in (split-second credential check)
-     const sess = await window.ABM.getSessionSafe();
-     if (!sess) {
-       location.href = "/abm-upload/index.html";
-       return;
-     }
-   
+        const sess = await window.ABM.getSessionSafe().catch(() => null);
+      if (sess?.session?.user) {
+        // logged in, continue
+      } else {
+        location.href = "/abm-upload/index.html";
+        return;
+      }
+
      state.user = await window.ABM.getUserSafe();
      state.role = await window.ABM.getRoleSafe();
      state.userId = state.user?.id || null;
