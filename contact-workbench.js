@@ -12,6 +12,8 @@
    - #detailMsg
 */
 
+(function () {
+
 // Use the same shared Supabase client pattern as other pages
 const sb = window.ABM_SB || (window.ABM && window.ABM.sb);
 
@@ -131,21 +133,26 @@ window.__cw_state = state;
 
 
   // ---------- Init ----------
-  async function init() {
-    if (state._inited) return;
-    state._inited = true;
+   async function init() {
+     if (state._inited) return;
+     state._inited = true;
 
-   // Session-first gate (matches Supplier page behaviour)
-      const sess = await window.ABM.getSessionSafe();
-      if (!sess) {
-        // Not logged in → bounce to index/login
-        location.href = "/abm-upload/index.html";
-        return;
-      }
+     // guard: shell helpers must exist
+     if (!window.ABM || !window.ABM.getSessionSafe) {
+       console.error("[Contact WB] ABM shell helpers missing (app.shell.js not ready)");
+       return;
+     }
       
-      state.user = await window.ABM.getUserSafe();
-      state.role = await window.ABM.getRoleSafe();
-      state.userId = state.user?.id || null;
+     // Auto-show app if already logged in (split-second credential check)
+     const sess = await window.ABM.getSessionSafe();
+     if (!sess) {
+       location.href = "/abm-upload/index.html";
+       return;
+     }
+   
+     state.user = await window.ABM.getUserSafe();
+     state.role = await window.ABM.getRoleSafe();
+     state.userId = state.user?.id || null;
       
       // Keep navbar identity in sync (optional but good)
       if (state.user?.email) {
