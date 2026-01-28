@@ -66,6 +66,13 @@ if (!sb) {
     detailMsg: $("#detailMsg")
   };
 
+   function setAuthedUI(isAuthed) {
+     const lw = $("#loginWrap");
+     const ag = $("#appGrid");
+     if (lw) lw.style.display = isAuthed ? "none" : "block";
+     if (ag) ag.style.display = isAuthed ? "block" : "none";
+   }
+      
   function esc(s) {
     return String(s ?? "").replace(/[&<>"']/g, (c) => ({
       "&": "&amp;",
@@ -133,37 +140,39 @@ window.__cw_state = state;
 
 
   // ---------- Init ----------
-   async function init() {
-     if (state._inited) return;
-     state._inited = true;
+      async function init() {
+        if (!window.ABM || !window.ABM.getSessionSafe) {
+          console.error("[Contact WB] ABM shell helpers missing (app.shell.js not ready)");
+          return;
+        }
 
-     // guard: shell helpers must exist
-     if (!window.ABM || !window.ABM.getSessionSafe) {
-       console.error("[Contact WB] ABM shell helpers missing (app.shell.js not ready)");
-       return;
-     }
-      
-     // Auto-show app if already logged in (split-second credential check)
+         wireEventsOnce();
+         
         const sess = await window.ABM.getSessionSafe().catch(() => null);
-      if (sess?.session?.user) {
-        // logged in, continue
-      } else {
-        location.href = "/abm-upload/admin-setup.html";
-        return;
-      }
-
-     state.user = await window.ABM.getUserSafe();
-     state.role = await window.ABM.getRoleSafe();
-     state.userId = state.user?.id || null;
       
-      // Keep navbar identity in sync (optional but good)
+        if (!sess?.session?.user) {
+          setAuthedUI(false);
+          state._inited = false; // allow init to run again after login
+          return;
+        }
+      
+        // Now we’re authed — lock init + show app
+        if (state._inited) return;
+        state._inited = true;
+      
+        setAuthedUI(true);
+      
+        state.user = await window.ABM.getUserSafe();
+        state.role = await window.ABM.getRoleSafe();
+        state.userId = state.user?.id || null;
+      
+// Keep navbar identity in sync (optional but good)
       if (state.user?.email) {
         window.ABM_USER_EMAIL = state.user.email;
         window.ABM_ROLE = state.role || "user";
         window.dispatchEvent(new Event("abm:nav:refresh"));
       }
-
-
+         
     if (els.role) els.role.textContent = state.role || "—";
     if (els.me) els.me.textContent = state.user?.email || "—";
 
@@ -173,7 +182,6 @@ window.__cw_state = state;
       return;
     }
 
-    wireEventsOnce();
     await loadCampaignOptions();
     await loadQueue();
   }
@@ -198,6 +206,7 @@ window.__cw_state = state;
     on(els.filterCampaign, "change", () => loadQueue(), "#filterCampaign");
     on(els.filterQueue, "change", () => loadQueue(), "#filterQueue");
     on(els.filterSearch, "input", debounce(() => loadQueue(), 250), "#filterSearch");
+    on($("#loginBtn"), "click", handleLogin, "#loginBtn");
 
     on(els.btnRefresh, "click", async () => {
       await loadQueue();
@@ -230,6 +239,25 @@ window.__cw_state = state;
     });
   }
 
+async function handleLogin() {
+  const email = ($("#email")?.value || "").trim();
+  const password = ($("#password")?.value || "");
+  const statusEl = $("#loginStatus");
+  if (statusEl) statusEl.textContent = "Signing in…";
+
+  const { error } = await sb.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    if (statusEl) statusEl.textContent = error.message;
+    return;
+  }
+
+  if (statusEl) statusEl.textContent = "";
+  state._inited = false; // allow init to run again
+  await init();
+}
+
+   
   function canEdit(detail) {
     if (!detail) return false;
     if (state.role === "admin") return true;
