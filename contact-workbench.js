@@ -12,12 +12,13 @@
    - #detailMsg
 */
 
-(function () {
-  const sb = window.ABM && window.ABM.sb;
-  if (!sb) {
-    console.error("[Contact WB] Supabase client missing (app.shell.js not loaded?)");
-    return;
-  }
+// Use the same shared Supabase client pattern as other pages
+const sb = window.ABM_SB || (window.ABM && window.ABM.sb);
+
+if (!sb) {
+  console.error("[Contact WB] Supabase client missing. Check script order: app.shell.js must load BEFORE contact-workbench.js");
+  return;
+}
 
   // ---------- DOM ----------
   function $(id) {
@@ -134,11 +135,25 @@ window.__cw_state = state;
     if (state._inited) return;
     state._inited = true;
 
-    await window.ABM.requireAuth({ redirectTo: "/abm-upload/index.html" });
+   // Session-first gate (matches Supplier page behaviour)
+      const sess = await window.ABM.getSessionSafe();
+      if (!sess) {
+        // Not logged in → bounce to index/login
+        location.href = "/abm-upload/index.html";
+        return;
+      }
+      
+      state.user = await window.ABM.getUserSafe();
+      state.role = await window.ABM.getRoleSafe();
+      state.userId = state.user?.id || null;
+      
+      // Keep navbar identity in sync (optional but good)
+      if (state.user?.email) {
+        window.ABM_USER_EMAIL = state.user.email;
+        window.ABM_ROLE = state.role || "user";
+        window.dispatchEvent(new Event("abm:nav:refresh"));
+      }
 
-    state.user = await window.ABM.getUserSafe();
-    state.role = await window.ABM.getRoleSafe();
-    state.userId = state.user?.id || null;
 
     if (els.role) els.role.textContent = state.role || "—";
     if (els.me) els.me.textContent = state.user?.email || "—";
