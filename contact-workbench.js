@@ -15,12 +15,19 @@
 (function () {
 
 // Use the same shared Supabase client pattern as other pages
-const sb = window.ABM_SB || (window.ABM && window.ABM.sb);
-
-if (!sb) {
-  console.error("[Contact WB] Supabase client missing. Check script order: app.shell.js must load BEFORE contact-workbench.js");
-  return;
+function getSbSafe() {
+  return window.ABM_SB || (window.ABM && window.ABM.sb) || null;
 }
+   
+ function sbNow() {
+     return getSbSafe();
+   }
+   function sbReq() {
+     const sb = sbNow();
+     if (!sb) throw new Error("Supabase client not ready");
+     return sb;
+   }
+
 
   // ---------- DOM ----------
   function $(id) {
@@ -146,6 +153,12 @@ window.__cw_state = state;
           return;
         }
 
+         const sb = sbNow();
+            if (!sb) {
+              console.warn("[Contact WB] Waiting for Supabase client (app.shell.js)...");
+              return;
+            }
+         
          wireEventsOnce();
          
         const sess = await window.ABM.getSessionSafe().catch(() => null);
@@ -245,6 +258,12 @@ async function handleLogin() {
   const statusEl = $("#loginStatus");
   if (statusEl) statusEl.textContent = "Signing in…";
 
+   const sb = sbNow();
+      if (!sb) {
+        if (statusEl) statusEl.textContent = "Login not ready yet (Supabase client missing). Refresh the page.";
+        return;
+      }
+
   const { error } = await sb.auth.signInWithPassword({ email, password });
 
   if (error) {
@@ -266,7 +285,7 @@ async function handleLogin() {
 
   // ---------- Data Loads ----------
   async function loadCampaignOptions() {
-    const { data, error } = await sb
+    const { data, error } = await sbReq()
       .from("v_contact_workbench_campaign_options")
       .select("campaign_id,campaign_name,client_name")
       .order("client_name", { ascending: true })
@@ -336,7 +355,7 @@ async function handleLogin() {
     if (qMode === "mine") viewName = "v_contact_workbench_queue_mine_v2";
     if (qMode === "done") viewName = "v_contact_workbench_queue_done_v2";
 
-    let query = sb
+    let query = sbReq()
       .from(viewName)
       .select([
         "campaign_contact_id",
@@ -472,7 +491,7 @@ async function handleLogin() {
     if (els.decisionBodyKey) els.decisionBodyKey.innerHTML = "";
     if (els.decisionBodyAll) els.decisionBodyAll.innerHTML = "";
 
-    const { data, error } = await sb
+    const { data, error } = await sbReq()
       .from("v_contact_workbench_detail_v5")
       .select("*")
       .eq("campaign_contact_id", campaignContactId)
@@ -872,7 +891,7 @@ async function handleLogin() {
 
     setMsg("Claiming…");
 
-   const { data: updRows, error: updErr } = await sb
+   const { data: updRows, error: updErr } = await sbReq()
      .from("campaign_contacts")
      .update({
        enrichment_assigned_to: state.userId,
@@ -955,7 +974,7 @@ async function handleLogin() {
     if (edits.phone_other) phoneUpd.phone_other = edits.phone_other;
 
     if (Object.keys(phoneUpd).length > 0) {
-      const { error: phoneErr } = await sb
+      const { error: phoneErr } = await sbReq()
         .from("campaign_contacts")
         .update(phoneUpd)
         .eq("campaign_contact_id", d.campaign_contact_id);
@@ -983,7 +1002,7 @@ async function handleLogin() {
       payload.company_size = d.company_size || d.verified_company_size;
     }
 
-    const { error } = await sb
+    const { error } = await sbReq()
       .from("campaign_contact_enrichment")
       .upsert(payload, { onConflict: "campaign_contact_id" });
 
@@ -1014,7 +1033,7 @@ async function handleLogin() {
 
     setMsg("Marking verified…");
 
-    const { error } = await sb
+    const { error } = await sbReq()
       .from("campaign_contacts")
       .update({
         enrichment_status: "verified",
@@ -1051,7 +1070,7 @@ async function handleLogin() {
 
     setMsg("Rejecting…");
 
-    const { error } = await sb
+    const { error } = await sbReq()
       .from("campaign_contacts")
       .update({
         enrichment_status: "rejected",
@@ -1072,7 +1091,7 @@ async function handleLogin() {
   }
 
   async function insertEvent(campaign_contact_id, event_type, event_payload) {
-    const { error } = await sb
+    const { error } = await sbReq()
       .from("campaign_contact_enrichment_events")
       .insert({
         campaign_contact_id,
