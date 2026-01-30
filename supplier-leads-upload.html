@@ -201,9 +201,13 @@
 
 </div>
 
+<!-- Supabase JS MUST load BEFORE app.shell.js -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
 <!-- Shared shell + nav (order matters) -->
 <script src="/abm-upload/app.shell.js?v=1"></script>
 <script src="/abm-upload/nav.js?v=25"></script>
+
 
 <script>
 
@@ -544,5 +548,6 @@ async function bootstrapAuthed() {
   </script>
 </body>
 </html>
+
 
 
