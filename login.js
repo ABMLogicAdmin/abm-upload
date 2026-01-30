@@ -9,6 +9,21 @@
     if (el) el.textContent = msg || "";
   }
 
+  function getNextUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const next = params.get("next");
+    // only allow same-site relative paths (basic safety)
+    if (!next) return null;
+    if (next.startsWith("http://") || next.startsWith("https://")) return null;
+    if (!next.startsWith("/")) return null;
+    return next;
+  }
+
+  function goNextOrHome() {
+    const next = getNextUrl();
+    window.location.href = next || "./home.html";
+  }
+
   async function initOnce() {
     if (_inited) return;
     _inited = true;
@@ -27,10 +42,10 @@
 
     const sb = window.ABM.sb;
 
-    // If already signed in, go straight to Home
+    // If already signed in, go to ?next= if present, else Home
     const { data } = await sb.auth.getSession();
     if (data?.session?.user) {
-      window.location.href = "./home.html";
+      goNextOrHome();
       return;
     }
 
@@ -52,7 +67,7 @@
       }
 
       setStatus("Signed in. Redirecting…");
-      window.location.href = "./home.html";
+      goNextOrHome();
     });
 
     // Allow Enter key to submit
@@ -66,4 +81,3 @@
   window.addEventListener("abm:shell:ready", initOnce);
   document.addEventListener("DOMContentLoaded", initOnce);
 })();
-
