@@ -875,3 +875,13 @@ body[data-page-title="Contact Workbench"] #appGrid.appFrame .decisionGridWrap{
   min-height: 0 !important;
   overflow: auto !important;   /* vertical + horizontal scrollbars */
 }
+
+/* ===== Detail panel: enable vertical scrolling ===== */
+
+body[data-page-title="Contact Workbench"] #detailForm{
+  display: flex;            /* ← THIS WAS MISSING */
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;         /* prevent double scroll */
+}
