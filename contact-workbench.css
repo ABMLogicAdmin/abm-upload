@@ -805,4 +805,24 @@ body[data-page-title="Contact Workbench"] .decisionGrid th + th,
 body[data-page-title="Contact Workbench"] .decisionGrid td + td{
   border-left: 1px solid rgba(34,35,61,.06);
 }
+/* ===== Contact WB: viewport-locked frame (match Admin Setup finish) ===== */
+
+body[data-page-title="Contact Workbench"] #siteNav{
+  flex: 0 0 auto;
+}
+
+/* This is the missing frame */
+body[data-page-title="Contact Workbench"] #appGrid{
+  flex: 1 1 auto;
+  min-height: 0;          /* CRITICAL */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Ensure the grid can shrink inside the frame */
+body[data-page-title="Contact Workbench"] .grid2{
+  flex: 1 1 auto;
+  min-height: 0;          /* CRITICAL */
+}
 
