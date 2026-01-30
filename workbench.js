@@ -93,7 +93,7 @@
     // =========================
     // UI helpers
     // =========================
-    function setLoginStatus(t) { if ($("loginStatus")) $("loginStatus").textContent = t || ""; }
+    
     function setDetailStatus(t) { if ($("detailStatus")) $("detailStatus").textContent = t || ""; }
     function setOutcomeStatus(t) { if ($("outcomeStatus")) $("outcomeStatus").textContent = t || ""; }
     function leadKey(r) { return `${r.ingest_job_id}:${r.row_number}`; }
@@ -109,19 +109,6 @@
       if (empty) empty.style.display = show ? "block" : "none";
       const ctx = $("leadContext");
       if (ctx) ctx.style.display = show ? "none" : "block";
-    }
-
-    function setAuthedUI(isAuthed) {
-      const loginWrap = $("loginWrap");
-      const appGrid = $("appGrid");
-    
-      if (isAuthed) {
-        if (loginWrap) loginWrap.style.display = "none";
-        if (appGrid) appGrid.style.display = "grid";
-      } else {
-        if (loginWrap) loginWrap.style.display = "";
-        if (appGrid) appGrid.style.display = "none";
-      }
     }
 
     function mapViewToStatuses(view) {
@@ -194,86 +181,76 @@
     // =========================
     // Auth
     // =========================
-    async function login() {
-      setLoginStatus("Signing in…");
-    
-      const email = ($("email")?.value || "").trim();
-      const password = $("password")?.value || "";
-    
-      const { error } = await sb.auth.signInWithPassword({ email, password });
-      if (error) {
-        setLoginStatus(error.message);
-        return;
-      }
-    
-      setLoginStatus("Signed in. Loading…");
-      await afterLogin();
+
+
+   async function bootstrapAuthed() {
+  // We already know we have a session, so just fetch the user
+  const { data: userRes, error: userErr } = await sb.auth.getUser();
+  if (userErr || !userRes?.user) {
+    // No inline login UI here — hard redirect to login
+    window.location.href = "./login.html";
+    return;
+  }
+
+  window.ABM.me = userRes.user;
+  window.ABM_USER_EMAIL = window.ABM.me.email || "";
+
+  // Role lookup (UI-only; server enforcement via RLS)
+  try {
+    const { data: roleRow, error: roleErr } = await sb
+      .from("app_users")
+      .select("role")
+      .eq("user_id", window.ABM.me.id)
+      .single();
+
+    if (roleErr || !roleRow?.role) throw roleErr || new Error("No role in app_users.");
+
+    window.ABM.currentRole = roleRow.role;
+    window.ABM_ROLE = roleRow.role;
+
+    const allowed = ["ops", "admin"];
+    const roleLower = String(window.ABM_ROLE || "").toLowerCase();
+    if (!allowed.includes(roleLower)) {
+      document.body.innerHTML = `
+        <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
+          <div>
+            <h2 style="margin:0 0 8px;">Access denied</h2>
+            <div>You do not have permission to view this page.</div>
+            <div style="margin-top:10px;opacity:.7;font-size:13px;">(Your app_users.role is not allowed.)</div>
+          </div>
+        </div>`;
+      return;
     }
 
-    async function afterLogin() {
-      const { data: userRes, error: userErr } = await sb.auth.getUser();
-      if (userErr || !userRes?.user) {
-        setLoginStatus("Login succeeded but user fetch failed.");
-        return;
-      }
+    // Refresh nav (nav.js listens)
+    window.dispatchEvent(new Event("abm:nav:refresh"));
+  } catch (err) {
+    console.error("Role lookup failed", err);
+    document.body.innerHTML = `
+      <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
+        <div>
+          <h2 style="margin:0 0 8px;">Access denied</h2>
+          <div>Your account is not provisioned in <code>app_users</code>.</div>
+          <div style="margin-top:10px;opacity:.7;font-size:13px;">Ask an admin to add your user_id + role.</div>
+        </div>
+      </div>`;
+    return;
+  }
 
-      window.ABM.me = userRes.user;
-      window.ABM_USER_EMAIL = window.ABM.me.email || "";
-
-      // Role lookup (UI-only; server enforcement via RLS)
-      try {
-        const { data: roleRow, error: roleErr } = await sb
-          .from("app_users")
-          .select("role")
-          .eq("user_id", window.ABM.me.id)
-          .single();
-
-        if (roleErr || !roleRow?.role) throw roleErr || new Error("No role in app_users.");
-
-        window.ABM.currentRole = roleRow.role;
-        window.ABM_ROLE = roleRow.role;
-
-        const allowed = ["ops", "admin"];
-        const roleLower = String(window.ABM_ROLE || "").toLowerCase();
-        if (!allowed.includes(roleLower)) {
-          document.body.innerHTML = `
-            <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
-              <div>
-                <h2 style="margin:0 0 8px;">Access denied</h2>
-                <div>You do not have permission to view this page.</div>
-                <div style="margin-top:10px;opacity:.7;font-size:13px;">(Your app_users.role is not allowed.)</div>
-              </div>
-            </div>`;
-          return;
-        }
-
-        // Refresh nav (nav.js listens)
-        window.dispatchEvent(new Event("abm:nav:refresh"));
-      } catch (err) {
-        console.error("Role lookup failed", err);
-        document.body.innerHTML = `
-          <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
-            <div>
-              <h2 style="margin:0 0 8px;">Access denied</h2>
-              <div>Your account is not provisioned in <code>app_users</code>.</div>
-              <div style="margin-top:10px;opacity:.7;font-size:13px;">Ask an admin to add your user_id + role.</div>
-            </div>
-          </div>`;
-        return;
-      }
-
-      setAuthedUI(true);
-      setLoginStatus("");
-      showEmptyState(true);
-
-      await loadClientCampaignOptions();
-      await loadQueue();
+  // Show the app container (login UI removed)
+    const appGrid = $("appGrid");
+    if (!appGrid) {
+      console.error("[Workbench] Missing #appGrid in HTML.");
+      alert("Workbench HTML is missing #appGrid. Cannot render app.");
+      return;
     }
+    appGrid.style.display = "grid";
 
-    async function logout() {
-      await sb.auth.signOut();
-      location.reload();
-    }
+  showEmptyState(true);
+
+  await loadClientCampaignOptions();
+  await loadQueue();
+}
 
     // =========================
     // Queue
@@ -815,16 +792,19 @@
     // =========================
     // Init
     // =========================
+    
     (async function init() {
       setupPhoneCountryDropdown();
-
-    const { data } = await sb.auth.getSession();
-    if (data?.session?.user) {
-      await afterLogin();
-    } else {
-      setAuthedUI(false);
-    }     
+    
+      const { data } = await sb.auth.getSession();
+      if (!data?.session?.user) {
+        window.location.href = "./login.html";
+        return;
+      }
+    
+      await bootstrapAuthed();
     })();
+
   }
 
   // Prefer: shell readiness event
