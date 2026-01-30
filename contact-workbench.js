@@ -189,53 +189,57 @@ function redirectToLoginOnce() {
 }
 
   // ---------- Init ----------
-      async function init() {
-        if (!window.ABM || !window.ABM.getSessionSafe) {
-          console.error("[Contact WB] ABM shell helpers missing (app.shell.js not ready)");
-          return;
-        }
+async function init() {
+  // ✅ Always wire events first (safe even if elements missing)
+  wireEventsOnce();
 
-         const sb = sbNow();
-            if (!sb) {
-              console.warn("[Contact WB] Waiting for Supabase client (app.shell.js)...");
-              return;
-            }
-         
-         wireEventsOnce();        
-// ✅ AUTH GATE: wait for session to settle, otherwise redirect to login
-         const user = await waitForUser(2500);
-         if (!user) {
-           redirectToLoginOnce();
-           return;
-         }
-
-         // We are authed — show app (login UI does not exist on this page)
-         const ag = $("#appGrid");
-         if (ag) ag.style.display = "block";
-
-        state.user = await window.ABM.getUserSafe();
-        state.role = await window.ABM.getRoleSafe();
-        state.userId = state.user?.id || null;
-      
-// Keep navbar identity in sync (optional but good)
-      if (state.user?.email) {
-        window.ABM_USER_EMAIL = state.user.email;
-        window.ABM_ROLE = state.role || "user";
-        window.dispatchEvent(new Event("abm:nav:refresh"));
-      }
-         
-    if (els.role) els.role.textContent = state.role || "—";
-    if (els.me) els.me.textContent = state.user?.email || "—";
-
-    if (!state.userId || !(state.role === "ops" || state.role === "admin")) {
-      if (els.queueStatus) els.queueStatus.textContent = "Access denied: requires ops or admin.";
-      disableAllActions();
-      return;
-    }
-
-    await loadCampaignOptions();
-    await loadQueue();
+  if (!window.ABM || !window.ABM.getSessionSafe) {
+    console.error("[Contact WB] ABM shell helpers missing (app.shell.js not ready)");
+    return;
   }
+
+  const sb = sbNow();
+  if (!sb) {
+    // ✅ Give the user visible feedback instead of a silent return
+    if (els.queueStatus) els.queueStatus.textContent = "Loading app…";
+    console.warn("[Contact WB] Waiting for Supabase client (app.shell.js)...");
+    return;
+  }
+
+  // ✅ AUTH GATE: wait for session to settle, otherwise redirect to login
+  const user = await waitForUser(2500);
+  if (!user) {
+    redirectToLoginOnce();
+    return;
+  }
+
+  // We are authed — show app (login UI does not exist on this page)
+  const ag = $("#appGrid");
+  if (ag) ag.style.display = "block";
+
+  state.user = { ...user };
+  state.role = await window.ABM.getRoleSafe();
+  state.userId = state.user?.id || null;
+
+  // Keep navbar identity in sync (optional but good)
+  if (state.user?.email) {
+    window.ABM_USER_EMAIL = state.user.email;
+    window.ABM_ROLE = state.role || "user";
+    window.dispatchEvent(new Event("abm:nav:refresh"));
+  }
+
+  if (els.role) els.role.textContent = state.role || "—";
+  if (els.me) els.me.textContent = state.user?.email || "—";
+
+  if (!state.userId || !(state.role === "ops" || state.role === "admin")) {
+    if (els.queueStatus) els.queueStatus.textContent = "Access denied: requires ops or admin.";
+    disableAllActions();
+    return;
+  }
+
+  await loadCampaignOptions();
+  await loadQueue();
+}
 
   function wireEventsOnce() {
     if (state.wired) return;
@@ -408,10 +412,10 @@ function redirectToLoginOnce() {
     const { data, error } = await query;
 
     if (error) {
-      els.queueStatus.textContent = "Queue load failed (check console).";
-      console.error("[Contact WB] queue error:", error);
-      return;
-    }
+     console.error("[Contact WB] queue error:", error);
+     els.queueStatus.textContent = "Queue load failed: " + (error.message || "Unknown error");
+     return;
+   }
 
     let rows = (data || []);
     if (search) {
@@ -1116,10 +1120,35 @@ function redirectToLoginOnce() {
   }
 
   // ---------- BOOT ----------
-  function bootOnce() {
-    init().catch(err => console.error("[Contact WB] init failed:", err));
+  let _booted = false;
+
+  async function boot() {
+    if (_booted) return;
+    try {
+      // Try init; if it returns early due to sb not ready, we’ll retry below
+      await init();
+      // If init got far enough to set userId/role, we consider it booted
+      if (state.userId) _booted = true;
+    } catch (err) {
+      console.error("[Contact WB] init failed:", err);
+    }
   }
 
-window.addEventListener("abm:shell:ready", bootOnce);
+  // 1) Listen for shell event (good when it fires)
+  window.addEventListener("abm:shell:ready", boot);
+
+  // 2) Also try immediately (covers “event fired before listener attached”)
+  boot();
+
+  // 3) And retry briefly (covers slow auth settle / slow supabase load)
+   (function retryBoot(n = 20) {
+     if (_booted || n <= 0) return;
+     setTimeout(() => {
+       boot();
+       retryBoot(n - 1);
+     }, 150);
+   })();
+
 
 })();
+
