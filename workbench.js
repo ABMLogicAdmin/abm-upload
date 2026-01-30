@@ -765,12 +765,10 @@
     // =========================
     // Wire buttons
     // =========================
-    $("loginBtn")?.addEventListener("click", login);
 
     // If you removed logoutBtn from HTML (recommended), nav handles logout.
     // If it's still present somewhere, this remains safe:
-    $("logoutBtn")?.addEventListener("click", logout);
-
+ 
     $("refreshBtn")?.addEventListener("click", async () => {
       const btn = $("refreshBtn");
       const old = btn?.textContent || "Refresh";
