@@ -28,10 +28,9 @@
 body[data-page-title="Contact Workbench"] .wrap{
   max-width: min(1600px, calc(100vw - 36px));
   width: 100%;
-  padding-left: 18px;
-  padding-right: 18px;
+  padding: 12px 18px 18px;   /* ✅ adds top + bottom finish */
   flex: 1 1 auto;
-  min-height: 0;     /* CRITICAL for inner scrolling */
+  min-height: 0;             /* CRITICAL */
   overflow: hidden;
   display: flex;
   flex-direction: column;
@@ -40,10 +39,10 @@ body[data-page-title="Contact Workbench"] .wrap{
 @media (max-width: 980px){
   body[data-page-title="Contact Workbench"] .wrap{
     max-width: 100%;
-    padding-left: 12px;
-    padding-right: 12px;
+    padding: 12px 12px 18px;
   }
 }
+
 
 /* Make columns feel “full screen” (Contact WB only) */
 body[data-page-title="Contact Workbench"] .grid2{
@@ -296,15 +295,25 @@ body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap 
 ========================= */
 
 /* Make the detail form the scroller */
-body[data-page-title="Contact Workbench"] #detailForm{
-  flex: 1 1 auto;
-  min-height: 0;
-  overflow: auto;
-  padding-right: 6px;
-}
+
 body[data-page-title="Contact Workbench"] #detailEmpty{
   flex: 0 0 auto;
 }
+
+/* Detail card: only the review table area scrolls */
+body[data-page-title="Contact Workbench"] #detailForm{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;   /* ✅ prevents “double scroll” */
+}
+
+/* Make the review grid area the scroller (NOT the whole form) */
+body[data-page-title="Contact Workbench"] .decisionGridWrap{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
 
 /* Hide optional header elements if present */
 #wbRole, #wbMe { display:none; }
@@ -392,3 +401,408 @@ body[data-page-title="Contact Workbench"] .decisionGrid th + th,
 body[data-page-title="Contact Workbench"] .decisionGrid td + td{
   border-left: 1px solid rgba(34,35,61,.06);
 }
+
+/* contact-workbench.css
+   Goal: match Lead Workbench styling (cards, table, spacing)
+   Cleanup: remove dead/duplicate code, keep behavior identical
+   NOTE: no size/color/font changes vs your provided CSS
+*/
+
+:root{
+  --card:#ffffff;
+  --radius:14px;
+  --shadow:0 10px 35px rgba(17,24,39,.12);
+}
+
+/* =========================
+   Layout
+========================= */
+
+.grid2{
+  display:grid;
+  grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+  gap:18px;
+  align-items:start;
+}
+@media (max-width: 980px){
+  .grid2{ grid-template-columns: 1fr; }
+}
+
+/* Wider than global .wrap (Contact WB only) */
+body[data-page-title="Contact Workbench"] .wrap{
+  max-width: min(1600px, calc(100vw - 36px));
+  width: 100%;
+  padding: 12px 18px 18px;   /* ✅ adds top + bottom finish */
+  flex: 1 1 auto;
+  min-height: 0;             /* CRITICAL */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (max-width: 980px){
+  body[data-page-title="Contact Workbench"] .wrap{
+    max-width: 100%;
+    padding: 12px 12px 18px;
+  }
+}
+
+
+/* Make columns feel “full screen” (Contact WB only) */
+body[data-page-title="Contact Workbench"] .grid2{
+  grid-template-columns: minmax(420px, 1.15fr) minmax(520px, 1.85fr);
+  flex: 1 1 auto;
+  min-height: 0;     /* CRITICAL */
+  align-items: stretch;
+}
+
+/* =========================
+   Cards
+========================= */
+
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:18px;
+  box-shadow:var(--shadow);
+}
+
+/* Contact WB: ensure panels behave like full-height columns */
+body[data-page-title="Contact Workbench"] .grid2 > .card{
+  min-height: 0;     /* CRITICAL */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Force cards to be white and respect rounding (kept behavior) */
+body[data-page-title="Contact Workbench"] .card{
+  background:#fff !important;
+  overflow:hidden;
+}
+
+/* =========================
+   Typography (match Lead WB)
+========================= */
+
+label{
+  display:block;
+  margin-top:0;
+  font-size:12.5px;
+  color:var(--brand-navy);
+  font-weight:600;
+}
+
+input, select, textarea{
+  width:100%;
+  padding:11px 12px;
+  margin-top:7px;
+  font-size:12px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  font-family:inherit;
+  background:#fff;
+  color:var(--text);
+}
+textarea{ min-height:110px; resize:vertical; }
+
+.title{
+  margin:0;
+  font-size:16px;
+  font-weight:800;
+  color:var(--brand-navy);
+}
+
+.subtle{
+  font-size:12px;
+  color:var(--muted);
+}
+
+/* Section headers in detail panel */
+#detailForm h3{
+  font-size:12.5px;
+  font-weight:900;
+  color:var(--brand-navy);
+}
+
+/* Raw snapshot key/value area */
+.kv{
+  display:grid;
+  grid-template-columns: 160px 1fr;
+  gap:6px 10px;
+  font-size:13px;
+  line-height:1.35;
+}
+
+/* =========================
+   Filters row
+========================= */
+
+.row3{
+  display:grid;
+  grid-template-columns: 1fr 1fr 1fr 1.3fr;
+  gap:12px;
+}
+@media (max-width: 980px){
+  .row3{ grid-template-columns: 1fr; }
+}
+
+.row{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap:12px;
+}
+@media (max-width: 980px){
+  .row{ grid-template-columns: 1fr; }
+}
+
+/* =========================
+   Queue table
+========================= */
+
+.tableWrap{
+  overflow-x:auto;
+  overflow-y:auto;
+  max-width:100%;
+  width:100%;
+  margin-top:12px;
+  border:1px solid rgba(34,35,61,.10);
+  border-radius:12px;
+  background:#fff;
+}
+
+/* table */
+.tableWrap table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  margin-top:10px;
+}
+
+.tableWrap thead th{
+  text-align:left;
+  font-size:12px;
+  color:var(--muted);
+  font-weight:900;
+  padding:10px;
+  border-bottom:1px solid rgba(34,35,61,.12);
+  white-space:nowrap;
+}
+
+.tableWrap tbody td{
+  padding:12px 10px;
+  border-bottom:1px solid rgba(34,35,61,.10);
+  vertical-align:top;
+  font-size:12px;
+}
+
+/* row hover/active */
+.tableWrap tbody tr{ cursor:pointer; }
+.tableWrap tbody tr:hover{ background:rgba(48,173,247,.06); }
+.tableWrap tbody tr.active{
+  background:rgba(48,173,247,.10);
+  outline:1px solid rgba(48,173,247,.20);
+}
+
+/* Sticky header inside scrolling queue table */
+body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+body[data-page-title="Contact Workbench"] .grid2 > .card:first-child .tableWrap thead th{
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #fff;
+}
+
+/* =========================
+   Pills / meta line
+========================= */
+
+.pill{
+  display:inline-flex;
+  align-items:center;
+  justify-content:center;
+  border-radius:999px;
+  padding:6px 10px;
+  font-size:11px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--brand-navy);
+}
+
+.metaLine{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  font-size:12px;
+  color:var(--muted);
+}
+
+.hr{
+  height:1px;
+  background:rgba(34,35,61,.12);
+  margin:14px 0;
+}
+
+/* =========================
+   Buttons (toolbar)
+========================= */
+
+.toolbar{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  align-items:center;
+}
+
+.btn{
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--border);
+  background:#fff;
+  color:var(--brand-navy);
+  cursor:pointer;
+  font-weight:800;
+  width:auto;
+  font-size:13px;
+}
+
+/* primary action */
+.btnPrimary{
+  border:1px solid rgba(48,173,247,.85);
+  background:var(--brand-primary);
+  color:#fff;
+}
+
+/* danger action */
+.btnDanger{
+  border:1px solid rgba(239,68,68,.85);
+  background:#ef4444;
+  color:#fff;
+}
+
+.btn:disabled{
+  cursor:not-allowed;
+  opacity:1;
+  background:#fff !important;
+  color:var(--muted) !important;
+  border:1px solid rgba(34,35,61,.18) !important;
+  box-shadow:none !important;
+}
+
+/* =========================
+   Detail panel internal scroller
+========================= */
+
+/* Make the detail form the scroller */
+
+body[data-page-title="Contact Workbench"] #detailEmpty{
+  flex: 0 0 auto;
+}
+
+/* Detail card: only the review table area scrolls */
+body[data-page-title="Contact Workbench"] #detailForm{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;   /* ✅ prevents “double scroll” */
+}
+
+/* Make the review grid area the scroller (NOT the whole form) */
+body[data-page-title="Contact Workbench"] .decisionGridWrap{
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+
+/* Hide optional header elements if present */
+#wbRole, #wbMe { display:none; }
+
+/* =========================
+   No page scroll on Contact Workbench
+========================= */
+
+html, body { height: 100%; }
+
+body[data-page-title="Contact Workbench"]{
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+body[data-page-title="Contact Workbench"] #siteNav{ flex: 0 0 auto; }
+
+/* Contact Review table text sizing */
+.decisionGrid td {
+  font-size: 12px;
+}
+
+.decisionGrid td a {
+  font-size: 12px;
+}
+
+/* Contact Review table - calmer headers */
+.reviewTable th{
+  font-size: 12px;          /* smaller */
+  font-weight: 600;         /* slightly lighter than bold */
+  color: var(--muted);      /* softer */
+  padding: 8px 10px;        /* tighter */
+  text-transform: none;     /* keep as-is */
+  letter-spacing: .01em;
+}
+
+.reviewTable td{
+  padding: 10px 10px;       /* slightly tighter rows */
+  vertical-align: top;
+}
+
+/* Minimal gridlines for scan-ability */
+.reviewTable{
+  border-collapse: collapse;
+}
+
+.reviewTable thead th{
+  border-bottom: 1px solid var(--border);
+}
+
+.reviewTable tbody td{
+  border-bottom: 1px solid rgba(229,231,235,.75);
+}
+
+/* Optional: subtle vertical dividers */
+.reviewTable th + th,
+.reviewTable td + td{
+  border-left: 1px solid rgba(229,231,235,.55);
+}
+
+/* Contact Review table — headers + minimal gridlines (actual table is .decisionGrid) */
+body[data-page-title="Contact Workbench"] .decisionGrid{
+  width: 100%;
+  border-collapse: collapse;
+}
+
+body[data-page-title="Contact Workbench"] .decisionGrid thead th{
+  text-align: left;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  padding: 8px 10px;
+  border-bottom: 1px solid rgba(34,35,61,.12);
+  white-space: nowrap;
+}
+
+body[data-page-title="Contact Workbench"] .decisionGrid tbody td{
+  padding: 10px 10px;
+  border-bottom: 1px solid rgba(34,35,61,.08);
+  vertical-align: top;
+}
+
+/* subtle column dividers */
+body[data-page-title="Contact Workbench"] .decisionGrid th + th,
+body[data-page-title="Contact Workbench"] .decisionGrid td + td{
+  border-left: 1px solid rgba(34,35,61,.06);
+}
+
