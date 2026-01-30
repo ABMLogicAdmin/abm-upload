@@ -213,7 +213,23 @@ function getSbOrNull() {
 }
 
   const $ = (id) => document.getElementById(id);
-  let pageBooted = false;
+
+  async function initPage() {
+    // wait up to 5 seconds for window.ABM.sb to exist
+    const hint = $("loadingHint");
+    for (let i = 0; i < 50; i++) {          // 50 x 100ms = 5s
+      if (getSbOrNull()) break;
+      if (hint) hint.textContent = "Loading app shell…";
+      await new Promise(r => setTimeout(r, 100));
+    }
+  
+    if (!getSbOrNull()) {
+      if (hint) hint.textContent = "App shell did not load. Press F12 → Console to see the error.";
+      return;
+    }
+  
+    await bootstrapAuthed();
+  }
 
   // Dropdown state
   const state = {
@@ -508,15 +524,8 @@ async function bootstrapAuthed() {
     renderDropdown("ddSource", "source", "Select source…");
   
     if (status) status.textContent = "";
-  }
-  
-    async function initPage() {
-      if (pageBooted) return;
-      pageBooted = true;
-      await bootstrapAuthed();
     }
-  
-  // Run when shell signals ready
+    
   window.addEventListener("abm:shell:ready", () => {
     initPage().catch((e) => {
       console.error(e);
@@ -524,7 +533,6 @@ async function bootstrapAuthed() {
     });
   });
   
-  // Fallback
   document.addEventListener("DOMContentLoaded", () => {
     initPage().catch((e) => {
       console.error(e);
@@ -532,8 +540,9 @@ async function bootstrapAuthed() {
     });
   });
 
-  
+
   </script>
 </body>
 </html>
+
 
