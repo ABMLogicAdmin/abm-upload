@@ -202,24 +202,7 @@
 
   <div class="wrap">
 
-    <!-- LOGIN -->
-    <div class="card" id="loginCard">
-      <div class="row">
-        <div>
-          <label>Email</label>
-          <input id="email" type="email" autocomplete="username" />
-        </div>
-        <div>
-          <label>Password</label>
-          <input id="password" type="password" autocomplete="current-password" />
-        </div>
-      </div>
-      <button class="btn" id="loginBtn" type="button">Sign in</button>
-      <div class="status" id="loginStatus"></div>
-      <div class="hint">If login works but Admin page blocks you, your app_users.role is not admin.</div>
-    </div>
-
-    <div class="grid2" id="adminGrid" style="display:none;">
+      <div class="grid2" id="adminGrid" style="display:none;">
 
       <!-- DELIVERY EXPORT CARD -->
       <div class="card" id="adminDeliveryExport" style="display:none;">
@@ -298,41 +281,31 @@
   </div>
   <!-- /wrap -->
 
-  <!-- Inline bootstrap for login/admin gate -->
- <script>
-  const $ = (id) => document.getElementById(id);
+<script>
+  (function () {
+    const $ = (id) => document.getElementById(id);
 
-  window.addEventListener("DOMContentLoaded", () => {
-    const sb = window.ABM?.sb;
-    if (!sb) {
-      alert("ABM App Shell not loaded. window.ABM.sb is missing.");
-      return;
-    }
+    async function gate() {
+      const sb = window.ABM?.sb;
+      if (!sb) return;
 
-    async function isAdmin() {
-      const { data: userRes, error: userErr } = await sb.auth.getUser();
-      if (userErr || !userRes?.user) return false;
+      // Must be logged in
+      const { data } = await sb.auth.getSession();
+      const user = data?.session?.user;
+      if (!user) {
+        window.location.href = "./login.html";
+        return;
+      }
 
-      const { data, error } = await sb
+      // Must be admin
+      const { data: roleRow } = await sb
         .from("app_users")
         .select("role")
-        .eq("user_id", userRes.user.id)
-        .single();
+        .eq("user_id", user.id)
+        .maybeSingle();
 
-      if (error) return false;
-      return data?.role === "admin";
-    }
-
-    async function showApp() {
-      const { data: userRes } = await sb.auth.getUser();
-      const user = userRes?.user;
-
-      if (user?.email) window.ABM_USER_EMAIL = user.email;
-      window.ABM_ROLE = "admin";
-      window.dispatchEvent(new Event("abm:nav:refresh"));
-
-      const admin = await isAdmin();
-      if (!admin) {
+      const role = String(roleRow?.role || "user").toLowerCase();
+      if (role !== "admin") {
         document.body.innerHTML = `
           <div style="max-width:600px;margin:80px auto;text-align:center;font-family:Poppins,Arial,sans-serif;">
             <h2>Access denied</h2>
@@ -343,37 +316,27 @@
         return;
       }
 
-      $("loginCard").style.display = "none";
+      // Set globals for nav + other scripts
+      window.ABM_USER_EMAIL = user.email || "";
+      window.ABM_ROLE = "admin";
+      window.dispatchEvent(new Event("abm:nav:refresh"));
+
+      // Show admin area
       $("adminGrid").style.display = "grid";
       $("adminDeliveryExport").style.display = "block";
 
-      // Tell admin-export.js it can wire up now
+      // Tell admin-export.js it can wire up now (if it listens)
       window.dispatchEvent(new Event("abm:export:ready"));
     }
 
-    async function login() {
-      $("loginStatus").textContent = "Signing in…";
+    // Run after shell is ready
+    window.addEventListener("abm:shell:ready", () => gate().catch(() => {
+      window.location.href = "./login.html";
+    }));
 
-      const { error } = await sb.auth.signInWithPassword({
-        email: $("email").value.trim(),
-        password: $("password").value
-      });
-
-      if (error) {
-        $("loginStatus").textContent = error.message;
-        return;
-      }
-
-      $("loginStatus").textContent = "";
-      await showApp();
-    }
-
-    $("loginBtn").onclick = login;
-
-    sb.auth.getSession()
-      .then(async (r) => { if (r.data.session) await showApp(); })
-      .catch(()=>{});
-  });
+    // If shell already ready
+    if (window.ABM?.sb) gate().catch(() => {});
+  })();
 </script>
 
 </body>
