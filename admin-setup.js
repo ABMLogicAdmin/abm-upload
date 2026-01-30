@@ -821,29 +821,6 @@ async function loadActiveBriefOnly(campaignId) {
   return data || null;
 }
 
-    async function login() {
-      $("loginStatus").textContent = "Signing in…";
-
-      const { error } = await sb.auth.signInWithPassword({
-        email: $("email").value.trim(),
-        password: $("password").value
-      });
-
-      if (error) {
-        $("loginStatus").textContent = error.message;
-        return;
-      }
-
-     $("loginStatus").textContent = "";
-     await showApp();
-     
-    }
-
-    async function logout() {
-      try { await sb.auth.signOut(); } catch (e) { console.warn("Logout error:", e); }
-      location.href = "/abm-upload/admin-setup.html";
-    }
-
 function normalizeDomain(input) {
   let s = (input || "").trim().toLowerCase();
   if (!s) return "";
@@ -1511,11 +1488,9 @@ showAudienceImport(
         return;
       }
 
-        const loginCard = $("loginCard");
         const grid = $("adminGrid");
         const appCard = $("appCard");
         
-        if (loginCard) loginCard.style.display = "none";
         if (grid) grid.style.display = "grid";
         if (appCard) appCard.style.display = "block";
      
@@ -1803,15 +1778,16 @@ syncAudiencePanel();
       setAdminStatus("✅ Source created.");
     }
 
-    document.addEventListener("DOMContentLoaded", () => {
-      const btn = document.getElementById("logoutBtn");
-      if (btn) btn.addEventListener("click", logout);
-
-     const loginBtn = $("loginBtn");
-     if (loginBtn) loginBtn.onclick = login;
-    });
-
- // Auto-show app if already logged in
- sb.auth.getSession()
-  .then(async (r) => { if (r.data.session) await showApp(); })
-  .catch(()=>{});
+    // Hard gate: admin-setup is NOT a login page.
+    // If no session: redirect to login page.
+    sb.auth.getSession()
+      .then(async (r) => {
+        if (!r?.data?.session) {
+          location.replace("/abm-upload/login.html");
+          return;
+        }
+        await showApp();
+      })
+      .catch(() => {
+        location.replace("/abm-upload/login.html");
+      });
