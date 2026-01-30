@@ -501,7 +501,15 @@ async function init() {
     setMsg("");
 
     if (els.detailEmpty) els.detailEmpty.style.display = "none";
-    if (els.detailForm) els.detailForm.style.display = "block";
+
+   if (els.detailForm) {
+     els.detailForm.style.display = "flex";          // <-- KEY CHANGE
+     els.detailForm.style.flexDirection = "column";  // ensure flex column
+     els.detailForm.style.flex = "1 1 auto";
+     els.detailForm.style.minHeight = "0";           // CRITICAL for scrolling
+     els.detailForm.style.overflow = "hidden";       // prevent double-scroll
+   }
+
 
     // clear tables
     if (els.decisionBodyKey) els.decisionBodyKey.innerHTML = "";
