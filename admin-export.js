@@ -596,10 +596,8 @@ async function callGenerateDeliveryCsv(deliveryId) {
     setStatus("Preparing session…");
 
     try {
-      const edgeUrl = `${window.ABM.SUPABASE_URL}/functions/v1/generate-delivery-csv`;
-      setStatus("Calling Edge Function…\n" + edgeUrl);
-
-     const signedUrl = await callGenerateDeliveryCsv(deliveryId);
+      setStatus("Calling Edge Function…");
+      const signedUrl = await callGenerateDeliveryCsv(deliveryId);
 
       setStatus("SUCCESS");
       showResult(signedUrl);
