@@ -1,1 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ABM Logic — Login</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="./base.css?v=31">
+
+  <!-- 1) Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+  <!-- 2) App Shell (creates window.ABM.sb ONCE) -->
+  <script src="./app.shell.js?v=1" defer></script>
+
+  <!-- 3) Shared nav (won't render when logged out) -->
+  <script src="./nav.js?v=25" defer></script>
+
+  <!-- 4) Login page JS -->
+  <script src="./login.js?v=1" defer></script>
+</head>
+
+<body data-page-title="Login" data-page-badge="" data-page-help="Sign in to access the ABM Logic workbenches.">
+  <div id="siteNav"></div>
+
+  <div class="wrap">
+    <div class="wrapSmall">
+      <div class="card" id="loginCard">
+        <div class="twoCol">
+          <div>
+            <label>Email</label>
+            <input id="email" type="email" autocomplete="username" />
+          </div>
+          <div>
+            <label>Password</label>
+            <input id="password" type="password" autocomplete="current-password" />
+          </div>
+        </div>
+
+        <button class="btn" id="loginBtn" type="button">Sign in</button>
+        <div class="statusText" id="loginStatus"></div>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
 
