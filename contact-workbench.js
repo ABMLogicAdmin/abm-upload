@@ -154,14 +154,34 @@ window.__cw_state = state;
          
          wireEventsOnce();
          
-         const sess = await window.ABM.getSessionSafe().catch(() => null);
+// Wait briefly for auth/session to hydrate (prevents false redirects)
+         async function waitForSession(maxMs = 1200) {
+           const sb = sbNow();
+           const start = Date.now();
+         
+           while (Date.now() - start < maxMs) {
+             // Prefer the shell helper, but fall back to sb.auth.getSession()
+             const sess =
+               (window.ABM?.getSessionSafe ? await window.ABM.getSessionSafe().catch(() => null) : null) ||
+               (sb ? await sb.auth.getSession().then(r => ({ session: r.data?.session })).catch(() => null) : null);
+         
+             if (sess?.session?.user) return sess;
+         
+             // short sleep
+             await new Promise(r => setTimeout(r, 150));
+           }
+           return null;
+         }
+         
+         const sess = await waitForSession(1500);
          
          if (!sess?.session?.user) {
-           // This is NOT a login page. Redirect immediately.
+           // Not authed → send to login page
            location.replace("/abm-upload/login.html");
            return;
          }
-         
+
+      
          // We are authed — show app (login UI does not exist on this page)
          const ag = $("#appGrid");
          if (ag) ag.style.display = "block";
