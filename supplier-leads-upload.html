@@ -164,7 +164,7 @@
 <div class="wrap">
 
   <div id="appGrid" style="display:none;">
-    <div class="card" id="appCard">
+    <div class="card">
       <div class="row">
         <div>
           <label>Client</label>
@@ -371,8 +371,9 @@ function getSbOrNull() {
       }
 
       if (status) status.textContent = "Checking session…";
-      const { data:{user}, error:userErr } = await sb.auth.getUser();
-      if (userErr || !user) { if (status) status.textContent = "Not logged in."; return; }
+      const { data: sess } = await sb.auth.getSession();
+      const user = sess?.session?.user;
+      if (!user) { if (status) status.textContent = "Not logged in."; return; }
 
       if (status) status.textContent = "Creating ingest job…";
       const { data: job, error: jobErr } = await sb
@@ -428,37 +429,29 @@ function getSbOrNull() {
       const sb = getSbOrNull();
       if (!sb) return;
     
-     
-// Must be logged in
-  const { data: sess } = await sb.auth.getSession();
-  if (!sess?.session?.user) {
-    window.location.href = "./login.html";
-    return;
-  }
+    const { data: sess } = await sb.auth.getSession();
+    const user = sess?.session?.user;
+    
+    if (!user) {
+      window.location.href = "./login.html";
+      return;
+    }
 
-  // Fetch role
-  const { data: userRes, error: userErr } = await sb.auth.getUser();
-  const user = userRes?.user;
-  if (userErr || !user) {
-    window.location.href = "./login.html";
-    return;
-  }
-
-  window.ABM_USER_EMAIL = user.email || "";
-  window.ABM_ROLE = "user";
-
+  let role = "user";
+  
   const { data: roleRow, error: roleErr } = await sb
     .from("app_users")
     .select("role")
     .eq("user_id", user.id)
     .maybeSingle();
-
+  
   if (!roleErr && roleRow?.role) {
-    window.ABM_ROLE = String(roleRow.role).toLowerCase();
+    role = String(roleRow.role).toLowerCase();
   }
 
+
   // Admin-only gate for this page
-  if (String(window.ABM_ROLE || "").toLowerCase() !== "admin") {
+  if (role !== "admin") {
     document.body.innerHTML = `
       <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
         <div>
@@ -525,4 +518,5 @@ function getSbOrNull() {
   </script>
 </body>
 </html>
+
 
