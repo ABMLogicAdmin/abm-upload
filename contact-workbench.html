@@ -38,10 +38,10 @@
   <div id="appGrid" style="display:none;">
   
   <div class="wrap">
-    <div class="grid2">
+    <div class="grid2" style="height: calc(100vh - 160px); align-items: stretch;">
 
       <!-- LEFT: QUEUE -->
-      <div class="card">
+      <div class="card" style="display:flex; flex-direction:column; min-height:0;">
         <div class="split">
           <h2 class="title">Queue</h2>
         </div>
@@ -86,7 +86,7 @@
 
         <div class="subtle" id="queueStatus">Loading…</div>
 
-        <div class="tableWrap">
+        <div class="tableWrap" style="flex:1; min-height:0; overflow:auto;">
           <table>
             <thead>
               <tr>
@@ -103,7 +103,7 @@
       </div>
 
       <!-- RIGHT: DETAIL -->
-      <div class="card">
+      <div class="card" style="display:flex; flex-direction:column; min-height:0;">
         <div class="split">
           <h2 class="title">Detail</h2>
           <div class="toolbar">
@@ -131,7 +131,7 @@
 
         <h3 style="margin:0 0 8px 0;">Contact Review</h3>
       
-        <div class="decisionGridWrap">
+        <div class="decisionGridWrap" style="flex:1; min-height:0; overflow:auto;">
           <table class="decisionGrid">
             <thead>
               <tr>
