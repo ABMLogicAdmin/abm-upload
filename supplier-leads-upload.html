@@ -159,13 +159,6 @@
   data-page-badge="Partner / Batch Ingest"
   data-page-help="Uploads a CSV to Storage and creates an ingest_jobs record."
 >
-
-  <div id="pageLoading" class="wrap">
-  <div class="card" style="margin-top:18px;">
-    <div style="font-weight:700;">Loading…</div>
-    <div class="hint" id="loadingHint">Checking your session.</div>
-  </div>
-</div>
   
 <div id="siteNav"></div>
 <div class="wrap">
@@ -220,18 +213,18 @@ function getSbOrNull() {
 
   async function initPage() {
     // wait up to 5 seconds for window.ABM.sb to exist
-    const hint = $("loadingHint");
+    
     for (let i = 0; i < 50; i++) {          // 50 x 100ms = 5s
       if (getSbOrNull()) break;
-      if (hint) hint.textContent = "Loading app shell…";
+      
       await new Promise(r => setTimeout(r, 100));
     }
   
-    if (!getSbOrNull()) {
-      if (hint) hint.textContent = "App shell did not load. Press F12 → Console to see the error.";
+     if (!getSbOrNull()) {
+      console.error("App shell did not load. Check Console for errors.");
       return;
     }
-  
+
     await bootstrapAuthed();
   }
 
@@ -450,10 +443,7 @@ function getSbOrNull() {
 
 async function bootstrapAuthed() {
   const sb = getSbOrNull();
-  if (!sb) {
-    const hint = $("loadingHint");
-    if (hint) hint.textContent = "Loading app shell…";
-    return;
+  if (!sb) return;
   }
 
 // Must be logged in
@@ -496,9 +486,7 @@ async function bootstrapAuthed() {
       </div>`;
     return;
   }
-
-  $("pageLoading")?.remove();
-  
+ 
   // Show app
     const appGrid = $("appGrid");
     if (appGrid) appGrid.style.display = "block";
@@ -548,6 +536,7 @@ async function bootstrapAuthed() {
   </script>
 </body>
 </html>
+
 
 
 
