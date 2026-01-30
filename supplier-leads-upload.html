@@ -210,15 +210,6 @@ function getSbOrNull() {
 }
 
   const $ = (id) => document.getElementById(id);
-
-  async function initPage() {
-    if (!getSbOrNull()) {
-      console.error("Shell not ready (no sb).");
-      return;
-    }
-    await bootstrapAuthed();
-  }
-
   
   // Dropdown state
   const state = {
@@ -511,19 +502,27 @@ function getSbOrNull() {
     }
 
     let __booted = false;
-  
-    window.addEventListener("abm:shell:ready", () => {
+    
+    async function bootOnce() {
       if (__booted) return;
+      if (!getSbOrNull()) return; // shell not ready yet
       __booted = true;
     
-      initPage().catch((e) => {
+      try {
+        await bootstrapAuthed();
+      } catch (e) {
         console.error(e);
         window.location.href = "./login.html";
-      });
-    });
+      }
+    }
+    
+    // 1) If shell becomes ready AFTER this script loads
+    window.addEventListener("abm:shell:ready", bootOnce);
+    
+    // 2) If shell was already ready BEFORE this listener was attached
+    bootOnce();
 
   </script>
 </body>
 </html>
-
 
