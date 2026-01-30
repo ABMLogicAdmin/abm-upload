@@ -11,8 +11,6 @@
 
   <link rel="stylesheet" href="/abm-upload/base.css?v=30">
   
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-
   <style>
     :root{
       --brand-primary:#30ADF7;
@@ -44,7 +42,7 @@
       border:1px solid var(--border);
       border-radius:var(--radius);
       padding:18px;
-      box-shadow:0 8px 30px rgba(17,24,39,06);
+      box-shadow:0 8px 30px rgba(17,24,39,.06);
     }
     label{display:block;margin-top:14px;font-size:12.5px;color:var(--brand-navy);font-weight:600}
 
@@ -162,28 +160,15 @@
   data-page-help="Uploads a CSV to Storage and creates an ingest_jobs record."
 >
 
-<div id="siteNav"></div>
-<button id="logoutBtn" type="button" style="display:none;">Logout</button>
-
-<div class="wrap">
-
-  <div id="loginWrap">
-    <div class="card" id="loginCard">
-      <div class="row">
-        <div>
-          <label>Email</label>
-          <input id="email" type="email" autocomplete="username" />
-        </div>
-        <div>
-          <label>Password</label>
-          <input id="password" type="password" autocomplete="current-password" />
-        </div>
-      </div>
-      <button class="btn" id="loginBtn">Sign in</button>
-      <div class="status" id="loginStatus"></div>
-      <div class="hint">If login works but dropdowns don’t load, it’s usually RLS.</div>
-    </div>
+  <div id="pageLoading" class="wrap">
+  <div class="card" style="margin-top:18px;">
+    <div style="font-weight:700;">Loading…</div>
+    <div class="hint" id="loadingHint">Checking your session.</div>
   </div>
+</div>
+  
+<div id="siteNav"></div>
+<div class="wrap">
 
   <div id="appGrid" style="display:none;">
     <div class="card" id="appCard">
@@ -223,26 +208,12 @@
 <script>
 
   // Use shared Supabase client from app.shell.js
-const sb = window.ABM_SB;
-
-if (!sb) {
-  alert("Supabase shell not ready. Check script order.");
-  throw new Error("ABM shell missing");
+function getSbOrNull() {
+  return window.ABM?.sb || null;
 }
 
   const $ = (id) => document.getElementById(id);
-  function setAuthedUI(isAuthed) {
-  const loginWrap = $("loginWrap");
-  const appGrid = $("appGrid");
-
-  if (isAuthed) {
-    if (loginWrap) loginWrap.style.display = "none";
-    if (appGrid) appGrid.style.display = "block";
-  } else {
-    if (loginWrap) loginWrap.style.display = "";
-    if (appGrid) appGrid.style.display = "none";
-  }
-}
+  let pageBooted = false;
 
   // Dropdown state
   const state = {
@@ -254,8 +225,7 @@ if (!sb) {
   // Raw caches (used for filtering campaigns by selected client)
   const cache = { clients: [], campaigns: [], sources: [] };
 
-  $("loginBtn").addEventListener("click", login);
-  $("uploadBtn").addEventListener("click", uploadCsv);
+  $("uploadBtn")?.addEventListener("click", uploadCsv);
 
   // Close dropdowns when clicking outside
   document.addEventListener("click", (e) => {
@@ -363,122 +333,38 @@ if (!sb) {
     const filtered = (cache.campaigns || []).filter(c => c.client_id === clientId);
     state.campaign.items = filtered.map(r => ({ value: r.campaign_id, label: r.name }));
   }
-
-  async function login() {
-    $("loginStatus").textContent = "Signing in…";
-    const { error } = await sb.auth.signInWithPassword({
-      email: $("email").value.trim(),
-      password: $("password").value
-    });
-    if (error) {
-      $("loginStatus").textContent = error.message;
-      return;
-    }
-    $("loginStatus").textContent = "";
-    showApp();
-  }
-async function logout() {
-  try {
-    await sb.auth.signOut();
-  } catch (e) {
-    console.warn("Logout error:", e);
-  }
-  location.href = "/abm-upload/supplier-leads-upload.html";
-}
-
-    $("logoutBtn")?.addEventListener("click", logout);
     
-    async function showApp() {
-      
-// Set navbar identity AFTER login, then refresh navbar
-const { data: userRes } = await sb.auth.getUser();
-const user = userRes?.user;
-
-if (user?.email) {
-  window.ABM_USER_EMAIL = user.email;
-  window.ABM_ROLE = "user"; // default until we fetch real role
-
-  // Fetch real role from app_users
-  const { data: roleRow, error: roleErr } = await sb
-    .from("app_users")
-    .select("role")
-    .eq("user_id", user.id)
-    .maybeSingle();
-
-  if (!roleErr && roleRow?.role) {
-    window.ABM_ROLE = roleRow.role; // "admin" or "ops"
-  }
-
-  window.dispatchEvent(new Event("abm:nav:refresh"));
-}
-      
-// ---- ADMIN-ONLY GATE FOR THIS PAGE ----
-const role = String(window.ABM_ROLE || "").toLowerCase();
-if (role !== "admin") {
-  document.body.innerHTML = `
-    <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
-      <div>
-        <h2 style="margin:0 0 8px;">Access denied</h2>
-        <div>You do not have permission to view this page.</div>
-        <div style="margin-top:10px;opacity:.7;font-size:13px;">(Your app_users.role is not admin.)</div>
-      </div>
-    </div>`;
-  return;
-}
-      const status = $("status");
-
-      setAuthedUI(true);
-      if (status) status.textContent = "Loading dropdowns…";
-
-      try {
-        await loadItems();
-
-        state.client.label = "Select client…";
-        state.client.value = "";
-        state.campaign.label = "Select campaign…";
-        state.campaign.value = "";
-        state.source.label = "Select source…";
-        state.source.value = "";
-
-        state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
-        state.source.items = (cache.sources || []).map(r => ({ value: r.source_id, label: r.source_name }));
-        state.campaign.items = [];
-
-        renderDropdown("ddClient", "client", "Select client…");
-        renderDropdown("ddCampaign", "campaign", "Select campaign…");
-        renderDropdown("ddSource", "source", "Select source…");
-
-        if (status) status.textContent = "";
-      } catch (e) {
-        if (status) status.textContent = String(e?.message || e);
-      }
-    }
-
     async function loadItems() {
+      const sb = getSbOrNull();
+      if (!sb) throw new Error("Shell not ready (no sb).");
+    
       const { data: clients, error: cErr } = await sb
         .from("clients")
         .select("client_id, name")
         .order("name");
       if (cErr) throw new Error(`Failed to load clients: ${cErr.message}`);
-
+    
       const { data: campaigns, error: caErr } = await sb
         .from("campaigns")
         .select("campaign_id, client_id, name, type, status")
         .order("name");
       if (caErr) throw new Error(`Failed to load campaigns: ${caErr.message}`);
-
+    
       const { data: sources, error: sErr } = await sb
         .from("sources")
         .select("source_id, source_name, source_system, source_channel")
         .order("source_name");
       if (sErr) throw new Error(`Failed to load sources: ${sErr.message}`);
-
+    
       cache.clients = clients || [];
       cache.campaigns = campaigns || [];
       cache.sources = sources || [];
     }
 
     async function uploadCsv() {
+      const sb = getSbOrNull();
+      if (!sb) { $("status").textContent = "Shell not ready."; return; }
+
       const file = $("file")?.files?.[0];
       const status = $("status");
       if (!file) { if (status) status.textContent = "Select a CSV first."; return; }
@@ -542,29 +428,112 @@ if (role !== "admin") {
       }
     }
 
-    // Auto-show app if already logged in (runs once on page load)
-   window.ABM.getSessionSafe()
-  .then(sess => {
-    if (sess) {
-      showApp();
-    } else {
-      setAuthedUI(false);
+async function bootstrapAuthed() {
+  const sb = getSbOrNull();
+  if (!sb) {
+    const hint = $("loadingHint");
+    if (hint) hint.textContent = "Loading app shell…";
+    return;
+  }
+
+// Must be logged in
+  const { data: sess } = await sb.auth.getSession();
+  if (!sess?.session?.user) {
+    window.location.href = "./login.html";
+    return;
+  }
+
+  // Fetch role
+  const { data: userRes, error: userErr } = await sb.auth.getUser();
+  const user = userRes?.user;
+  if (userErr || !user) {
+    window.location.href = "./login.html";
+    return;
+  }
+
+  window.ABM_USER_EMAIL = user.email || "";
+  window.ABM_ROLE = "user";
+
+  const { data: roleRow, error: roleErr } = await sb
+    .from("app_users")
+    .select("role")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (!roleErr && roleRow?.role) {
+    window.ABM_ROLE = String(roleRow.role).toLowerCase();
+  }
+
+  // Admin-only gate for this page
+  if (String(window.ABM_ROLE || "").toLowerCase() !== "admin") {
+    document.body.innerHTML = `
+      <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
+        <div>
+          <h2 style="margin:0 0 8px;">Access denied</h2>
+          <div>You do not have permission to view this page.</div>
+          <div style="margin-top:10px;opacity:.7;font-size:13px;">(Your app_users.role is not admin.)</div>
+        </div>
+      </div>`;
+    return;
+  }
+
+  $("pageLoading")?.remove();
+  
+  // Show app
+    const appGrid = $("appGrid");
+    if (appGrid) appGrid.style.display = "block";
+  
+    // Refresh nav now that role/email are known
+    window.dispatchEvent(new Event("abm:nav:refresh"));
+  
+    // Load dropdowns
+    const status = $("status");
+    if (status) status.textContent = "Loading dropdowns…";
+  
+    await loadItems();
+  
+    state.client.label = "Select client…";
+    state.client.value = "";
+    state.campaign.label = "Select campaign…";
+    state.campaign.value = "";
+    state.source.label = "Select source…";
+    state.source.value = "";
+  
+    state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
+    state.source.items = (cache.sources || []).map(r => ({ value: r.source_id, label: r.source_name }));
+    state.campaign.items = [];
+  
+    renderDropdown("ddClient", "client", "Select client…");
+    renderDropdown("ddCampaign", "campaign", "Select campaign…");
+    renderDropdown("ddSource", "source", "Select source…");
+  
+    if (status) status.textContent = "";
+  }
+  
+    async function initPage() {
+      if (pageBooted) return;
+      pageBooted = true;
+      await bootstrapAuthed();
     }
-  })
-  .catch(() => {
-    setAuthedUI(false);
+  
+  // Run when shell signals ready
+  window.addEventListener("abm:shell:ready", () => {
+    initPage().catch((e) => {
+      console.error(e);
+      window.location.href = "./login.html";
+    });
+  });
+  
+  // Fallback
+  document.addEventListener("DOMContentLoaded", () => {
+    initPage().catch((e) => {
+      console.error(e);
+      window.location.href = "./login.html";
+    });
   });
 
+  
   </script>
 </body>
 </html>
-
-
-
-
-
-
-
-
-
 
