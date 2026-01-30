@@ -138,6 +138,55 @@ const state = {
 window.__cw_state = state;
    
 
+async function waitForUser(maxMs = 2500) {
+  const start = Date.now();
+
+  while (Date.now() - start < maxMs) {
+    // 1) shell helper
+    try {
+      const s = await window.ABM.getSessionSafe();
+      const u = s?.session?.user;
+      if (u) return u;
+    } catch {}
+
+    // 2) direct supabase session (only if sb exists)
+    try {
+      const sb = sbNow();
+      if (sb?.auth?.getSession) {
+        const { data } = await sb.auth.getSession();
+        const u = data?.session?.user;
+        if (u) return u;
+      }
+    } catch {}
+
+    await new Promise(r => setTimeout(r, 150));
+  }
+
+  return null;
+}
+
+
+function redirectToLoginOnce() {
+  // Prevent infinite bounce loops (sessionStorage is per-tab)
+  const key = "abm_cw_redirect_guard";
+  const last = Number(sessionStorage.getItem(key) || "0");
+  const now = Date.now();
+
+  // if we already redirected within 3 seconds, STOP
+  if (now - last < 3000) {
+    console.error("[Contact WB] Redirect loop stopped. Auth did not settle.");
+    if (els.queueStatus) {
+      els.queueStatus.textContent =
+        "Auth did not settle (redirect loop stopped). Hard refresh. If still broken, send app.shell.js auth helpers.";
+    }
+    return false;
+  }
+
+  sessionStorage.setItem(key, String(now));
+  const next = encodeURIComponent(location.pathname + location.search + location.hash);
+  location.replace(`/abm-upload/login.html?next=${next}`);
+  return true;
+}
 
   // ---------- Init ----------
       async function init() {
@@ -152,37 +201,14 @@ window.__cw_state = state;
               return;
             }
          
-         wireEventsOnce();
-         
-// Wait briefly for auth/session to hydrate (prevents false redirects)
-         async function waitForSession(maxMs = 1200) {
-           const sb = sbNow();
-           const start = Date.now();
-         
-           while (Date.now() - start < maxMs) {
-             // Prefer the shell helper, but fall back to sb.auth.getSession()
-             const sess =
-               (window.ABM?.getSessionSafe ? await window.ABM.getSessionSafe().catch(() => null) : null) ||
-               (sb ? await sb.auth.getSession().then(r => ({ session: r.data?.session })).catch(() => null) : null);
-         
-             if (sess?.session?.user) return sess;
-         
-             // short sleep
-             await new Promise(r => setTimeout(r, 150));
-           }
-           return null;
-         }
-         
-         const sess = await waitForSession(1500);
-         
-         if (!sess?.session?.user) {
-           // Not authed → send to login page
-           const next = encodeURIComponent(location.pathname + location.search + location.hash);
-           location.replace(`/abm-upload/login.html?next=${next}`);
+         wireEventsOnce();        
+// ✅ AUTH GATE: wait for session to settle, otherwise redirect to login
+         const user = await waitForUser(2500);
+         if (!user) {
+           redirectToLoginOnce();
            return;
          }
 
-      
          // We are authed — show app (login UI does not exist on this page)
          const ag = $("#appGrid");
          if (ag) ag.style.display = "block";
@@ -1094,6 +1120,6 @@ window.__cw_state = state;
     init().catch(err => console.error("[Contact WB] init failed:", err));
   }
 
-  window.addEventListener("abm:shell:ready", bootOnce);
-  window.addEventListener("DOMContentLoaded", bootOnce);
+window.addEventListener("abm:shell:ready", bootOnce);
+
 })();
