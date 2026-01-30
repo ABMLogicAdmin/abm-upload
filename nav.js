@@ -38,14 +38,14 @@
     };
   }
 
-  const PAGES = [
-    { label: "Home", href: "/abm-upload/index.html" },
-    { label: "Admin Setup", href: "/abm-upload/admin-setup.html", role: "admin" },
-    { label: "Contact Workbench", href: "/abm-upload/contact-workbench.html" },
-    { label: "Supplier Leads Upload", href: "/abm-upload/supplier-leads-upload.html", role: "admin" },
-    { label: "Lead Workbench", href: "/abm-upload/workbench.html" },
-    { label: "Lead Delivery", href: "/abm-upload/admin-export.html", role: "admin" }
-  ];
+   const PAGES = [
+     { label: "Home", href: "./home.html" },
+     { label: "Admin Setup", href: "./admin-setup.html", role: "admin" },
+     { label: "Contact Workbench", href: "./contact-workbench.html" },
+     { label: "Supplier Leads Upload", href: "./supplier-leads-upload.html", role: "admin" },
+     { label: "Lead Workbench", href: "./workbench.html" },
+     { label: "Lead Delivery", href: "./admin-export.html", role: "admin" }
+   ];
 
   function getSbOrNull() {
     return (window.ABM && window.ABM.sb) ? window.ABM.sb : null;
@@ -93,8 +93,8 @@
     siteNav.innerHTML = `
       <div class="navShell">
         <div class="navTop">
-          <a class="nav-brand" href="/abm-upload/index.html">
-            <img class="nav-logo" src="/abm-upload/abm-logo.png" alt="ABM Logic" />
+          <a class="nav-brand" href="./home.html">
+            <img class="nav-logo" src="./abm-logo.png" alt="ABM Logic" />
           </a>
 
           <div class="navMeta">
