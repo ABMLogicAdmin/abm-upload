@@ -825,3 +825,53 @@ body[data-page-title="Contact Workbench"] .grid2{
   min-height: 0;          /* CRITICAL */
 }
 
+/* ===== Contact WB: force frame + panel scrollers (works with JS display:block) ===== */
+
+html, body { height: 100%; }
+
+body[data-page-title="Contact Workbench"]{
+  margin: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+body[data-page-title="Contact Workbench"] #siteNav{
+  flex: 0 0 auto;
+}
+
+/* keep hidden state */
+body[data-page-title="Contact Workbench"] #appGrid[style*="display:none"]{
+  display: none !important;
+}
+
+/* when shown, force it to be the frame */
+body[data-page-title="Contact Workbench"] #appGrid.appFrame{
+  display: flex !important;
+  flex-direction: column !important;
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+}
+
+/* content fills frame */
+body[data-page-title="Contact Workbench"] #appGrid.appFrame .wrap{
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  overflow: hidden !important;
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+body[data-page-title="Contact Workbench"] #appGrid.appFrame .grid2{
+  flex: 1 1 auto !important;
+  min-height: 0 !important;
+  align-items: stretch;
+}
+
+/* scrollers */
+body[data-page-title="Contact Workbench"] #appGrid.appFrame .tableWrap,
+body[data-page-title="Contact Workbench"] #appGrid.appFrame .decisionGridWrap{
+  min-height: 0 !important;
+  overflow: auto !important;   /* vertical + horizontal scrollbars */
+}
