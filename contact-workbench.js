@@ -72,13 +72,6 @@ function getSbSafe() {
     fNotes: $("#fNotes"),
     detailMsg: $("#detailMsg")
   };
-
-   function setAuthedUI(isAuthed) {
-     const lw = $("#loginWrap");
-     const ag = $("#appGrid");
-     if (lw) lw.style.display = isAuthed ? "none" : "block";
-     if (ag) ag.style.display = isAuthed ? "block" : "none";
-   }
       
   function esc(s) {
     return String(s ?? "").replace(/[&<>"']/g, (c) => ({
@@ -161,20 +154,18 @@ window.__cw_state = state;
          
          wireEventsOnce();
          
-        const sess = await window.ABM.getSessionSafe().catch(() => null);
-      
-        if (!sess?.session?.user) {
-          setAuthedUI(false);
-          state._inited = false; // allow init to run again after login
-          return;
-        }
-      
-        // Now we’re authed — lock init + show app
-        if (state._inited) return;
-        state._inited = true;
-      
-        setAuthedUI(true);
-      
+         const sess = await window.ABM.getSessionSafe().catch(() => null);
+         
+         if (!sess?.session?.user) {
+           // This is NOT a login page. Redirect immediately.
+           location.replace("/abm-upload/login.html");
+           return;
+         }
+         
+         // We are authed — show app (login UI does not exist on this page)
+         const ag = $("#appGrid");
+         if (ag) ag.style.display = "block";
+
         state.user = await window.ABM.getUserSafe();
         state.role = await window.ABM.getRoleSafe();
         state.userId = state.user?.id || null;
@@ -219,8 +210,7 @@ window.__cw_state = state;
     on(els.filterCampaign, "change", () => loadQueue(), "#filterCampaign");
     on(els.filterQueue, "change", () => loadQueue(), "#filterQueue");
     on(els.filterSearch, "input", debounce(() => loadQueue(), 250), "#filterSearch");
-    on($("#loginBtn"), "click", handleLogin, "#loginBtn");
-
+   
     on(els.btnRefresh, "click", async () => {
       await loadQueue();
       if (state.selectedId) await loadDetail(state.selectedId);
@@ -251,31 +241,6 @@ window.__cw_state = state;
       if (b) b.disabled = true;
     });
   }
-
-async function handleLogin() {
-  const email = ($("#email")?.value || "").trim();
-  const password = ($("#password")?.value || "");
-  const statusEl = $("#loginStatus");
-  if (statusEl) statusEl.textContent = "Signing in…";
-
-   const sb = sbNow();
-      if (!sb) {
-        if (statusEl) statusEl.textContent = "Login not ready yet (Supabase client missing). Refresh the page.";
-        return;
-      }
-
-  const { error } = await sb.auth.signInWithPassword({ email, password });
-
-  if (error) {
-    if (statusEl) statusEl.textContent = error.message;
-    return;
-  }
-
-  if (statusEl) statusEl.textContent = "";
-  state._inited = false; // allow init to run again
-  await init();
-}
-
    
   function canEdit(detail) {
     if (!detail) return false;
