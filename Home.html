@@ -1,1 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>ABM Logic — Home</title>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+
+  <!-- CSS -->
+  <link rel="stylesheet" href="./base.css?v=32">
+
+  <!-- 1) Supabase SDK -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2" defer></script>
+
+  <!-- 2) App Shell -->
+  <script src="./app.shell.js?v=1" defer></script>
+
+  <!-- 3) Nav -->
+  <script src="./nav.js?v=25" defer></script>
+
+  <!-- 4) Home JS -->
+  <script src="./home.js?v=1" defer></script>
+</head>
+
+<body
+  data-page-title="Home"
+  data-page-badge="Dashboard"
+  data-page-help="Welcome to ABM Logic"
+>
+  <div id="siteNav"></div>
+
+  <div class="wrap">
+    <div class="card">
+      <h2 style="margin-top:0;">ABM Logic</h2>
+      <p class="muted">
+        You are signed in. Use the navigation above to access workbenches.
+      </p>
+
+      <ul style="margin-top:16px; line-height:1.8;">
+        <li><a href="./workbench.html">Lead Workbench</a></li>
+        <li><a href="./contact-workbench.html">Contact Workbench</a></li>
+        <li><a href="./supplier-leads-upload.html">Supplier Leads Upload</a></li>
+        <li><a href="./admin-setup.html">Admin Setup</a></li>
+        <li><a href="./admin-export.html">Lead Delivery</a></li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
 
