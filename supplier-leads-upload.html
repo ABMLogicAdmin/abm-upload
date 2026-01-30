@@ -441,10 +441,82 @@ function getSbOrNull() {
       }
     }
 
-async function bootstrapAuthed() {
-  const sb = getSbOrNull();
-  if (!sb) return;
-  }
+    async function bootstrapAuthed() {
+      const sb = getSbOrNull();
+      if (!sb) return;
+    
+      // Must be logged in
+      const { data: sess } = await sb.auth.getSession();
+      if (!sess?.session?.user) {
+        window.location.href = "./login.html";
+        return;
+      }
+    
+      // Fetch role
+      const { data: userRes, error: userErr } = await sb.auth.getUser();
+      const user = userRes?.user;
+      if (userErr || !user) {
+        window.location.href = "./login.html";
+        return;
+      }
+    
+      window.ABM_USER_EMAIL = user.email || "";
+      window.ABM_ROLE = "user";
+    
+      const { data: roleRow, error: roleErr } = await sb
+        .from("app_users")
+        .select("role")
+        .eq("user_id", user.id)
+        .maybeSingle();
+    
+      if (!roleErr && roleRow?.role) {
+        window.ABM_ROLE = String(roleRow.role).toLowerCase();
+      }
+    
+      // Admin-only gate for this page
+      if (String(window.ABM_ROLE || "").toLowerCase() !== "admin") {
+        document.body.innerHTML = `
+          <div style="min-height:60vh;display:flex;align-items:center;justify-content:center;text-align:center;padding:40px;">
+            <div>
+              <h2 style="margin:0 0 8px;">Access denied</h2>
+              <div>You do not have permission to view this page.</div>
+              <div style="margin-top:10px;opacity:.7;font-size:13px;">(Your app_users.role is not admin.)</div>
+            </div>
+          </div>`;
+        return;
+      }
+    
+      // Show app
+      const appGrid = $("appGrid");
+      if (appGrid) appGrid.style.display = "block";
+    
+      // Refresh nav now that role/email are known
+      window.dispatchEvent(new Event("abm:nav:refresh"));
+    
+      // Load dropdowns
+      const status = $("status");
+      if (status) status.textContent = "Loading dropdowns…";
+    
+      await loadItems();
+    
+      state.client.label = "Select client…";
+      state.client.value = "";
+      state.campaign.label = "Select campaign…";
+      state.campaign.value = "";
+      state.source.label = "Select source…";
+      state.source.value = "";
+    
+      state.client.items = (cache.clients || []).map(r => ({ value: r.client_id, label: r.name }));
+      state.source.items = (cache.sources || []).map(r => ({ value: r.source_id, label: r.source_name }));
+      state.campaign.items = [];
+    
+      renderDropdown("ddClient", "client", "Select client…");
+      renderDropdown("ddCampaign", "campaign", "Select campaign…");
+      renderDropdown("ddSource", "source", "Select source…");
+    
+      if (status) status.textContent = "";
+    }
+
 
 // Must be logged in
   const { data: sess } = await sb.auth.getSession();
@@ -536,6 +608,7 @@ async function bootstrapAuthed() {
   </script>
 </body>
 </html>
+
 
 
 
