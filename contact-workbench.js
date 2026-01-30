@@ -177,7 +177,8 @@ window.__cw_state = state;
          
          if (!sess?.session?.user) {
            // Not authed → send to login page
-           location.replace("/abm-upload/login.html");
+           const next = encodeURIComponent(location.pathname + location.search + location.hash);
+           location.replace(`/abm-upload/login.html?next=${next}`);
            return;
          }
 
